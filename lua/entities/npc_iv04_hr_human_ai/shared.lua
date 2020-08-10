@@ -682,7 +682,7 @@ function ENT:BodyUpdate()
 end
 
 function ENT:DoAnimationEvent(a)
-	-- I don't care
+	-- I don't 
 	if a == 1689 then
 		local wep = self.Weapon
 		if CLIENT then wep = self:GetNWEntity("wep") end
