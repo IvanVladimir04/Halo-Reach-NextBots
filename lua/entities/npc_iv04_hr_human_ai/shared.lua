@@ -11,15 +11,23 @@ ENT.BehaviourType = 3
 
 ENT.CustomIdle = true
 
+ENT.SightType = 2
+
 ENT.Faction = "FACTION_UNSC"
 
 ENT.AIType = "Defensive"
 
 ENT.ExtraSpread = 0
 
+ENT.ShootDist = 1024
+
 ENT.CanUse = true
 
-ENT.MeleeDamage = 35
+ENT.GrenadeRange = 768
+
+ENT.GrenadeChances = 30
+
+ENT.MeleeDamage = 0
 
 ENT.MeleeRange = 70
 
@@ -196,6 +204,8 @@ function ENT:SetupHoldtypes()
 		self.SurpriseAnim = "Surprised_1handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
+		self.GrenadeAnim = "Throw_Grenade"
+		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
 	elseif self.RifleHolds[hold] then
@@ -224,6 +234,9 @@ function ENT:SetupHoldtypes()
 		self.SurpriseAnim = "Surprised_2handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle_Crouch"))}
+		self.GrenadeAnim = "Throw_Grenade"
+		self.AllowGrenade = true
+		self.CanShootCrouch = true
 		self.CanMelee = true
 	elseif hold == "rpg" then
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
@@ -239,6 +252,7 @@ function ENT:SetupHoldtypes()
 		self.SurpriseAnim = "Surprised_2handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile_Crouch"))}
+		self.AllowGrenade = false
 		self.CanShootCrouch = true
 		self.CanMelee = false
 	end
@@ -253,23 +267,9 @@ function ENT:DoCustomIdle()
 	end
 	if math.random(1,4) == 1 then
 		if math.random(1,2) == 1 then
-			self:PlaySequenceAndWait(self.CalmTurnLeftAnim)
-			for i = 1, 140 do
-				timer.Simple( 0.001*i, function()
-					if IsValid(self) then
-						self:SetAngles(self:GetAngles()+Angle(0,1,0))
-					end
-				end )
-			end
+			self:TurnTo(math.random(45,140),true)
 		else
-			self:PlaySequenceAndWait(self.CalmTurnRightAnim)
-			for i = 1, 140 do
-				timer.Simple( 0.001*i, function()
-					if IsValid(self) then
-						self:SetAngles(self:GetAngles()+Angle(0,-1,0))
-					end
-				end )
-			end
+			self:TurnTo(math.random(-45,-140),true)
 		end
 	end
 	local anim = self.IdleCalmAnim[math.random(#self.IdleCalmAnim)]
@@ -282,7 +282,7 @@ end
 
 function ENT:OnHaveEnemy(ent)
 	if !self.IsOnVehicle then
-		if !self.BeenSurprised then
+		if !self.BeenSurprised and math.random(1,3) == 1 then
 			self.BeenSurprised = true
 			local xy = ent:GetPos().x+ent:GetPos().y
 			local xy2 = self:GetPos().x+self:GetPos().y
@@ -423,15 +423,65 @@ function ENT:DoMeleeDamage()
 	end
 end
 
+function ENT:ThrowGrenade()
+	self.ThrowedGrenade = true
+	timer.Simple( math.random(5,10), function()
+		if IsValid(self) then
+			self.ThrowedGrenade = false
+		end
+	end )
+	local grenade
+	timer.Simple( 0.8, function()
+		if IsValid(self) then
+			--grenade = ents.Create("astw2_halo_cea_frag_grenade_thrown")
+			grenade = ents.Create("frag_grenade_h3")
+			local att = self:GetAttachment(2)
+			grenade:SetPos(att.Pos)
+			grenade:SetAngles(att.Ang)
+			grenade:SetOwner(self)
+			grenade:Spawn()
+			grenade:Activate()
+			grenade:SetMoveType( MOVETYPE_NONE )
+			grenade:SetParent( self, 2 )
+		end
+	end )
+	timer.Simple( 1.5, function()
+		if IsValid(self) and IsValid(grenade) then
+			grenade:SetMoveType( MOVETYPE_VPHYSICS )
+			grenade:SetParent( nil )
+			grenade:SetPos(self:GetAttachment(2).Pos)
+			local prop = grenade:GetPhysicsObject()
+			if IsValid(prop) then
+				prop:Wake()
+				prop:EnableGravity(true)
+				prop:SetVelocity( (self:GetAimVector() * 500)+(self:GetUp()*(math.random(10,50)*5)) )
+			end
+		end
+	end )
+	self:PlaySequenceAndMove(self.GrenadeAnim,1,self:GetForward(),40,0.8)
+	return self:CustomBehaviour(self.Enemy)
+end
+
 function ENT:CustomBehaviour(ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
 	if !IsValid(self.Enemy) then return else ent = self.Enemy end
 	local los = self:IsAbleToSee( ent, false )
 	local range = self:GetRangeSquaredTo(ent)
-	if !self.DoneMelee and range < self.MeleeRange^2 then
+	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
 	end
+	if range > self.ShootDist^2 and range > (self.MeleeRange*2)^2 then
+		self.StopShoot = true
+	else
+		self.StopShoot = false
+	end
+	if self.AllowGrenade and range < self.GrenadeRange^2 then
+		self.CanThrowGrenade = true
+	else
+		self.CanThrowGrenade = false
+	end
+	if !IsValid(ent) then return end
 	if self.AIType == "Static" then
 	
 		if self:HasToReload() then
@@ -440,17 +490,21 @@ function ENT:CustomBehaviour(ent)
 		end
 		local should, dif = self:ShouldFace(ent)
 		if should then
-			self:TurnTo(ent,dif)
+			self:TurnTo(dif)
 			return
 		end
 		if !IsValid(ent) then return end
 		if los then
-			if self.CanShootCrouch and math.random(1,5) == 1 then
-				self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+			if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+				return self:ThrowGrenade()
 			else
-				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+				if self.CanShootCrouch and math.random(1,2) == 1 then
+					self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+				else
+					self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+				end
+				self:Shoot()
 			end
-			self:Shoot()
 		else
 			self:SetEnemy(nil)
 		end
@@ -484,7 +538,7 @@ function ENT:CustomBehaviour(ent)
 		end
 		local should, dif = self:ShouldFace(ent)
 		if should then
-			self:TurnTo(ent,dif)
+			self:TurnTo(dif)
 			return
 		end
 		if !IsValid(ent) then return end
@@ -523,22 +577,41 @@ function ENT:CustomBehaviour(ent)
 				for i = 1, wait*100 do
 				
 					timer.Simple( 0.01*i, function()
-						if IsValid(self) then
+						if IsValid(self) and self:Health() > 0 then
 							self.loco:Approach(self:GetPos()+dir,1)
 						end
 					end )
 				
 				end
 			else
-				if self.CanShootCrouch and math.random(1,5) == 1 then
-					self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+					return self:ThrowGrenade()
 				else
-					self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+					if self.CanShootCrouch and math.random(1,2) == 1 then
+						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+					else
+						self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+					end
 				end
 			end
 			self:Shoot()
 		else
-			self:SetEnemy(nil)
+			if math.random(1,2) == 1 then
+				self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				local r = math.random(1,2)
+				if r == 2 then r = -1 end
+				for i = 1, 100 do
+				
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 then
+							self.loco:Approach(self:GetPos()+self:GetRight()*r,1)
+						end
+					end )
+				
+				end
+			else
+				self:SetEnemy(nil)
+			end
 		end
 		coroutine.wait(wait)
 		
@@ -546,16 +619,24 @@ function ENT:CustomBehaviour(ent)
 	return self:CustomBehaviour(ent)
 end
 
-function ENT:TurnTo(ent,dif)
-	if !IsValid(ent) then return end
+function ENT:TurnTo(dif,calm)
+	calm = calm or false
 	local seq
 	local e
 	if dif < 0 then
 		e = 1
-		seq = self.TurnLeftAnim
+		if calm then
+			seq = self.CalmTurnLeftAnim
+		else
+			seq = self.TurnLeftAnim
+		end
 	else
 		e = -1
-		seq = self.TurnRightAnim
+		if calm then
+			seq = self.CalmTurnRightAnim
+		else
+			seq = self.TurnRightAnim
+		end
 	end
 	local id, len = self:LookupSequence(seq)
 	local t
@@ -582,6 +663,7 @@ end
 
 function ENT:Shoot()
 	if !IsValid(self.Weapon) then return end
+	if self.StopShoot then return end
 	self.Weapon:AI_PrimaryAttack()
 	self:DoGesture(self.ShootAnim)
 end
@@ -668,9 +750,10 @@ function ENT:BodyUpdate()
 	local dip = 0
 	if IsValid(self.Enemy) then
 		goal = self.Enemy:WorldSpaceCenter()
-		y = (goal-self:WorldSpaceCenter()):Angle().y
+		local an = (goal-self:WorldSpaceCenter()):Angle()
+		y = an.y
 		di = math.AngleDifference(self:GetAngles().y,y)
-		p = (goal-self:WorldSpaceCenter()):Angle().p
+		p = an.p
 		dip = math.AngleDifference(self:GetAngles().p,p)
 	end
 	self:SetPoseParameter("aim_yaw",-di)
@@ -682,7 +765,7 @@ function ENT:BodyUpdate()
 end
 
 function ENT:DoAnimationEvent(a)
-	-- I don't 
+	-- I don't care
 	if a == 1689 then
 		local wep = self.Weapon
 		if CLIENT then wep = self:GetNWEntity("wep") end
