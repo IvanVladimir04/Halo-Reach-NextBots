@@ -93,6 +93,7 @@ function ENT:Give(class)
 end
 
 function ENT:OnInitialize()
+	self.StartPosition = self:GetPos()
 	self:DoInit()
 	self:SetupHoldtypes()
 end
@@ -115,6 +116,7 @@ function ENT:Use( activator )
 				self.FollowingPlayer = activator
 			else
 				self.FollowingPlayer = nil
+				self.StartPosition = self:GetPos()
 			end
 			self.CanUse = false
 			timer.Simple( 1, function()
@@ -263,6 +265,11 @@ function ENT:DoCustomIdle()
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
 		if dist > 300^2 then
 			self:WanderToPosition( (self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+		end
+	elseif self.AIType == "Defensive" then
+		local dist = self:GetRangeSquaredTo(self.StartPosition)
+		if dist > 300^2 then
+			self:WanderToPosition( (self.StartPosition + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		end
 	end
 	if math.random(1,4) == 1 then
@@ -433,8 +440,7 @@ function ENT:ThrowGrenade()
 	local grenade
 	timer.Simple( 0.8, function()
 		if IsValid(self) then
-			--grenade = ents.Create("astw2_halo_cea_frag_grenade_thrown")
-			grenade = ents.Create("frag_grenade_h3")
+			grenade = ents.Create("astw2_halo3_frag_thrown")
 			local att = self:GetAttachment(2)
 			grenade:SetPos(att.Pos)
 			grenade:SetAngles(att.Ang)
@@ -542,7 +548,7 @@ function ENT:CustomBehaviour(ent)
 			return
 		end
 		if !IsValid(ent) then return end
-		local wait = math.random(2,3)
+		local wait = math.random(1,2)
 		if los then
 			if math.random(1,3) == 1 then
 				local anim
@@ -578,7 +584,11 @@ function ENT:CustomBehaviour(ent)
 				
 					timer.Simple( 0.01*i, function()
 						if IsValid(self) and self:Health() > 0 then
-							self.loco:Approach(self:GetPos()+dir,1)
+							if IsValid(self.Enemy) then
+								self.loco:Approach(self:GetPos()+dir,1)
+							else
+								self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+							end
 						end
 					end )
 				
