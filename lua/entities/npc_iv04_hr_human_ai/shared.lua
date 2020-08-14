@@ -15,11 +15,13 @@ ENT.SightType = 2
 
 ENT.Faction = "FACTION_UNSC"
 
-ENT.AIType = "Defensive"
+ENT.AIType = "Offensive"
 
 ENT.ExtraSpread = 0
 
 ENT.ShootDist = 1024
+
+ENT.SightDistance = 2048
 
 ENT.CanUse = true
 
@@ -69,16 +71,14 @@ ENT.UsableWeps = {
 	["astw2_haloreach_magnum"] = true,
 	["astw2_haloreach_rocket_launcher"] = true,
 	["astw2_haloreach_sniper_rifle"] = true,
-	["astw2_haloreach_spartan_laser"] = false
+	["astw2_haloreach_spartan_laser"] = true,
+	["astw2_haloreach_needler"] = true
 }
 
 function ENT:Give(class)
 	local wep = ents.Create(class)
 	local attach = self:GetAttachment(1)
 	local pos = attach.Pos
-	local offpos = self.WepOffsets[class].pos
-	local offang = self.WepOffsets[class].ang
-	local off = self:GetForward()*offpos.x+self:GetRight()*offpos.y+self:GetUp()*offpos.z
 	wep:SetOwner(self)
 	wep:SetPos(pos)
 	wep:SetAngles(attach.Ang)
@@ -124,7 +124,7 @@ function ENT:Use( activator )
 					self.CanUse = true
 				end
 			end )
-		elseif self.UsableWeps[activator:GetActiveWeapon():GetClass()] and self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() then
+		elseif self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() and self.TotalHolds[activator:GetActiveWeapon().HoldType_Aim] then
 			self.CanUse = false
 			local stop = false
 			for i = 1, 200 do
@@ -132,7 +132,7 @@ function ENT:Use( activator )
 					if stop then return end
 					if IsValid(self) then
 						if IsValid(ply) then
-							if !ply:KeyDown(IN_USE) or !self.UsableWeps[activator:GetActiveWeapon():GetClass()] and self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() then
+							if ( !ply:KeyDown(IN_USE) and self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() ) or !self.TotalHolds[activator:GetActiveWeapon().HoldType_Aim] then
 								self.CanUse = true
 								stop = true
 							else
@@ -181,6 +181,20 @@ ENT.RifleHolds = {
 	["shotgun"] = true
 }
 
+ENT.PistolHolds = {
+	["pistol"] = true,
+	["revolver"] = true
+}
+
+ENT.TotalHolds = {
+	["crossbow"] = true,
+	["ar2"] = true,
+	["shotgun"] = true,
+	["pistol"] = true,
+	["revolver"] = true,
+	["rpg"] = true
+}
+
 function ENT:SetupHoldtypes()
 	local hold = self.Weapon.HoldType_Aim
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
@@ -191,7 +205,7 @@ function ENT:SetupHoldtypes()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
 	end
-	if hold == "pistol" then
+	if self.PistolHolds[hold] then
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
@@ -220,6 +234,9 @@ function ENT:SetupHoldtypes()
 		if self.Weapon:GetClass() == "astw2_haloreach_sniper_rifle" then
 			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Sniper"))
 			self.Weapon.BurstLength = 1
+		elseif self.Weapon:GetClass() == "astw2_haloreach_grenade_launcher" then
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Grenade_Launcher"))
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_GL"))
 		elseif hold == "ar2" then
 			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Rifle"))
 		elseif hold == "shotgun" then
@@ -228,6 +245,8 @@ function ENT:SetupHoldtypes()
 			self.WeaponAccuracy = 9
 			self.Weapon.BurstLength = 1
 			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Shotgun"))
+		else
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Rifle"))
 		end
 		self.CalmTurnLeftAnim = "Passive_Turn_Left_Idle"
 		self.CalmTurnRightAnim = "Passive_Turn_Right_Idle"
@@ -348,7 +367,19 @@ end
 function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
-	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
+	if rel == "friend" then
+		if self.BeenInjured then
+			dmg:ScaleDamage(0)
+			return
+		else
+			self.BeenInjured = true
+			timer.Simple( math.random(5,10), function()
+				if IsValid(self) then
+					self.BeenInjured = false
+				end
+			end )
+		end
+	end
 	if rel == "foe" and !self.Switched then 
 		self.Switched = true
 		timer.Simple( math.random(5,10), function()
@@ -357,6 +388,17 @@ function ENT:OnInjured(dmg)
 			end
 		end )
 		self:SetEnemy(dmg:GetAttacker()) 
+	end
+	if IsValid(self.Enemy) then
+		if self:Health() < self.StartHealth/2 and !self.Covered then
+			self.Covered = true
+			self.NeedsToCover = true
+			timer.Simple( math.random(10,20), function()
+				if IsValid(self) then
+					self.Covered = false
+				end
+			end )
+		end
 	end
 	local total = dmg:GetDamage()
 	--print(self.Shield, "before")
@@ -483,6 +525,20 @@ function ENT:ThrowGrenade()
 	return self:CustomBehaviour(self.Enemy)
 end
 
+function ENT:FindCoverSpots(ent,r)
+	r = r or math.random(3,4)
+	local dire = (self:GetPos()-ent:GetPos()):GetNormalized()
+	local navs = navmesh.Find( self:GetPos()+(dire*512), 1024, 100, 10 )
+	local tbl = {}
+	local found = false
+	for k, nav in pairs(navs) do
+		if !nav:IsVisible( ent:WorldSpaceCenter() ) then
+			tbl[nav:GetID()] = nav
+		end
+	end
+	return tbl, dire
+end
+
 function ENT:CustomBehaviour(ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
@@ -492,12 +548,12 @@ function ENT:CustomBehaviour(ent)
 	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
 	end
-	if range > self.ShootDist^2 and range > (self.MeleeRange*2)^2 then
+	if range > self.ShootDist^2 then
 		self.StopShoot = true
 	else
 		self.StopShoot = false
 	end
-	if self.AllowGrenade and range < self.GrenadeRange^2 then
+	if self.AllowGrenade and range < self.GrenadeRange^2 and range > (self.MeleeRange*2)^2 then
 		self.CanThrowGrenade = true
 	else
 		self.CanThrowGrenade = false
@@ -534,16 +590,8 @@ function ENT:CustomBehaviour(ent)
 	elseif self.AIType == "Defensive" then
 	
 		if self:HasToReload() then
-			local dire = (self:GetPos()-ent:GetPos()):GetNormalized()
-			local navs = navmesh.Find( self:GetPos()+(dire*512), 1024, 100, 10 )
-			local tbl = {}
-			local found = false
 			local r = math.random(3,4)
-			for k, nav in pairs(navs) do
-				if !nav:IsVisible( ent:WorldSpaceCenter() ) then
-					tbl[nav:GetID()] = nav
-				end
-			end
+			local tbl,dire = self:FindCoverSpots(ent,r)
 			if table.Count(tbl) > 0 or #tbl > 0 then
 				local area = table.Random(tbl)
 				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
@@ -570,6 +618,14 @@ function ENT:CustomBehaviour(ent)
 				self.Weapon:AI_PrimaryAttack()
 			end
 			return
+		elseif self.NeedsToCover then
+			self.NeedsToCover = false
+			local tbl = self:FindCoverSpots(ent)
+			if table.Count(tbl) > 0 or #tbl > 0 then
+				local area = table.Random(tbl)
+				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				return
+			end
 		end
 		local should, dif = self:ShouldFace(ent)
 		if should then
@@ -654,8 +710,160 @@ function ENT:CustomBehaviour(ent)
 		end
 		coroutine.wait(wait)
 		
+	elseif self.AIType == "Offensive" then
+	
+		if self:HasToReload() then
+			self.Weapon:AI_PrimaryAttack()
+			return
+		elseif self.NeedsToCover then
+			self.NeedsToCover = false
+			local tbl = self:FindCoverSpots(ent)
+			if table.Count(tbl) > 0 or #tbl > 0 then
+				local area = table.Random(tbl)
+				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				return
+			end
+		end
+		
+		if los then
+		
+			local should, dif = self:ShouldFace(ent)
+			if should then
+				self:TurnTo(dif)
+				return
+			end
+			if self.StopShoot then
+				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+			end
+			if !IsValid(ent) then return end
+	
+			local wait = math.random(2,3)
+			if math.random(1,2) == 1 then
+				local anim
+				local speed
+				local mul
+				local r2 = math.random(1,2)
+				if r2 == 2 then r2 = -1 end
+				local dir
+				local dire
+				if math.random(1,2) == 1 then
+					dir = (self:GetRight()*r2)
+					dire = self:GetForward()*1
+				else
+					dir = (self:GetForward()*1)
+					dire = (self:GetRight()*r2)
+				end
+				timer.Simple( wait*0.5, function()
+					if IsValid(self) then
+						dir = dire
+					end
+				end )
+				if math.random(1,3) == 1 then
+					anim = self.CrouchMoveAnim
+					speed = self.MoveSpeed
+					mul = 1
+				else
+					anim = self.RunAnim
+					speed = self.MoveSpeed
+					mul = self.MoveSpeedMultiplier
+				end
+				self:StartMovingAnimations( anim[math.random(#anim)], speed*mul )
+				for i = 1, wait*100 do
+				
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 then
+							if IsValid(self.Enemy) then
+								self.loco:Approach(self:GetPos()+dir,1)
+							else
+								self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+							end
+						end
+					end )
+				
+				end
+			else
+				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+					return self:ThrowGrenade()
+				else
+					if self.CanShootCrouch and math.random(1,2) == 1 then
+						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+					else
+						self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+					end
+				end
+			end
+			
+			self:Shoot()
+			
+			coroutine.wait(wait)
+		
+		else
+		
+			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false)
+		
+		end
+		
 	end
 	return self:CustomBehaviour(ent)
+end
+
+function ENT:StartChasing( ent, anim, speed, los )
+	self:StartActivity( anim )			-- Move animation
+	self.loco:SetDesiredSpeed( speed )		-- Move speed
+	self:ChaseEnt(ent,los)
+end
+
+ENT.NextUpdateT = CurTime()
+
+ENT.UpdateDelay = 0.5
+
+function ENT:ChaseEnt(ent,los)
+	local path = Path( "Follow" )
+	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
+	path:SetGoalTolerance( self.PathGoalTolerance )
+	if !IsValid(ent) then return end
+	path:Compute( self, ent:GetPos() )
+	if ( !path:IsValid() ) then return "Failed" end
+	self:DoGesture("Run")
+	local saw = false
+	while ( path:IsValid() and IsValid(ent) ) do
+		if self.NextUpdateT < CurTime() then
+			self.NextUpdateT = CurTime()+self.UpdateDelay
+			local cansee = self:IsLineOfSightClear( ent )
+			saw = cansee
+			local dist = self:GetPos():DistToSqr(ent:GetPos())
+			if !los and cansee then
+				return "Obtained LOS"
+			elseif los and cansee and dist < self.ShootDist^2 then
+				return "Obtained range"
+			end
+			if self.loco:GetVelocity():IsZero() and self.loco:IsAttemptingToMove() then
+				-- We are stuck, don't bother
+				return "Give up"
+			end
+			if dist < self.MeleeRange^2 then
+				return self:Melee()
+			elseif dist > self.LoseEnemyDistance^2 then
+				self:OnLoseEnemy()
+				self:SetEnemy(nil)
+				return "Lost enemy"
+			end
+		end
+		if path:GetAge() > self.RebuildPathTime then
+			if self.OnRebuildPath == true then
+				self:OnRebuiltPath()
+			end	
+			path:Compute( self, ent:GetPos() )
+		end
+		path:Update( self )
+		if self.loco:IsStuck() then
+			if self.CustomOnStuck == true then self:CustomStuck() return "CustomOnStuck" end
+			self:OnStuck()
+			return "Stuck"
+		end
+		coroutine.yield()
+	end
+	return "ok"
 end
 
 function ENT:TurnTo(dif,calm)
