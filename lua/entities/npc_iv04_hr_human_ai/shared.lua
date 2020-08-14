@@ -283,6 +283,11 @@ function ENT:DoCustomIdle()
 	local seq = self:SelectWeightedSequence(anim)
 	self:StartActivity(anim)
 	self:SearchEnemy()
+	timer.Simple( self:SequenceDuration(seq)/2, function()
+		if IsValid(self) then
+			self:SearchEnemy()
+		end
+	end )
 	coroutine.wait(self:SequenceDuration(seq))
 	self:SearchEnemy()
 end
@@ -344,7 +349,15 @@ function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
 	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
-	if rel == "foe" then self:SetEnemy(dmg:GetAttacker()) end
+	if rel == "foe" and !self.Switched then 
+		self.Switched = true
+		timer.Simple( math.random(5,10), function()
+			if IsValid(self) then
+				self.Switched = false
+			end
+		end )
+		self:SetEnemy(dmg:GetAttacker()) 
+	end
 	local total = dmg:GetDamage()
 	--print(self.Shield, "before")
 	self.HealthActual = self:Health()
@@ -440,7 +453,7 @@ function ENT:ThrowGrenade()
 	local grenade
 	timer.Simple( 0.8, function()
 		if IsValid(self) then
-			grenade = ents.Create("astw2_halo3_frag_thrown")
+			grenade = ents.Create("astw2_haloreach_frag_thrown")
 			local att = self:GetAttachment(2)
 			grenade:SetPos(att.Pos)
 			grenade:SetAngles(att.Ang)
@@ -449,6 +462,8 @@ function ENT:ThrowGrenade()
 			grenade:Activate()
 			grenade:SetMoveType( MOVETYPE_NONE )
 			grenade:SetParent( self, 2 )
+			grenade.BlastRadius = 200
+			grenade.BlastDMG = 80
 		end
 	end )
 	timer.Simple( 1.5, function()
@@ -472,7 +487,7 @@ function ENT:CustomBehaviour(ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
 	if !IsValid(self.Enemy) then return else ent = self.Enemy end
-	local los = self:IsAbleToSee( ent, false )
+	local los = self:IsLineOfSightClear( ent )
 	local range = self:GetRangeSquaredTo(ent)
 	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
@@ -520,26 +535,40 @@ function ENT:CustomBehaviour(ent)
 	
 		if self:HasToReload() then
 			local dire = (self:GetPos()-ent:GetPos()):GetNormalized()
+			local navs = navmesh.Find( self:GetPos()+(dire*512), 1024, 100, 10 )
+			local tbl = {}
+			local found = false
 			local r = math.random(3,4)
-			local dir = dire+self:GetRight()*1
-			timer.Simple( r*0.25, function()
-				if IsValid(self) then
-					dir = dire
+			for k, nav in pairs(navs) do
+				if !nav:IsVisible( ent:WorldSpaceCenter() ) then
+					tbl[nav:GetID()] = nav
 				end
-			end )
-			for i = 1, r*100 do
-				
-				timer.Simple( 0.01*i, function()
+			end
+			if table.Count(tbl) > 0 or #tbl > 0 then
+				local area = table.Random(tbl)
+				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				self.Weapon:AI_PrimaryAttack()
+			else
+				local dir = dire+self:GetRight()*1
+				timer.Simple( r*0.25, function()
 					if IsValid(self) then
-						self.loco:Approach(self:GetPos()+dir,1)
-						self.loco:FaceTowards(self:GetPos()+dir)
+						dir = dire
 					end
 				end )
-				
+				for i = 1, r*100 do
+					
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) then
+							self.loco:Approach(self:GetPos()+dir,1)
+							self.loco:FaceTowards(self:GetPos()+dir)
+						end
+					end )
+					
+				end
+				self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				coroutine.wait(r)
+				self.Weapon:AI_PrimaryAttack()
 			end
-			self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
-			coroutine.wait(r)
-			self.Weapon:AI_PrimaryAttack()
 			return
 		end
 		local should, dif = self:ShouldFace(ent)
@@ -548,7 +577,7 @@ function ENT:CustomBehaviour(ent)
 			return
 		end
 		if !IsValid(ent) then return end
-		local wait = math.random(1,2)
+		local wait = math.random(2,3)
 		if los then
 			if math.random(1,3) == 1 then
 				local anim
@@ -675,6 +704,9 @@ function ENT:Shoot()
 	if !IsValid(self.Weapon) then return end
 	if self.StopShoot then return end
 	self.Weapon:AI_PrimaryAttack()
+end
+
+function ENT:OnFiring()
 	self:DoGesture(self.ShootAnim)
 end
 
