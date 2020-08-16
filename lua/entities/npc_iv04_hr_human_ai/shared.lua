@@ -622,7 +622,7 @@ function ENT:CanEnterAVehicle()
 			local total = 0
 			for i = 1, #veh.PassengerS do
 				local pas = veh.PassengerS[i]
-				if IsValid(pas) or ( ( i == 1 and !IsValid(veh:GetDriver()) ) or ( IsValid(veh.pSeat[i-1]) and !IsValid(veh.pSeat[i-1]:GetDriver()) ) ) then
+				if IsValid(pas) or ( ( i == 1 and !IsValid(veh:GetDriver()) ) or ( IsValid(veh.pSeat[i-1]) and IsValid(veh.pSeat[i-1]:GetDriver()) ) ) then
 					total = total+1
 				end
 			end
@@ -1555,7 +1555,7 @@ function ENT:BodyUpdate()
 					else
 						i = -2
 					end
-					self:SetAngles(Angle(0,self:GetAngles().y+i,0))
+					self:SetAngles(Angle(self.Vehicle:GetAngles().p,self:GetAngles().y+i,self.Vehicle:GetAngles().r))
 					self.Vehicle:SetPoseParameter("turret_yaw",self.LTPP+i)
 					self.GunnerShoot = false
 				else
