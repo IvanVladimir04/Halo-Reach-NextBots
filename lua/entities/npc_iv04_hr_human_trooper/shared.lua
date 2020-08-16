@@ -35,8 +35,19 @@ ENT.WepOffsets = {
 	["astw2_haloreach_magnum"] = {ang = Angle(280,210,70), pos = {x=4,y=-0,z=2}}
 }
 
+ENT.Skins = {
+	[1] = 0,
+	[2] = 0,
+	[3] = 3,
+	[4] = 3,
+	[5] = 3,
+	[6] = 4,
+	[7] = 1
+}
+
 function ENT:DoInit()
 	local wep = table.Random(self.PossibleWeapons)
+	self:SetSkin(self.Skins[math.random(#self.Skins)])
 	self:Give(wep)
 	local head = math.random(0,5)
 	self:SetBodygroup(2,head)
@@ -47,7 +58,7 @@ function ENT:DoInit()
 	self:SetBodygroup(4,math.random(-4,3))
 	self:SetBodygroup(5,math.random(0,1))
 	local attch
-	if helm == 3 then self.IsSargeant = true attch = 0 end
+	if helm == 3 then self.IsSergeant = true attch = 0 end
 	attch = attch or math.random(-2,2)
 	self:SetBodygroup(6,attch)
 	self:SetBodygroup(7,math.random(0,2))

@@ -37,6 +37,12 @@ ENT.FlinchChance = 30
 
 ENT.FlinchDamage = 10
 
+ENT.RunBehaviourTime = 0
+
+ENT.SeenVehicles = {}
+
+ENT.CountedVehicles = 0
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -113,7 +119,7 @@ function ENT:Use( activator )
 		if ply:KeyDown(IN_WALK) then
 			self.IsFollowingPlayer = !self.IsFollowingPlayer
 			if !IsValid(self.FollowingPlayer) then
-				self.FollowingPlayer = activator
+				self.FollowingPlayer = ply
 			else
 				self.FollowingPlayer = nil
 				self.StartPosition = self:GetPos()
@@ -124,7 +130,7 @@ function ENT:Use( activator )
 					self.CanUse = true
 				end
 			end )
-		elseif self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() and self.TotalHolds[activator:GetActiveWeapon().HoldType_Aim] then
+		elseif IsValid(ply:GetActiveWeapon()) and IsValid(self.Weapon) and self.Weapon:GetClass() != ply:GetActiveWeapon():GetClass() and self.TotalHolds[ply:GetActiveWeapon().HoldType_Aim] then
 			self.CanUse = false
 			local stop = false
 			for i = 1, 200 do
@@ -132,7 +138,7 @@ function ENT:Use( activator )
 					if stop then return end
 					if IsValid(self) then
 						if IsValid(ply) then
-							if ( !ply:KeyDown(IN_USE) and self.Weapon:GetClass() != activator:GetActiveWeapon():GetClass() ) or !self.TotalHolds[activator:GetActiveWeapon().HoldType_Aim] then
+							if ( !ply:KeyDown(IN_USE) and self.Weapon:GetClass() != ply:GetActiveWeapon():GetClass() ) or !self.TotalHolds[ply:GetActiveWeapon().HoldType_Aim] then
 								self.CanUse = true
 								stop = true
 							else
@@ -205,6 +211,14 @@ function ENT:SetupHoldtypes()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
 	end
+	self.WarthogDriverEnter = "Warthog_Driver_Enter"
+	self.WarthogDriverExit = "Warthog_Driver_Exit"
+	self.WarthogDriverIdle = "Warthog_Driver_Idle"
+	self.WarthogPassengerEnter = "Warthog_Passenger_Enter"
+	self.WarthogPassengerExit = "Warthog_Passenger_Exit"
+	self.WarthogGunnerEnter = "Warthog_Gunner_Enter"
+	self.WarthogGunnerExit = "Warthog_Gunner_Exit"
+	self.WarthogGunnerIdle = "Warthog_Gunner_Idle"
 	if self.PistolHolds[hold] then
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
@@ -221,6 +235,7 @@ function ENT:SetupHoldtypes()
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
 		self.GrenadeAnim = "Throw_Grenade"
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Pistol"
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
@@ -256,6 +271,7 @@ function ENT:SetupHoldtypes()
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle_Crouch"))}
 		self.GrenadeAnim = "Throw_Grenade"
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Rifle"
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
@@ -273,6 +289,7 @@ function ENT:SetupHoldtypes()
 		self.SurpriseAnim = "Surprised_2handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile_Crouch"))}
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Missile"
 		self.AllowGrenade = false
 		self.CanShootCrouch = true
 		self.CanMelee = false
@@ -280,6 +297,12 @@ function ENT:SetupHoldtypes()
 end
 
 function ENT:DoCustomIdle()
+	if self.IsInVehicle then return self:VehicleIdle() end
+	local can, veh = self:CanEnterAVehicle()
+	if can then
+		self:EnterVehicle(veh)
+		return self:VehicleIdle()
+	end
 	if self.IsFollowingPlayer then
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
 		if dist > 300^2 then
@@ -312,7 +335,7 @@ function ENT:DoCustomIdle()
 end
 
 function ENT:OnHaveEnemy(ent)
-	if !self.IsOnVehicle then
+	if !self.IsInVehicle then
 		if !self.BeenSurprised and math.random(1,3) == 1 then
 			self.BeenSurprised = true
 			local xy = ent:GetPos().x+ent:GetPos().y
@@ -342,7 +365,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	local hg = trace.HitGroup
-	if self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
+	if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true
 		self.DoingFlinch = true
 		timer.Simple( math.random(1,2), function()
@@ -367,7 +390,7 @@ end
 function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
-	if rel == "friend" then
+	if rel == "friend" and !dmg:GetAttacker():IsPlayer() then
 		if self.BeenInjured then
 			dmg:ScaleDamage(0)
 			return
@@ -522,7 +545,6 @@ function ENT:ThrowGrenade()
 		end
 	end )
 	self:PlaySequenceAndMove(self.GrenadeAnim,1,self:GetForward(),40,0.8)
-	return self:CustomBehaviour(self.Enemy)
 end
 
 function ENT:FindCoverSpots(ent,r)
@@ -539,12 +561,343 @@ function ENT:FindCoverSpots(ent,r)
 	return tbl, dire
 end
 
-function ENT:CustomBehaviour(ent)
+local thingstoavoid = {
+	["prop_physics"] = true,
+	["prop_ragdoll"] = true
+}
+
+function ENT:OnContact( ent ) -- When we touch someBODY
+	if ent == game.GetWorld() then return "no" end
+	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
+		local d = self:GetPos()-ent:GetPos()
+		self.loco:SetVelocity(d*1)
+	end
+	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
+		ent:Fire( "Open" )
+	end
+	if (thingstoavoid[ent:GetClass()]) then
+		local p = ent:GetPhysicsObject()
+		if IsValid(p) then
+			p:Wake()
+			local d = ent:GetPos()-self:GetPos()
+			p:SetVelocity(d*5)
+		end
+	end
+	if ent:IsVehicle() and self.DriveThese[ent:GetModel()] and !self.SeenVehicles[ent] then
+			self.SeenVehicles[ent] = true
+			self.CountedVehicles = self.CountedVehicles+1
+	end
+	local tbl = {
+		HitPos = self:NearestPoint(ent:GetPos()),
+		HitEntity = self,
+		OurOldVelocity = ent:GetVelocity(),
+		DeltaTime = 0,
+		TheirOldVelocity = self.loco:GetVelocity(),
+		HitNormal = self:NearestPoint(ent:GetPos()):GetNormalized(),
+		Speed = ent:GetVelocity().x,
+		HitObject = self:GetPhysicsObject(),
+		PhysObject = self:GetPhysicsObject()
+	}
+	if isfunction(ent.DoDamageCode) then
+		ent:DoDamageCode(tbl,self:GetPhysicsObject())
+	elseif isfunction(ent.PhysicsCollide) then 
+		ent:PhysicsCollide(tbl,self:GetPhysicsObject())
+	end
+end
+
+ENT.DriveThese = {
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = true
+}
+
+ENT.PassengerSlots = {
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = 3
+}
+
+function ENT:CanEnterAVehicle()
+	local ve
+	local can = false
+	for veh, bool in pairs(self.SeenVehicles) do
+		if IsValid(veh) then
+			if !veh.PassengerS then veh.PassengerS = {} end
+			local total = 0
+			for i = 1, #veh.PassengerS do
+				local pas = veh.PassengerS[i]
+				if IsValid(pas) or ( ( i == 1 and !IsValid(veh:GetDriver()) ) or ( IsValid(veh.pSeat[i-1]) and !IsValid(veh.pSeat[i-1]:GetDriver()) ) ) then
+					total = total+1
+				end
+			end
+			if total < self.PassengerSlots[veh:GetModel()] then
+				ve = veh
+				can = true
+				break
+			end
+		else
+			self.SeenVehicles[veh] = nil
+		end
+	end
+	return can, ve
+end
+
+function ENT:Think()
+	if self.IsInVehicle then
+		if self.VehicleRole == "Gunner" then
+			self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone("turret"))+self:GetUp()*26+self:GetForward()*-20)
+		else
+			local offs = {
+				["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
+				["Passenger"] = self.Vehicle:GetRight()*18+self.Vehicle:GetUp()*6+self.Vehicle:GetForward()*67
+			}
+			self:SetPos(self.Seat:GetPos()+offs[self.VehicleRole])
+		end
+	end
+end
+
+function ENT:VehicleIdle()
+	self:SearchEnemy()
+	if self.VehicleRole == "Gunner" then
+		if self.IsFollowingPlayer then
+			self:Drive(self.FollowingPlayer:GetPos()+self.FollowingPlayer:GetForward()*-400)
+		end
+		self:PlaySequenceAndWait(self.WarthogGunnerIdle)
+	elseif self.VehicleRole == "Driver" then
+		self:PlaySequenceAndWait(self.WarthogDriverIdle)
+	elseif self.VehicleRole == "Passenger" then
+		self:PlaySequenceAndWait(self.WarthogPassengerIdle)
+	end
+end
+
+--[[ Stuff to make the vehicle move:
+    veh:SetActive(true)
+    veh:StartEngine()
+
+    veh.PressedKeys["A"] = true/false
+    veh.PressedKeys["S"] = true/false
+    veh.PressedKeys["D"] = true/false
+    veh.PressedKeys["W"] = true/false
+	veh.PressedKeys["joystick_steer_left"] = true/false
+	veh.PressedKeys["joystick_steer_right"] = true/false
+	
+	veh.PressedKeys["Space"] = false
+   
+    veh:PlayerSteerVehicle( self, left, right )
+    self is the driver
+    left, right are 0 or 1
+    
+    function ENT:GetInfoNum(no,yes)
+        return 1
+    end
+]]
+
+function ENT:AdjustKeys(ang)
+	local veh = self.Vehicle
+	local dif = math.AngleDifference(self:GetAngles().y,ang.y)
+	local right = 0
+	local left = 0
+	if dif < 0 then dif = dif + 360 end
+	if ( dif > 195 and dif < 345 ) or ( dif < 165 and dif > 15 )then
+		if dif >= 180 then
+			veh.PressedKeys["A"] = true
+			veh.PressedKeys["D"] = false
+			veh.PressedKeys["joystick_steer_right"] = false
+			veh.PressedKeys["joystick_steer_left"] = true
+			left = 1
+			--print("left")
+		else
+			veh.PressedKeys["A"] = false
+			veh.PressedKeys["D"] = true
+			veh.PressedKeys["joystick_steer_right"] = true
+			veh.PressedKeys["joystick_steer_left"] = false
+			right = 1
+			--print("right")
+		end
+	else
+		veh.PressedKeys["A"] = false
+		veh.PressedKeys["D"] = false
+		veh.PressedKeys["joystick_steer_right"] = false
+		veh.PressedKeys["joystick_steer_left"] = false
+	end
+	if ( dif < 90 and dif > 270 ) then
+		veh.PressedKeys["S"] = true
+		veh.PressedKeys["W"] = false
+		--print("back")
+	else
+		veh.PressedKeys["S"] = false
+		veh.PressedKeys["W"] = true
+		--print("front")
+	end
+	veh.PressedKeys["Space"] = false
+   
+    veh:PlayerSteerVehicle( self, left, right )
+end
+
+function ENT:Drive(goal,pathed,path)
+	local pos = goal
+	local stop = false
+	local timed = false
+	while (!stop) do
+		if pathed then
+			if !IsValid(path) then
+				return
+			end
+			pos = path:GetCurrentGoal().pos
+			path:Draw()
+		elseif !timed then
+			timer.Simple( math.random(3,5), function()
+				if IsValid(self) then
+					stop = true
+				end
+			end )
+		end
+		local ang = (pos-self:GetPos()):GetNormalized():Angle()
+		self:AdjustKeys(ang)
+		coroutine.wait(0.3)
+	end
+	self.Vehicle.PressedKeys["Space"] = true
+	self.Vehicle.PressedKeys["S"] = false
+	self.Vehicle.PressedKeys["W"] = false
+	self.Vehicle.PressedKeys["A"] = false
+	self.Vehicle.PressedKeys["D"] = false
+	self.Vehicle.PressedKeys["joystick_steer_right"] = false
+	self.Vehicle.PressedKeys["joystick_steer_left"] = false
+end
+
+function ENT:VehicleBehavior(ent,dist)
+	if self.VehicleRole == "Gunner" then
+		if self.GunnerShoot and !self.Shot then
+			self.Shot = true
+			timer.Simple( math.random( 4,6 ), function()
+				if IsValid(self) then
+					self.Shot = false
+				end
+			end )
+			local del = 0.5
+			for i = 1, math.random(30,40) do
+				del = del-0.1
+				if del < 0.1 then del = 0.1 end
+				timer.Simple( i*del, function()
+					if IsValid(self) and IsValid(self.Vehicle) then
+						local bullet = {}
+						bullet.Attacker = self
+						bullet.Damage = 8
+						local dir
+						local origin = self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Pos
+						ParticleEffectAttach( "simphys_halo_warthog_chaingun_muzzle", PATTACH_POINT_FOLLOW, self.Vehicle, 5 )
+						self.Vehicle:EmitSound("hce_turret")
+						local ens = ents.Create("prop_physics")
+						ens:SetPos(origin)
+						ens:SetAngles(self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Ang)
+						bullet.TracerName = "effect_simfphys_halo_warthog_chaingun_tracer"
+						bullet.Src = ens:GetPos()
+						bullet.Spread = Vector(0.05,0.05,0.05)
+						if IsValid(self.Enemy) then
+							dir = (self.Enemy:WorldSpaceCenter()-origin):GetNormalized()
+						end
+						bullet.Dir = dir or self:GetAimVector()
+						ens:FireBullets(bullet)
+						ens:Remove()
+					end
+				end )
+			end
+		end
+		self:PlaySequenceAndWait(self.WarthogGunnerIdle)
+	elseif self.VehicleRole == "Driver" then
+		self:SetSequence(self.WarthogDriverIdle)
+		local r = math.random(1,2)
+		if r == 2 then r = -1 end
+		local goal = ent:GetPos()+self:GetRight()*(r*600)+self:GetForward()*math.random(100,1000)
+		self:Drive(goal,false,nil)
+	elseif self.VehicleRole == "Passenger" then
+		local y = math.AngleDifference(self:GetAngles().y,(ent:WorldSpaceCenter()-self:GetShootPos()):GetNormalized():Angle().y)
+		if math.abs(y) <= 90 then
+			self.Weapon:AI_PrimaryAttack()
+		else
+			self:SetEnemy(nil)
+		end
+		self:PlaySequenceAndWait(self.WarthogPassengerIdle)
+	end
+end
+
+ENT.VehicleSlots = {
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = {
+		[1] = "Driver",
+		[2] = "Gunner",
+		[3] = "Passenger"
+	}
+}
+
+function ENT:EnterVehicle(veh)
+	local dirs = {
+		[1] = veh:GetRight()*-80,
+		[2] = veh:GetForward()*-160,
+		[3] = veh:GetRight()*80
+	}
+	local seat
+	local clss = veh:GetModel()
+	local e
+	for i = 1, self.PassengerSlots[clss] do
+		if !IsValid(veh.PassengerS[i]) then
+			if ( i == 1 and !IsValid(veh:GetDriver()) ) or ( IsValid(veh.pSeat[i-1]) and !IsValid(veh.pSeat[i-1]:GetDriver()) ) then
+				veh.PassengerS[i] = self
+				if i == 1 then
+					seat = veh
+				else
+					seat = veh.pSeat[i-1]
+				end
+				e = i
+				break
+			end
+		end
+	end
+	self.VehicleRole = self.VehicleSlots[clss][e]
+	self:MoveToPosition(seat:GetPos()+dirs[e],self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+	veh:SetActive(true)
+	veh:StartEngine()
+	self.IsInVehicle = true
+	self.Vehicle = veh
+	self.Seat = seat
+	--self:SetPos(seat:GetPos())
+	self:SetParent(seat)
+	self:SetOwner(seat)
+	self.TraceMask = MASK_VISIBLE_AND_NPCS
+	if self.VehicleRole == "Gunner" then
+		self.LTPP = veh:GetPoseParameter("turret_yaw")
+		self.Weapon:SetNoDraw(true)
+		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y+veh:GetPoseParameter("turret_yaw"),0))
+		self:PlaySequenceAndWait(self.WarthogGunnerEnter)
+	elseif self.VehicleRole == "Driver" then
+		self.Weapon:SetNoDraw(true)
+		self:PlaySequenceAndWait(self.WarthogDriverEnter)
+		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y,0))
+	elseif self.VehicleRole == "Passenger" then
+		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y,0))
+		self:PlaySequenceAndWait(self.WarthogPassengerEnter)
+	end
+end
+
+function ENT:GetInfoNum(no,yes)
+    return 1
+end
+
+function ENT:CustomBehaviour(ent,range)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
 	if !IsValid(self.Enemy) then return else ent = self.Enemy end
-	local los = self:IsLineOfSightClear( ent )
-	local range = self:GetRangeSquaredTo(ent)
+	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
+	if IsValid(obstr) then	
+		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
+			self.SeenVehicles[obstr] = true
+			self.CountedVehicles = self.CountedVehicles+1
+		elseif self:CheckRelationships(obstr) == "foe" then
+			ent = obstr
+			self:SetEnemy(ent)
+		end
+	end
+	if self.IsInVehicle then return self:VehicleBehavior(ent,range) end
+	local can, veh = self:CanEnterAVehicle()
+	if can then
+		self:EnterVehicle(veh)
+		return self:VehicleBehavior(ent,range)
+	end
 	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
 	end
@@ -568,6 +921,7 @@ function ENT:CustomBehaviour(ent)
 		local should, dif = self:ShouldFace(ent)
 		if should then
 			self:TurnTo(dif)
+			coroutine.wait(0.2)
 			return
 		end
 		if !IsValid(ent) then return end
@@ -606,7 +960,7 @@ function ENT:CustomBehaviour(ent)
 				for i = 1, r*100 do
 					
 					timer.Simple( 0.01*i, function()
-						if IsValid(self) then
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							self.loco:Approach(self:GetPos()+dir,1)
 							self.loco:FaceTowards(self:GetPos()+dir)
 						end
@@ -630,6 +984,7 @@ function ENT:CustomBehaviour(ent)
 		local should, dif = self:ShouldFace(ent)
 		if should then
 			self:TurnTo(dif)
+			coroutine.wait(0.2)
 			return
 		end
 		if !IsValid(ent) then return end
@@ -668,7 +1023,7 @@ function ENT:CustomBehaviour(ent)
 				for i = 1, wait*100 do
 				
 					timer.Simple( 0.01*i, function()
-						if IsValid(self) and self:Health() > 0 then
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							if IsValid(self.Enemy) then
 								self.loco:Approach(self:GetPos()+dir,1)
 							else
@@ -698,7 +1053,7 @@ function ENT:CustomBehaviour(ent)
 				for i = 1, 100 do
 				
 					timer.Simple( 0.01*i, function()
-						if IsValid(self) and self:Health() > 0 then
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							self.loco:Approach(self:GetPos()+self:GetRight()*r,1)
 						end
 					end )
@@ -716,13 +1071,31 @@ function ENT:CustomBehaviour(ent)
 			self.Weapon:AI_PrimaryAttack()
 			return
 		elseif self.NeedsToCover then
+			local r = math.random(3,4)
 			self.NeedsToCover = false
-			local tbl = self:FindCoverSpots(ent)
-			if table.Count(tbl) > 0 or #tbl > 0 then
-				local area = table.Random(tbl)
-				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
-				return
+			local dir = self:GetForward()*-1
+			timer.Simple( r*0.25, function()
+				if IsValid(self) then
+					dir = dir+self:GetRight()*math.random(1,-1)
+				end
+			end )
+			for i = 1, r*100 do
+					
+				timer.Simple( 0.01*i, function()
+					if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+						self.loco:Approach(self:GetPos()+dir,1)
+						if IsValid(self.Enemy) then
+							self.loco:FaceTowards(self.Enemy:GetPos())
+						else
+							self.loco:FaceTowards(self:GetPos()+dir)
+						end
+					end
+				end )
+				
 			end
+			self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			self.Weapon:AI_PrimaryAttack()
+			coroutine.wait(r)
 		end
 		
 		if los then
@@ -730,6 +1103,7 @@ function ENT:CustomBehaviour(ent)
 			local should, dif = self:ShouldFace(ent)
 			if should then
 				self:TurnTo(dif)
+				coroutine.wait(0.2)
 				return
 			end
 			if self.StopShoot then
@@ -771,7 +1145,7 @@ function ENT:CustomBehaviour(ent)
 				for i = 1, wait*100 do
 				
 					timer.Simple( 0.01*i, function()
-						if IsValid(self) and self:Health() > 0 then
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							if IsValid(self.Enemy) then
 								self.loco:Approach(self:GetPos()+dir,1)
 							else
@@ -804,7 +1178,147 @@ function ENT:CustomBehaviour(ent)
 		end
 		
 	end
-	return self:CustomBehaviour(ent)
+end
+
+ENT.NoticedKills = 0
+
+ENT.CountedEnemies = 0
+
+ENT.MentionedSpree = false
+
+ENT.CountedAllies = 0
+
+ENT.MentionedAllySpree = false
+
+function ENT:OnOtherKilled( victim, info )
+	if victim == self then return end
+	if self:Health() < 1 then return end
+	local rel = self:CheckRelationships(victim)
+	if rel == "friend" then
+		if !victim.BeenNoticed then
+			victim.BeenNoticed = self.IsSergeant
+			if self.SawAllyDie and !self.SawAlliesDie then self.SawAlliesDie = true end
+			if !self.SawAllyDie then self.SawAllyDie = true end
+			local attacker = info:GetAttacker()
+			if attacker:IsPlayer() and self.FriendlyToPlayers then
+				self.NoticedKills = self.NoticedKills+1
+				if self.NoticedKills > 1 then
+					--self:Speak("AllianceBroken")
+					self.FriendlyToPlayers = false
+					self.LastAllyKill = CurTime()
+					local last = self.LastAllyKill
+					timer.Simple( 30, function()
+						if IsValid(self) then
+							if self.LastAllyKill == last then
+								self.FriendlyToPlayers = true
+								self.NoticedKills = 0
+								self:SetEnemy(nil)
+								--self:Speak("AllianceReformed")
+							end
+						end
+					end )
+				else
+					--self:Speak("FriendKilledByPlayer")
+				end
+				
+			elseif attacker:IsPlayer() and !self.FriendlyToPlayers then
+				--self:Speak("FriendKilledByEnemyPlayer")
+				self.LastAllyKill = CurTime()
+				local last = self.LastAllyKill
+				timer.Simple( 30, function()
+					if IsValid(self) then
+						if self.LastAllyKill == last then
+							self.NoticedKills = 0
+							self.FriendlyToPlayers = true
+							self:SetEnemy(nil)
+							self:Speak("AllianceReformed")
+						end
+					end
+				end )
+			elseif attacker.Faction == "FACTION_COVENANT" then
+				--self:Speak("FriendKilledByCovenant")
+				
+			elseif ( attacker:IsNPC() and attacker.IsVJBaseSNPC and string.StartWith(attacker:GetClass(), "npc_vj_flood") ) or victim.HasBeenLatchedOn then
+				-- Killed by flood
+				--self:Speak("FriendKilledByFlood")
+				
+			elseif self:CheckRelationships(attacker) == "friend" then
+				--self:Speak("FriendKilledByFriend")
+				
+			elseif victim:IsPlayer() then
+				if info:GetAttacker() == self then
+					--self:Speak("KilledFriendPlayer")
+					--self:NearbyReply("KilledFriendPlayerAlly")
+				else
+					--self:Speak("FriendPlayerDie")
+				end
+				
+			else
+				if info:GetAttacker() == self then
+					--self:Speak("KilledFriend")
+					--self:NearbyReply("KilledFriendAlly")
+				else
+					if self.SawAlliesDie then
+						local AI = self.AIType
+						self.AIType = "Defensive"
+						local func = function()
+							if self.IsSergeant and !self.IsInVehicle then
+								self:PlaySequenceAndMove(self:LookupSequence("Signal_Fallback"),1,self:GetForward()*-1,50,0.7)
+							end
+						end
+						timer.Simple( math.random(15,20), function()
+							if IsValid(self) then
+								self.AIType = AI
+							end
+						end )
+						table.insert(self.StuffToRunInCoroutine,func)
+						self:ResetAI()
+						--self:Speak("NearMassacre")
+					else
+						--self:Speak("FriendKilledByEnemy")
+					end
+				end
+				
+			end
+		end
+	elseif rel == "foe" and !victim.BeenNoticed then
+		victim.BeenNoticed = true
+		local spoke = false
+		self.CountedEnemies = self.CountedEnemies+1
+		if self.CountedEnemies > 4 and !self.MentionedSpree then
+			self.MentionedSpree = true
+			timer.Simple( 30, function()
+				if IsValid(self) then
+					self.MentionedSpree = false
+				end
+			end )
+			--self:Speak("KillingSpree")
+			self.Taunting = true
+			timer.Simple( 2, function()
+				if IsValid(self) then
+					self.Taunting = false
+				end
+			end )
+			local func = function()
+				if self.IsInVehicle then return end
+				if self.IsSergeant then
+					self:PlaySequenceAndPWait("Signal_Advance",1,self:GetPos())
+				else
+					if math.random(1,2) == 1 then
+						self:PlaySequenceAndWait("Taunt")
+					else
+						self:PlaySequenceAndWait("Taunt_Shakefist")
+					end
+				end
+			end
+			table.insert(self.StuffToRunInCoroutine,func)
+		end
+		timer.Simple( 60, function()
+			if IsValid(self) then
+				self.CountedEnemies = self.CountedEnemies-1
+			end
+		end )
+	end
 end
 
 function ENT:StartChasing( ent, anim, speed, los )
@@ -817,6 +1331,8 @@ ENT.NextUpdateT = CurTime()
 
 ENT.UpdateDelay = 0.5
 
+ENT.TraceMask = MASK_ALL
+
 function ENT:ChaseEnt(ent,los)
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
@@ -824,13 +1340,10 @@ function ENT:ChaseEnt(ent,los)
 	if !IsValid(ent) then return end
 	path:Compute( self, ent:GetPos() )
 	if ( !path:IsValid() ) then return "Failed" end
-	self:DoGesture("Run")
-	local saw = false
 	while ( path:IsValid() and IsValid(ent) ) do
 		if self.NextUpdateT < CurTime() then
 			self.NextUpdateT = CurTime()+self.UpdateDelay
-			local cansee = self:IsLineOfSightClear( ent )
-			saw = cansee
+			local cansee, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
 			if !los and cansee then
 				return "Obtained LOS"
@@ -1005,10 +1518,35 @@ function ENT:BodyUpdate()
 		di = math.AngleDifference(self:GetAngles().y,y)
 		p = an.p
 		dip = math.AngleDifference(self:GetAngles().p,p)
+		if self.IsInVehicle then
+			if !self.Transitioned and self.VehicleRole == "Gunner" then
+				local vy = math.AngleDifference(self.Vehicle:GetAngles().y+self.LTPP,y)
+				self.Transitioned = true
+				timer.Simple(0.01, function()
+					if IsValid(self) then
+						self.Transitioned = false
+					end
+				end )
+				if math.abs(vy) > 5 then
+					self.LTPP = self.Vehicle:GetPoseParameter("turret_yaw")
+					local i
+					if vy < 0 then
+						i = 2
+					else
+						i = -2
+					end
+					self:SetAngles(Angle(0,self:GetAngles().y+i,0))
+					self.Vehicle:SetPoseParameter("turret_yaw",self.LTPP+i)
+					self.GunnerShoot = false
+				else
+					self.GunnerShoot = true
+				end
+			end
+		end
 	end
 	self:SetPoseParameter("aim_yaw",-di)
 	self:SetPoseParameter("aim_pitch",-dip)
-	if !self.DoingFlinch and self:Health() > 0 and !self.DoingMelee then
+	if !self.DoingFlinch and self:Health() > 0 and !self.DoingMelee and !self.Taunting then
 		self:BodyMoveXY()
 	end
 	self:FrameAdvance()
