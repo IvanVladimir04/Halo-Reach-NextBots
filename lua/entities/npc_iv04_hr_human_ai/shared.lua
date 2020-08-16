@@ -850,6 +850,24 @@ function ENT:EnterVehicle(veh)
 	end
 	self.VehicleRole = self.VehicleSlots[clss][e]
 	self:MoveToPosition(seat:GetPos()+dirs[e],self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+	for i = 1, self.PassengerSlots[clss] do
+		if veh.PassengerS[i] == self then
+			if ( i == 1 and IsValid(veh:GetDriver()) ) or ( IsValid(veh.pSeat[i-1]) and IsValid(veh.pSeat[i-1]:GetDriver()) ) then
+				local rude
+				if i == 1 then
+					rude = veh:GetDriver()
+				else
+					if IsValid(veh.pSeat[i-1]) then
+						rude = veh.pSeat[i-1]:GetDriver()
+					end
+				end
+				veh.PassengerS[i] = rude
+				self.VehicleRole = "No"
+				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+				return
+			end
+		end
+	end
 	veh:SetActive(true)
 	veh:StartEngine()
 	self.IsInVehicle = true
@@ -861,6 +879,7 @@ function ENT:EnterVehicle(veh)
 	self.TraceMask = MASK_VISIBLE_AND_NPCS
 	if self.VehicleRole == "Gunner" then
 		self.LTPP = veh:GetPoseParameter("turret_yaw")
+		self.LTP = veh:GetPoseParameter("spin_cannon")
 		self.Weapon:SetNoDraw(true)
 		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y+veh:GetPoseParameter("turret_yaw"),0))
 		self:PlaySequenceAndWait(self.WarthogGunnerEnter)
@@ -1521,6 +1540,7 @@ function ENT:BodyUpdate()
 		if self.IsInVehicle then
 			if !self.Transitioned and self.VehicleRole == "Gunner" then
 				local vy = math.AngleDifference(self.Vehicle:GetAngles().y+self.LTPP,y)
+				local vp = math.AngleDifference(self.Vehicle:GetAngles().p+self.LTP,p)
 				self.Transitioned = true
 				timer.Simple(0.01, function()
 					if IsValid(self) then
@@ -1540,6 +1560,16 @@ function ENT:BodyUpdate()
 					self.GunnerShoot = false
 				else
 					self.GunnerShoot = true
+				end
+				if math.abs(vp) > 5 then
+					self.LTP = self.Vehicle:GetPoseParameter("spin_cannon")
+					local i
+					if vp < 0 then
+						i = 1
+					else
+						i = -1
+					end
+					self.Vehicle:SetPoseParameter("spin_cannon",self.LTP+i)
 				end
 			end
 		end
