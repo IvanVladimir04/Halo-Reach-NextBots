@@ -223,6 +223,7 @@ function ENT:SetupHoldtypes()
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Pistol"))}
 		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Holstered"))}
 		self.MeleeAnim = {"Melee_Pistol_1","Melee_Pistol_2"}
 		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Pistol"))
@@ -243,6 +244,7 @@ function ENT:SetupHoldtypes()
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Passive_Idle"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_1")),self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_2")),self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_3")),self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_4")),self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_5"))}
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Rifle"))}
 		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle_Holstered"))}
 		self.MeleeAnim = {"Melee_Rifle_1","Melee_Rifle_2"}
 		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Rifle"))
@@ -279,6 +281,7 @@ function ENT:SetupHoldtypes()
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Missile"))}
 		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile"))}
 		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Missile"))
 		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Missile"))
@@ -304,6 +307,13 @@ function ENT:DoCustomIdle()
 		return self:VehicleIdle()
 	end
 	if self.IsFollowingPlayer then
+		if self.FollowingPlayer:InVehicle() then
+			local ent = self.FollowingPlayer:GetVehicle():GetParent()
+			if IsValid(ent) and self.DriveThese[ent:GetModel()] and !self.SeenVehicles[ent] then
+				self.SeenVehicles[ent] = true
+				self.CountedVehicles = self.CountedVehicles+1
+			end
+		end
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
 		if dist > 300^2 then
 			self:WanderToPosition( (self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
@@ -384,6 +394,18 @@ function ENT:OnTraceAttack( info, dir, trace )
 		end
 		table.insert(self.StuffToRunInCoroutine,func)
 		self:ResetAI()
+	end
+end
+
+function ENT:OnLeaveGround(ent)
+	if self:Health() <= 0 then 
+		self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
+	end
+end
+
+function ENT:OnLandOnGround(ent)
+	if self.FlyingDead then
+		self.HasLanded = true
 	end
 end
 
@@ -584,8 +606,8 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 		end
 	end
 	if ent:IsVehicle() and self.DriveThese[ent:GetModel()] and !self.SeenVehicles[ent] then
-			self.SeenVehicles[ent] = true
-			self.CountedVehicles = self.CountedVehicles+1
+		self.SeenVehicles[ent] = true
+		self.CountedVehicles = self.CountedVehicles+1
 	end
 	local tbl = {
 		HitPos = self:NearestPoint(ent:GetPos()),
@@ -655,11 +677,11 @@ end
 function ENT:VehicleIdle()
 	self:SearchEnemy()
 	if self.VehicleRole == "Gunner" then
+		self:PlaySequenceAndWait(self.WarthogGunnerIdle)
+	elseif self.VehicleRole == "Driver" then
 		if self.IsFollowingPlayer then
 			self:Drive(self.FollowingPlayer:GetPos()+self.FollowingPlayer:GetForward()*-400)
 		end
-		self:PlaySequenceAndWait(self.WarthogGunnerIdle)
-	elseif self.VehicleRole == "Driver" then
 		self:PlaySequenceAndWait(self.WarthogDriverIdle)
 	elseif self.VehicleRole == "Passenger" then
 		self:PlaySequenceAndWait(self.WarthogPassengerIdle)
@@ -737,11 +759,12 @@ function ENT:Drive(goal,pathed,path)
 	while (!stop) do
 		if pathed then
 			if !IsValid(path) then
-				return
+				stop = true
 			end
 			pos = path:GetCurrentGoal().pos
 			path:Draw()
 		elseif !timed then
+			timed = true
 			timer.Simple( math.random(3,5), function()
 				if IsValid(self) then
 					stop = true
@@ -868,8 +891,6 @@ function ENT:EnterVehicle(veh)
 			end
 		end
 	end
-	veh:SetActive(true)
-	veh:StartEngine()
 	self.IsInVehicle = true
 	self.Vehicle = veh
 	self.Seat = seat
@@ -884,6 +905,8 @@ function ENT:EnterVehicle(veh)
 		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y+veh:GetPoseParameter("turret_yaw"),0))
 		self:PlaySequenceAndWait(self.WarthogGunnerEnter)
 	elseif self.VehicleRole == "Driver" then
+		veh:SetActive(true)
+		veh:StartEngine()
 		self.Weapon:SetNoDraw(true)
 		self:PlaySequenceAndWait(self.WarthogDriverEnter)
 		self:SetAngles(Angle(veh:GetAngles().p,veh:GetAngles().y,0))
@@ -1139,28 +1162,40 @@ function ENT:CustomBehaviour(ent,range)
 				if r2 == 2 then r2 = -1 end
 				local dir
 				local dire
-				if math.random(1,2) == 1 then
+				local ra = math.random(1,3)
+				if ra == 1 then
 					dir = (self:GetRight()*r2)
 					dire = self:GetForward()*1
-				else
+				elseif ra == 2 then
 					dir = (self:GetForward()*1)
 					dire = (self:GetRight()*r2)
+				else
+					dir = (self:GetForward()*-1)
+					dire = (self:GetRight()*r2)
 				end
-				timer.Simple( wait*0.5, function()
+				local switch = math.Rand(0.3,0.7)
+				timer.Simple( wait*switch, function()
 					if IsValid(self) then
 						dir = dire
 					end
 				end )
-				if math.random(1,3) == 1 then
-					anim = self.CrouchMoveAnim
-					speed = self.MoveSpeed
-					mul = 1
+				if ra == 3 then
+						anim = self.WalkAnim
+						speed = self.MoveSpeed
+						mul = 1
 				else
-					anim = self.RunAnim
-					speed = self.MoveSpeed
-					mul = self.MoveSpeedMultiplier
+					if math.random(1,3) == 1 then
+						anim = self.CrouchMoveAnim
+						speed = self.MoveSpeed
+						mul = 1
+					else
+						anim = self.RunAnim
+						speed = self.MoveSpeed
+						mul = self.MoveSpeedMultiplier
+					end
 				end
 				self:StartMovingAnimations( anim[math.random(#anim)], speed*mul )
+				local idled = false
 				for i = 1, wait*100 do
 				
 					timer.Simple( 0.01*i, function()
@@ -1168,7 +1203,10 @@ function ENT:CustomBehaviour(ent,range)
 							if IsValid(self.Enemy) then
 								self.loco:Approach(self:GetPos()+dir,1)
 							else
-								self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+								if !idled then
+									idled = true
+									self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+								end
 							end
 						end
 					end )
@@ -1250,7 +1288,7 @@ function ENT:OnOtherKilled( victim, info )
 							self.NoticedKills = 0
 							self.FriendlyToPlayers = true
 							self:SetEnemy(nil)
-							self:Speak("AllianceReformed")
+							--self:Speak("AllianceReformed")
 						end
 					end
 				end )
@@ -1523,6 +1561,7 @@ function ENT:BodyUpdate()
 		local y = (goal-self:GetPos()):Angle().y
 		local di = math.AngleDifference(self:GetAngles().y,y)
 		self:SetPoseParameter("move_yaw",di)
+		self:SetPoseParameter("walk_yaw",di)
 	end
 	local look = false
 	local goal
@@ -1561,7 +1600,7 @@ function ENT:BodyUpdate()
 				else
 					self.GunnerShoot = true
 				end
-				if math.abs(vp) > 5 then
+				if math.abs(vp) > 2 then
 					self.LTP = self.Vehicle:GetPoseParameter("spin_cannon")
 					local i
 					if vp < 0 then
@@ -1607,8 +1646,8 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
-	self.DieThread = coroutine.create( function() self:DoKilledAnim() end )
-	coroutine.resume( self.DieThread )
+	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
+	coroutine.resume( self.DrownThread )
 end
 
 function ENT:DetermineDeathAnim( info )
@@ -1648,35 +1687,89 @@ function ENT:DetermineDeathAnim( info )
 end
 
 function ENT:DoKilledAnim()
-	if self.KilledDmgInfo:GetDamage() <= 150 then
-		local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
-		if anim == true then 
-			local wep = ents.Create(self.Weapon:GetClass())
-			wep:SetPos(self.Weapon:GetPos())
-			wep:SetAngles(self.Weapon:GetAngles())
-			wep:Spawn()
-			self.Weapon:Remove()
-			local rag = self:BecomeRagdoll(DamageInfo())
-			return
-		end
-		local seq, len = self:LookupSequence(anim)
-		timer.Simple( len, function()
-			if IsValid(self) then
+	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
+		if self.KilledDmgInfo:GetDamage() <= 150 then
+			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
+			if anim == true then 
 				local wep = ents.Create(self.Weapon:GetClass())
 				wep:SetPos(self.Weapon:GetPos())
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
 				local rag = self:BecomeRagdoll(DamageInfo())
+				return
 			end
-		end )
-		self:PlaySequenceAndPWait(seq, 1, self:GetPos())
+			local seq, len = self:LookupSequence(anim)
+			timer.Simple( len, function()
+				if IsValid(self) then
+					local wep = ents.Create(self.Weapon:GetClass())
+					wep:SetPos(self.Weapon:GetPos())
+					wep:SetAngles(self.Weapon:GetAngles())
+					wep:Spawn()
+					self.Weapon:Remove()
+					local rag
+					if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+						timer.Simple( 60, function()
+							if IsValid(wep) then
+								wep:Remove()
+							end
+							if IsValid(rag) then
+								rag:Remove()
+							end
+						end)
+					end
+					rag = self:BecomeRagdoll(DamageInfo())
+				end
+			end )
+			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
+		else
+			local wep = ents.Create(self.Weapon:GetClass())
+			wep:SetPos(self.Weapon:GetPos())
+			wep:SetAngles(self.Weapon:GetAngles())
+			wep:Spawn()
+			self.Weapon:Remove()
+			local rag
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(wep) then
+						wep:Remove()
+					end
+					if IsValid(rag) then
+						rag:Remove()
+					end
+				end)
+			end
+			rag = self:BecomeRagdoll(DamageInfo())
+		end
 	else
+		self.FlyingDead = true
+		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
+		dir = dir+self:GetUp()*2
+		local force = self.KilledDmgInfo:GetDamage()*1.5
+		self:SetAngles(Angle(0,dir:Angle().y,0))
+		self.loco:Jump()
+		self.loco:SetVelocity(dir*force)
+		coroutine.wait(0.5)
+		while (!self.HasLanded) do
+			coroutine.wait(0.01)
+		end
+		self:PlaySequenceAndWait("Dead_Land")
 		local wep = ents.Create(self.Weapon:GetClass())
 		wep:SetPos(self.Weapon:GetPos())
 		wep:SetAngles(self.Weapon:GetAngles())
 		wep:Spawn()
 		self.Weapon:Remove()
-		self:BecomeRagdoll(DamageInfo())
+		local rag
+		if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+			timer.Simple( 60, function()
+				if IsValid(wep) then
+					wep:Remove()
+				end
+				if IsValid(rag) then
+					rag:Remove()
+				end
+			end)
+		end
+		rag = self:BecomeRagdoll(DamageInfo())
 	end
 end
