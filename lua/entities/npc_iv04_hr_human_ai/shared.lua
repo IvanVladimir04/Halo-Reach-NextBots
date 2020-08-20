@@ -43,6 +43,8 @@ ENT.SeenVehicles = {}
 
 ENT.CountedVehicles = 0
 
+ENT.IsUNSC = true
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -120,9 +122,11 @@ function ENT:Use( activator )
 			self.IsFollowingPlayer = !self.IsFollowingPlayer
 			if !IsValid(self.FollowingPlayer) then
 				self.FollowingPlayer = ply
+				self:SetNWInt("optredisp",1)
 			else
 				self.FollowingPlayer = nil
 				self.StartPosition = self:GetPos()
+				self:SetNWInt("optredisp",0)
 			end
 			self.CanUse = false
 			timer.Simple( 1, function()
