@@ -155,7 +155,11 @@ function ENT:Use( activator )
 									local wep = ply:Give(give,true)
 									ply:GiveAmmo(ammo,t,true)
 									ply:SelectWeapon(give)
-									local clone = ents.Create(self:GetClass())
+									self.Weapon:Remove()
+									self:Give(gift)
+									self:SetupHoldtypes()
+									self.CanUse = true
+									--[[local clone = ents.Create(self:GetClass())
 									clone:SetPos(self:GetPos())
 									clone:SetAngles(self:GetAngles())
 									clone:SetHealth(self:Health())
@@ -171,7 +175,7 @@ function ENT:Use( activator )
 									end
 									clone:Spawn()
 									undo.ReplaceEntity(self,clone)
-									self:Remove()
+									self:Remove()]]
 								end
 							end
 						else
@@ -241,6 +245,9 @@ function ENT:SetupHoldtypes()
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
 		self.GrenadeAnim = "Throw_Grenade"
 		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Pistol"
+		if self.Weapon:GetClass() == "astw2_haloreach_magnum" then
+			self.Weapon.BurstLength = 2
+		end
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
@@ -1257,7 +1264,7 @@ function ENT:OnOtherKilled( victim, info )
 	local rel = self:CheckRelationships(victim)
 	if rel == "friend" then
 		if !victim.BeenNoticed then
-			victim.BeenNoticed = self.IsSergeant
+			--victim.BeenNoticed = self.IsSergeant
 			if self.SawAllyDie and !self.SawAlliesDie then self.SawAlliesDie = true end
 			if !self.SawAllyDie then self.SawAllyDie = true end
 			local attacker = info:GetAttacker()
@@ -1607,10 +1614,10 @@ function ENT:BodyUpdate()
 				if math.abs(vp) > 2 then
 					self.LTP = self.Vehicle:GetPoseParameter("spin_cannon")
 					local i
-					if vp < 0 then
-						i = 1
-					else
+					if (vp-10) <= self.LTP then
 						i = -1
+					else
+						i = 1
 					end
 					self.Vehicle:SetPoseParameter("spin_cannon",self.LTP+i)
 				end
