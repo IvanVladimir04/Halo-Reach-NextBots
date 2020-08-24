@@ -1054,7 +1054,7 @@ function ENT:DoKilledAnim()
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
-				local rag = self:BecomeRagdoll(DamageInfo())
+				self:CreateRagdoll(DamageInfo())
 				return
 			end
 			local seq, len = self:LookupSequence(anim)
@@ -1082,18 +1082,14 @@ function ENT:DoKilledAnim()
 			wep:SetAngles(self.Weapon:GetAngles())
 			wep:Spawn()
 			self.Weapon:Remove()
-			local rag
 			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
 				timer.Simple( 60, function()
 					if IsValid(wep) then
 						wep:Remove()
 					end
-					if IsValid(rag) then
-						rag:Remove()
-					end
 				end)
 			end
-			rag = self:BecomeRagdoll(DamageInfo())
+			rag = self:CreateRagdoll(DamageInfo())
 		end
 	else
 		self.FlyingDead = true
@@ -1113,18 +1109,14 @@ function ENT:DoKilledAnim()
 		wep:SetAngles(self.Weapon:GetAngles())
 		wep:Spawn()
 		self.Weapon:Remove()
-		local rag
 		if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
 			timer.Simple( 60, function()
 				if IsValid(wep) then
 					wep:Remove()
 				end
-				if IsValid(rag) then
-					rag:Remove()
-				end
 			end)
 		end
-		rag = self:BecomeRagdoll(DamageInfo())
+		rag = self:CreateRagdoll(DamageInfo())
 	end
 end
 
