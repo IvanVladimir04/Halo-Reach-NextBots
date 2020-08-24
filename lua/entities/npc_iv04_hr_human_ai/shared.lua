@@ -1522,26 +1522,6 @@ function ENT:PlaySequenceAndPWait( name, speed, p )
 
 end
 
-function ENT:PlaySequenceAndMove( name, speed, dir, sp, cyc )
-    local len = self:SetSequence( name )
-	if isstring(name) then name = self:LookupSequence(name) end
-	local stop = false
-	timer.Simple( len, function()
-		stop = true
-	end )
-    self:ResetSequenceInfo()
-    self:SetCycle( 0 )
-    self:SetPlaybackRate( speed )
-	self.loco:SetDesiredSpeed(sp)
-    while (!stop) do
-		if self:GetCycle() < cyc then
-			self.loco:Approach(self:GetPos()+dir,1)
-		end
-        coroutine.wait(0.01)
-    end
-
-end
-
 --[[ENT.NThink = 0
 
 function ENT:Think()
