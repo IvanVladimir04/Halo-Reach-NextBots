@@ -161,8 +161,8 @@ function ENT:SetupHoldtypes()
 	local hold = self.Weapon.HoldType_Aim
 	if self.PistolHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_1")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_2")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_3")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_4"))}
-		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_1")),self:GetSequenceActivity(self:LookupSequence("Idle_2")),self:GetSequenceActivity(self:LookupSequence("Idle_3")),self:GetSequenceActivity(self:LookupSequence("Idle_4")),self:GetSequenceActivity(self:LookupSequence("Idle_5")),self:GetSequenceActivity(self:LookupSequence("Idle_6"))}
-		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
+		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_1")),self:GetSequenceActivity(self:LookupSequence("Idle_2")),self:GetSequenceActivity(self:LookupSequence("Idle_3")),self:GetSequenceActivity(self:LookupSequence("Idle_4")),self:GetSequenceActivity(self:LookupSequence("Idle_5")),self:GetSequenceActivity(self:LookupSequence("Idle_6"))}
+		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
 		self.WarnAnim = "Warn"
 		self.SurpriseAnim = "Surprised"
 		self.FireAnim = "Attack_Plasma_Pistol"
@@ -509,9 +509,6 @@ function ENT:OnOtherKilled( victim, info )
 					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 				end
 				table.insert(self.StuffToRunInCoroutine,func)
-			end
-			if !self.IsHeavy then
-				self.IdleAnim = {ACT_IDLE}
 			end
 		end
 	elseif rel == "friend" then
@@ -1183,6 +1180,22 @@ function ENT:BodyUpdate()
 	if moves[act] and self:Health() > 0 then
 		self:BodyMoveXY()
 	end
+	local look = false
+	local goal
+	local y
+	local di = 0
+	local p
+	local dip = 0
+	if IsValid(self.Enemy) then
+		goal = self.Enemy:WorldSpaceCenter()
+		local an = (goal-self:WorldSpaceCenter()):Angle()
+		y = an.y
+		di = math.AngleDifference(self:GetAngles().y,y)
+		p = an.p
+		dip = math.AngleDifference(self:GetAngles().p,p)
+	end
+	self:SetPoseParameter("aim_yaw",-di)
+	self:SetPoseParameter("aim_pitch",-dip)
 	local goal = self:GetPos()+self.loco:GetVelocity()
 	local y = (goal-self:GetPos()):Angle().y
 	local di = math.AngleDifference(self:GetAngles().y,y)

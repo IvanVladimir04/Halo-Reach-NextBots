@@ -639,11 +639,27 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 end
 
 ENT.DriveThese = {
-	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = true
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = true,
+	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = true,
+	["models/snowysnowtime/vehicles/haloreach/warthog_gauss.mdl"] = true
 }
 
 ENT.PassengerSlots = {
-	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = 3
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = 3,
+	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = 3,
+	["models/snowysnowtime/vehicles/haloreach/warthog_gauss.mdl"] = 3
+}
+
+ENT.TurretTypes = {
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = "MG",
+	["models/snowysnowtime/vehicles/haloreach/warthog_gauss.mdl"] = "Gauss",
+	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = "Rocket"
+}
+
+ENT.TurretBones = {
+	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = "turret",
+	["models/snowysnowtime/vehicles/haloreach/warthog_gauss.mdl"] = "turret_2",
+	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = "turret_2"
 }
 
 function ENT:CanEnterAVehicle()
@@ -674,7 +690,7 @@ end
 function ENT:Think()
 	if self.IsInVehicle then
 		if self.VehicleRole == "Gunner" then
-			self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone("turret"))+self:GetUp()*26+self:GetForward()*-20)
+			self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone(self.TurretBone))+self:GetUp()*26+self:GetForward()*-20)
 		else
 			local offs = {
 				["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
@@ -804,33 +820,108 @@ function ENT:VehicleBehavior(ent,dist)
 					self.Shot = false
 				end
 			end )
-			local del = 0.5
-			for i = 1, math.random(30,40) do
-				del = del-0.1
-				if del < 0.1 then del = 0.1 end
-				timer.Simple( i*del, function()
-					if IsValid(self) and IsValid(self.Vehicle) then
-						local bullet = {}
-						bullet.Attacker = self
-						bullet.Damage = 8
-						local dir
-						local origin = self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Pos
-						ParticleEffectAttach( "simphys_halo_warthog_chaingun_muzzle", PATTACH_POINT_FOLLOW, self.Vehicle, 5 )
-						self.Vehicle:EmitSound("hce_turret")
-						local ens = ents.Create("prop_physics")
-						ens:SetPos(origin)
-						ens:SetAngles(self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Ang)
-						bullet.TracerName = "effect_simfphys_halo_warthog_chaingun_tracer"
-						bullet.Src = ens:GetPos()
-						bullet.Spread = Vector(0.05,0.05,0.05)
-						if IsValid(self.Enemy) then
-							dir = (self.Enemy:WorldSpaceCenter()-origin):GetNormalized()
+			if self.TurretType == "MG" then
+				local del = 0.5
+				for i = 1, math.random(30,40) do
+					del = del-0.1
+					if del < 0.1 then del = 0.1 end
+					timer.Simple( i*del, function()
+						if IsValid(self) and IsValid(self.Vehicle) then
+							local bullet = {}
+							bullet.Attacker = self
+							bullet.Damage = 8
+							local dir
+							local origin = self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Pos
+							ParticleEffectAttach( "simphys_halo_warthog_chaingun_muzzle", PATTACH_POINT_FOLLOW, self.Vehicle, 5 )
+							self.Vehicle:EmitSound("hce_turret")
+							local ens = ents.Create("prop_physics")
+							ens:SetPos(origin)
+							ens:SetAngles(self.Vehicle:GetAttachment(self.Vehicle:LookupAttachment("muzzle")).Ang)
+							bullet.TracerName = "effect_simfphys_halo_warthog_chaingun_tracer"
+							bullet.Src = ens:GetPos()
+							bullet.Spread = Vector(0.05,0.05,0.05)
+							if IsValid(self.Enemy) then
+								dir = (self.Enemy:WorldSpaceCenter()-origin):GetNormalized()
+							end
+							bullet.Dir = dir or self:GetAimVector()
+							ens:FireBullets(bullet)
+							ens:Remove()
 						end
-						bullet.Dir = dir or self:GetAimVector()
-						ens:FireBullets(bullet)
-						ens:Remove()
-					end
-				end )
+					end )
+				end
+			elseif self.TurretType == "Gauss" then
+				local vehicle = self.Vehicle
+				
+				vehicle.wOldPos = vehicle.wOldPos or vehicle:GetPos()
+				local deltapos = vehicle:GetPos() - vehicle.wOldPos
+				vehicle.wOldPos = vehicle:GetPos()
+				
+				local AttachmentID = vehicle.swapMuzzle and vehicle:LookupAttachment( "muzzle" ) or vehicle:LookupAttachment( "muzzle" )
+				local Attachment = vehicle:GetAttachment( AttachmentID )
+							
+				local shootOrigin = Attachment.Pos + deltapos * engine.TickInterval()
+				local shootDirection = Attachment.Ang:Forward()
+			
+				self.Vehicle:EmitSound("gauss_fire")
+
+				self.Vehicle:GetPhysicsObject():ApplyForceOffset( -shootDirection * 150000, shootOrigin )
+					
+				local projectile = {}
+					projectile.filter = self.Vehicle.VehicleData["filter"]
+					projectile.shootOrigin = shootOrigin
+					projectile.shootDirection = shootDirection
+					projectile.attacker = self
+					projectile.attackingent = vehicle
+					projectile.Damage = 500
+					projectile.Force = 64000
+					projectile.Size = 25
+					projectile.BlastRadius = 50
+					projectile.BlastDamage = 2500
+					projectile.DeflectAng = 10
+					projectile.BlastEffect = "simfphys_hce_snow_gauss"
+					projectile.MuzzleVelocity = 640
+				
+				AVX.FirePhysProjectile( projectile )
+			elseif self.TurretType == "Rocket" then
+				for i = 1, 6 do 
+					timer.Simple( 0.3*i, function()
+						if IsValid(self) and IsValid(self.Vehicle) then
+							local vehicle = self.Vehicle
+							
+							vehicle.wOldPos = vehicle.wOldPos or vehicle:GetPos()
+							local deltapos = vehicle:GetPos() - vehicle.wOldPos
+							vehicle.wOldPos = vehicle:GetPos()
+							
+							local AttachmentID = math.random(6,7)
+							local Attachment = vehicle:GetAttachment( AttachmentID )
+										
+							local shootOrigin = Attachment.Pos + deltapos * engine.TickInterval()
+							local shootDirection = Attachment.Ang:Forward()
+						
+							vehicle:EmitSound("reach_rocket_fire")
+
+							vehicle:GetPhysicsObject():ApplyForceOffset( -shootDirection * 80000, shootOrigin )
+							
+							local projectile = {}
+								projectile.filter = vehicle.VehicleData["filter"]
+								projectile.shootOrigin = shootOrigin
+								projectile.shootDirection = shootDirection
+								projectile.attacker = self
+								projectile.attackingent = vehicle
+								projectile.Damage = 250
+								projectile.Force = 64000
+								projectile.Size = 50
+								projectile.BlastRadius = 200
+								projectile.BlastDamage = 800
+								projectile.DeflectAng = 1
+								projectile.BlastEffect = "simfphys_hce_snow_rocket_reach"
+								projectile.MuzzleVelocity = 50
+							
+							HCE.FirePhysProjectile( projectile )
+						end
+					end )
+				end
+				
 			end
 		end
 		self:PlaySequenceAndWait(self.WarthogGunnerIdle)
@@ -853,6 +944,16 @@ end
 
 ENT.VehicleSlots = {
 	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = {
+		[1] = "Driver",
+		[2] = "Gunner",
+		[3] = "Passenger"
+	},
+	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = {
+		[1] = "Driver",
+		[2] = "Gunner",
+		[3] = "Passenger"
+	},
+	["models/snowysnowtime/vehicles/haloreach/warthog_gauss.mdl"] = {
 		[1] = "Driver",
 		[2] = "Gunner",
 		[3] = "Passenger"
@@ -883,6 +984,8 @@ function ENT:EnterVehicle(veh)
 		end
 	end
 	self.VehicleRole = self.VehicleSlots[clss][e]
+	self.TurretType = self.TurretTypes[clss]
+	self.TurretBone = self.TurretBones[clss]
 	self:MoveToPosition(seat:GetPos()+dirs[e],self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 	for i = 1, self.PassengerSlots[clss] do
 		if veh.PassengerS[i] == self then
@@ -1063,8 +1166,13 @@ function ENT:CustomBehaviour(ent,range)
 						dir = dire
 					end
 				end )
-				if math.random(1,3) == 1 then
+				local ra = math.random(1,3)
+				if ra == 1 then
 					anim = self.CrouchMoveAnim
+					speed = self.MoveSpeed
+					mul = 1
+				elseif ra == 2 then
+					anim = self.WalkAnim
 					speed = self.MoveSpeed
 					mul = 1
 				else
@@ -1190,20 +1298,19 @@ function ENT:CustomBehaviour(ent,range)
 						dir = dire
 					end
 				end )
-				if ra == 3 then
-						anim = self.WalkAnim
-						speed = self.MoveSpeed
-						mul = 1
+				local re = math.random(1,3)
+				if re == 1 then
+					anim = self.CrouchMoveAnim
+					speed = self.MoveSpeed
+					mul = 1
+				elseif re == 2 then
+					anim = self.WalkAnim
+					speed = self.MoveSpeed
+					mul = 1
 				else
-					if math.random(1,3) == 1 then
-						anim = self.CrouchMoveAnim
-						speed = self.MoveSpeed
-						mul = 1
-					else
-						anim = self.RunAnim
-						speed = self.MoveSpeed
-						mul = self.MoveSpeedMultiplier
-					end
+					anim = self.RunAnim
+					speed = self.MoveSpeed
+					mul = self.MoveSpeedMultiplier
 				end
 				self:StartMovingAnimations( anim[math.random(#anim)], speed*mul )
 				local idled = false
@@ -1594,7 +1701,7 @@ function ENT:BodyUpdate()
 				if math.abs(vp) > 2 then
 					self.LTP = self.Vehicle:GetPoseParameter("spin_cannon")
 					local i
-					if (vp-10) <= self.LTP then
+					if (vp/2) <= self.LTP then
 						i = -1
 					else
 						i = 1
