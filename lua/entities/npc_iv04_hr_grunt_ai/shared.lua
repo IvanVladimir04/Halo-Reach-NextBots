@@ -2,7 +2,7 @@ AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
 ENT.MoveSpeed = 50
-ENT.MoveSpeedMultiplier = 2.5
+ENT.MoveSpeedMultiplier = 4
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
@@ -166,6 +166,13 @@ function ENT:SetupHoldtypes()
 		self.WarnAnim = "Warn"
 		self.SurpriseAnim = "Surprised"
 		self.FireAnim = "Attack_Plasma_Pistol"
+		self.CalmTurnLeftAnim = "Pistol_Turn_Left_Idle"
+		self.CalmTurnRightAnim = "Pistol_Turn_Right_Idle"
+		self.TurnLeftAnim = "Pistol_Turn_Left_Idle"
+		self.TurnRightAnim = "Pistol_Turn_Right_Idle"
+		if self.Weapon:GetClass() == "astw2_haloreach_needler" then
+			self.Weapon.BurstLength = self.CovRank+2
+		end
 	elseif hold == "rpg" then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile_1")),self:GetSequenceActivity(self:LookupSequence("Move_Missile_2"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
@@ -173,6 +180,10 @@ function ENT:SetupHoldtypes()
 		self.WarnAnim = "Warn_Fuel_Rod"
 		self.SurpriseAnim = "Surprised_Fuel_Rod"
 		self.FireAnim = "Attack_Fuel_Rod"
+		self.CalmTurnLeftAnim = "Missile_Turn_Left_Idle"
+		self.CalmTurnRightAnim = "Missile_Turn_Right_Idle"
+		self.TurnLeftAnim = "Missile_Turn_Left_Idle"
+		self.TurnRightAnim = "Missile_Turn_Right_Idle"
 	end
 end
 
@@ -464,7 +475,7 @@ function ENT:Flee(ent)
 	if table.Count(tbl) > 0 or #tbl > 0 then
 		self.Hiding = true
 		local area = table.Random(tbl)
-		self:MoveToPosition( area:GetRandomPoint(), ACT_RUN_AGITATED, self.MoveSpeed*(self.MoveSpeedMultiplier*1.45) )
+		self:MoveToPosition( area:GetRandomPoint(), ACT_RUN_AGITATED, self.MoveSpeed*(self.MoveSpeedMultiplier) )
 		timer.Simple( 5, function()
 			if IsValid(self) then
 				self.Hiding = false
@@ -473,7 +484,7 @@ function ENT:Flee(ent)
 	end
 	if !self.Hiding then
 		local nav = table.Random(navs)
-		self:MoveToPosition( nav:GetRandomPoint(), ACT_RUN_AGITATED,self.MoveSpeed*(self.MoveSpeedMultiplier*1.45) )
+		self:MoveToPosition( nav:GetRandomPoint(), ACT_RUN_AGITATED,self.MoveSpeed*(self.MoveSpeedMultiplier) )
 	end
 end
 
@@ -486,7 +497,7 @@ function ENT:OnOtherKilled( victim, info )
 			victim.BeenNoticed = true
 			--self:Speak("KilledEnemy")
 			if victim:IsPlayer() then
-				self:NearbyReply("KilledEnemyPlayerAlly")
+				--self:NearbyReply("KilledEnemyPlayerAlly")
 			end
 		end
 		local found = false
@@ -512,23 +523,29 @@ function ENT:OnOtherKilled( victim, info )
 			end
 		end
 	elseif rel == "friend" then
-	
-		if !self.IsSpecOps and ( victim.IsElite or ( ( victim.IsMajor or victim.IsSpecOps ) and (!self.IsMajor) ) ) then
-			--self:Speak("FleeLeaderDied")
-			self:NearbyReply("FleeLeaderDiedAlly")
-			self.Spooked = true
-			timer.Simple( math.random(10,13), function()
-				if IsValid(self) then
-					self.Spooked = false
+		--print(victim.IsElite,victim.IsLeader,victim.IsUltra)
+		--print(victim.CovRank,self.CovRank)
+		if victim.CovRank > self.CovRank then
+			local r1 = math.random(100)
+			local r2 = self.CovRank*20
+			--print(r1,r2)
+			if r1 <= r2 then
+				self.Kamikaze = true
+			else
+				self.Spooked = true
+				timer.Simple( math.random(5,10), function()
+					if IsValid(self) then
+						self.Spooked = false
+					end
+				end )
+				local func = function()
+					while (self.Spooked) do
+						self:Flee()
+						coroutine.wait(0.01)
+					end
 				end
-			end )
-			local func = function()
-				while (self.Spooked) do
-					self:Flee()
-					coroutine.wait(0.01)
-				end
+				table.insert(self.StuffToRunInCoroutine,func)
 			end
-			table.insert(self.StuffToRunInCoroutine,func)
 		else
 			if info:GetAttacker():IsPlayer() then
 				--self:Speak("FriendKilledByPlayer")
@@ -592,9 +609,108 @@ function ENT:OnLostSeenEnemy(ent)
 	end
 end
 
+function ENT:TurnTo(dif,calm)
+	calm = calm or false
+	local seq
+	local e
+	if dif < 0 then
+		e = 1
+		if calm then
+			seq = self.CalmTurnLeftAnim
+		else
+			seq = self.TurnLeftAnim
+		end
+	else
+		e = -1
+		if calm then
+			seq = self.CalmTurnRightAnim
+		else
+			seq = self.TurnRightAnim
+		end
+	end
+	local id, len = self:LookupSequence(seq)
+	local t
+	if math.abs(dif) > 140 then
+		t = 1
+	else
+		t = math.abs(dif)/140
+	end
+	self:SetSequence(seq)
+	self:ResetSequenceInfo()
+	self:SetCycle( 0 )
+	self:SetPlaybackRate( 1 )
+	local z = len*t
+	for i = 1, 140*t do
+		timer.Simple( (0.001*i)+z, function()
+			if IsValid(self) then
+				self:SetAngles(self:GetAngles()+Angle(0,e,0))
+			end
+		end )
+	end
+	coroutine.wait(z)
+	self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+end
+
+function ENT:GoCrazyAalALalALa(ent) -- A reference to a nice memory
+	self.InKamikaze = true
+	self.Weapon:SetNoDraw(true)
+	timer.Simple( 0.5, function()
+		if IsValid(self) then
+			local grenade1 = ents.Create("astw2_haloreach_plasma_thrown")
+			local att = self:GetAttachment(1)
+			grenade1:SetPos(att.Pos)
+			grenade1:SetAngles(att.Ang)
+			grenade1:SetOwner(self)
+			grenade1.ImpactFuse = false
+			grenade1.kt = CurTime()+10
+			grenade1.FuseTime = 10
+			grenade1:Spawn()
+			grenade1:Activate()
+			grenade1:SetMoveType( MOVETYPE_NONE )
+			grenade1:SetParent( self, 1 )
+			grenade1.OPC = grenade1.PhysicsCollide
+			grenade1.PhysicsCollide = function() end
+			grenade1.BlastRadius = 200
+			grenade1.BlastDMG = 80
+			self.Grenade1 = grenade1
+			local grenade2 = ents.Create("astw2_haloreach_plasma_thrown")
+			local att2 = self:GetAttachment(2)
+			grenade2:SetPos(att2.Pos)
+			grenade2:SetAngles(att2.Ang)
+			grenade2:SetOwner(self)
+			grenade2.ImpactFuse = false
+			grenade2.FuseTime = 10
+			grenade2.kt = CurTime()+10
+			grenade2:Spawn()
+			grenade2:Activate()
+			grenade2:SetMoveType( MOVETYPE_NONE )
+			grenade2:SetParent( self, 2 )
+			grenade2.OPC = grenade1.PhysicsCollide
+			grenade2.PhysicsCollide = function() end
+			grenade2.BlastRadius = 200
+			grenade2.BlastDMG = 80
+			self.Grenade2 = grenade2
+		end
+	end )
+	self:PlaySequenceAndWait("Kamikaze_Start")
+end
+
 function ENT:CustomBehaviour(ent)
 	if !IsValid(ent) then return end
+	local should, dif = self:ShouldFace(ent)
+	if should then
+		self:TurnTo(dif)
+		coroutine.wait(0.2)
+		return
+	end
 	if !ent:IsOnGround() then return self:StartShooting(ent) end
+	if self.Kamikaze then
+		if !self.InKamikaze then
+			return self:GoCrazyAalALalALa(ent) -- Funny reference
+		else
+			return self:StartChasing(ent,ACT_RUN_AGITATED,self.MoveSpeed*self.MoveSpeedMultiplier,true,true)
+		end
+	end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
 	if !self.IsSniper and ent.GetEnemy and ent:GetEnemy() == self and los then
@@ -642,7 +758,7 @@ function ENT:GetNear(ent)
 			dir = dire
 		end
 	end )
-	self:StartMovingAnimations(self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+	self:StartMovingAnimations(self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*2.5)
 	local r = math.random(1,3)
 	local dir
 	local dire
@@ -660,9 +776,6 @@ function ENT:GetNear(ent)
 		if shoot then
 			shoot = false
 			self:ShootBullet(ent)
-		end
-		if IsValid(ent) then
-			self.loco:FaceTowards(ent:GetPos())
 		end
 		self.loco:Approach(self:GetPos()+dir,1)
 		coroutine.wait(0.01)
@@ -726,13 +839,6 @@ function ENT:StartShooting(ent)
 				self:ShootBullet(ent)
 			end
 		end )
-		for i = 1, 30 do
-			timer.Simple( 0.1*i, function()
-				if IsValid(self) and IsValid(ent) then
-					self.loco:FaceTowards(ent:GetPos())
-				end
-			end )
-		end
 		coroutine.wait(3)
 	else
 		self:GetNear(ent)
@@ -853,47 +959,23 @@ end
 
 function ENT:Melee()
 	--self:Speak("Melee")
-	timer.Simple( 0.85, function()
-		if IsValid(self) then
-			self:DoMeleeDamage()
-		end
-	end )
-	local ang = self:GetAimVector():Angle()
-	self:SetAngles(Angle(self:GetAngles().p,ang.y,self:GetAngles().r))
-	local name = "melee"
-	self.loco:SetDesiredSpeed( self.MoveSpeed*(self.MoveSpeedMultiplier) )
-	local len = self:SetSequence( name )
-	self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
-	speed = speed or 1
-
-	self:ResetSequenceInfo()
-	self:SetCycle( 0 )
-	self:SetPlaybackRate( speed )
-
-	local dir = 1
-	
-	for i = 1, len*15 do
-		timer.Simple( (i*0.05), function()
-			if IsValid(self) then
-				self.loco:Approach(self:GetPos()+self:GetForward()*dir,1)
-			end
-		end )
-	end
-
-	coroutine.wait( len / speed )
+	self.Grenade1.kt = CurTime()+0.25
+	self.Grenade2.kt = CurTime()+0.25
+	coroutine.wait( 0.5 )
+	self:TakeDamage( self:Health(), self, self )
 end
 
-function ENT:StartChasing( ent, anim, speed, los )
+function ENT:StartChasing( ent, anim, speed, los, kam )
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
-	self:ChaseEnt(ent,los)
+	self:ChaseEnt(ent,los,kam)
 end
 
 ENT.NextUpdateT = CurTime()
 
 ENT.UpdateDelay = 0.5
 
-function ENT:ChaseEnt(ent,los)
+function ENT:ChaseEnt(ent,los,kamikaze)
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )
@@ -921,15 +1003,15 @@ function ENT:ChaseEnt(ent,los)
 			local cansee = self:CanSee( ent:GetPos() + ent:OBBCenter(), ent )
 			saw = cansee
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
-			if dist < self.MeleeDistance^2 then
+			if kamikaze and dist < self.MeleeDistance^2 then
 				return self:Melee()
-			elseif cansee and !los then
+			elseif !kamikaze and cansee and !los then
 				return "GotLOS"
 			elseif dist > self.LoseEnemyDistance^2 then
 				self:OnLoseEnemy()
 				self:SetEnemy(nil)
 				return "Lost enemy"
-			elseif dist > 400^2 and cansee and los then
+			elseif !kamikaze and dist < 400^2 and cansee and los then
 				return "Got range"
 			end
 			if cansee then
@@ -1007,6 +1089,20 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+	if IsValid(self.Grenade1) then
+		self.Grenade1:SetParent(nil)
+		self.Grenade1:SetMoveType( MOVETYPE_VPHYSICS )
+		self.Grenade1:Initialize()
+		self.Grenade1.PhysicsCollide = self.Grenade1.OPC
+		self.Grenade1.kt = CurTime()+2
+	end
+	if IsValid(self.Grenade2) then
+		self.Grenade2:SetParent(nil)
+		self.Grenade2:SetMoveType( MOVETYPE_VPHYSICS )
+        self.Grenade2:Initialize()
+		self.Grenade2.PhysicsCollide = self.Grenade2.OPC
+		self.Grenade2.kt = CurTime()+2
+	end
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )

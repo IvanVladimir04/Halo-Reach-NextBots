@@ -246,7 +246,7 @@ function ENT:SetupHoldtypes()
 		self.GrenadeAnim = "Throw_Grenade"
 		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Pistol"
 		if self.Weapon:GetClass() == "astw2_haloreach_magnum" then
-			self.Weapon.BurstLength = 2
+			self.Weapon.BurstLength = 4
 		end
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
@@ -901,7 +901,6 @@ function ENT:VehicleBehavior(ent,dist)
 							vehicle:EmitSound("reach_rocket_fire")
 
 							vehicle:GetPhysicsObject():ApplyForceOffset( -shootDirection * 80000, shootOrigin )
-							
 							local projectile = {}
 								projectile.filter = vehicle.VehicleData["filter"]
 								projectile.shootOrigin = shootOrigin
