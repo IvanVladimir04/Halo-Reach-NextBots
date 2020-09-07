@@ -525,7 +525,7 @@ function ENT:OnOtherKilled( victim, info )
 	elseif rel == "friend" then
 		--print(victim.IsElite,victim.IsLeader,victim.IsUltra)
 		--print(victim.CovRank,self.CovRank)
-		if victim.CovRank > self.CovRank then
+		if math.random(1,2) == 1 and ( ( victim.CovRank and victim.CovRank > self.CovRank ) or victim.IsElite ) then
 			local r1 = math.random(100)
 			local r2 = self.CovRank*20
 			--print(r1,r2)
