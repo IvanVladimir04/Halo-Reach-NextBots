@@ -1067,14 +1067,19 @@ function ENT:CustomBehaviour(ent,range)
 		self.CanThrowGrenade = false
 	end
 	if !IsValid(ent) then return end
+	local reloaded = false
 	if self.AIType == "Static" then
 	
 		if self:HasToReload() then
 			self.Weapon:AI_PrimaryAttack()
+			reloaded = true
 			return
 		end
 		local should, dif = self:ShouldFace(ent)
 		if should then
+			if !reloaded then
+				self:Shoot()
+			end
 			self:TurnTo(dif)
 			coroutine.wait(0.2)
 			return
@@ -1099,6 +1104,7 @@ function ENT:CustomBehaviour(ent,range)
 	elseif self.AIType == "Defensive" then
 	
 		if self:HasToReload() then
+			reloaded = true
 			local r = math.random(3,4)
 			local tbl,dire = self:FindCoverSpots(ent,r)
 			if table.Count(tbl) > 0 or #tbl > 0 then
@@ -1138,6 +1144,9 @@ function ENT:CustomBehaviour(ent,range)
 		end
 		local should, dif = self:ShouldFace(ent)
 		if should then
+			if !reloaded then
+				self:Shoot()
+			end
 			self:TurnTo(dif)
 			coroutine.wait(0.2)
 			return
@@ -1228,6 +1237,7 @@ function ENT:CustomBehaviour(ent,range)
 	elseif self.AIType == "Offensive" then
 	
 		if self:HasToReload() then
+			reloaded = true
 			self.Weapon:AI_PrimaryAttack()
 			return
 		elseif self.NeedsToCover then
@@ -1262,6 +1272,9 @@ function ENT:CustomBehaviour(ent,range)
 		
 			local should, dif = self:ShouldFace(ent)
 			if should then
+				if !reloaded then
+					self:Shoot()
+				end
 				self:TurnTo(dif)
 				coroutine.wait(0.2)
 				return
