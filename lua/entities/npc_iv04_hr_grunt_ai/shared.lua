@@ -1,7 +1,7 @@
 AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
-ENT.MoveSpeed = 50
+ENT.MoveSpeed = 30
 ENT.MoveSpeedMultiplier = 4
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
