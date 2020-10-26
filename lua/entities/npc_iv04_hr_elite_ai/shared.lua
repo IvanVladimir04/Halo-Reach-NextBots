@@ -871,8 +871,13 @@ function ENT:OnInjured(dmg)
 		local dm = dmg:GetDamage()
 		total = dm-self.Shield
 		if total < 0 then total = 0 end
-		dmg:SubtractDamage(self.Shield*2)
-		self.Shield = self.Shield-math.abs(dm/2)
+		if dmg:IsBulletDamage() then
+			dmg:SubtractDamage(self.Shield*2)
+			self.Shield = self.Shield-math.abs(dm/2)
+		else
+			dmg:SubtractDamage(self.Shield)
+			self.Shield = self.Shield-math.abs(dm)
+		end
 		if self.Shield < 0 then self.Shield = 0 end
 		local shild = self.Shield
 		timer.Simple( 3, function()
