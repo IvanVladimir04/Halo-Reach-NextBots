@@ -1872,17 +1872,17 @@ local se = {
 	[2] = "Step Left"
 }
 
-function ENT:StartChasing( ent, anim, speed, sword )
+function ENT:StartChasing( ent, anim, speed, los )
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
-	self:ChaseEnt(ent,sword)
+	self:ChaseEnt(ent,los)
 end
 
 ENT.NextUpdateT = CurTime()
 
 ENT.UpdateDelay = 0.5
 
-function ENT:ChaseEnt(ent,sword)
+function ENT:ChaseEnt(ent,los)
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )
@@ -1912,8 +1912,10 @@ function ENT:ChaseEnt(ent,sword)
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
 			if dist < self.MeleeRange^2 then
 				return self:DoMelee()
-			elseif !sword and dist > 250^2 then
+			elseif los and dist < self.ShootDist^2 and dist > 250^2 then
 				return "Got far"
+			elseif los and dist < self.ShootDist^2 then
+				return "GainedDistance"
 			elseif dist > self.LoseEnemyDistance^2 then
 				self:OnLoseEnemy()
 				self:SetEnemy(nil)
