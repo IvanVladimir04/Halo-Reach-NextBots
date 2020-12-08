@@ -984,20 +984,22 @@ function ENT:OnInjured(dmg)
 			return
 		end
 	end]]
+	local rel = self:CheckRelationships(dmg:GetAttacker())
 	if !IsValid(self.Enemy) then
-		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
+		if rel == "foe" then
 			--self:Speak("Surprise")
 			self:SetEnemy(dmg:GetAttacker())
 		end
 	else
-		--[[if self.NPSound < CurTime() then
-			if dmg:GetDamage() > 10 then
-				self:Speak("PainMajor")
-			else
-				self:Speak("PainMinor")
-			end
-			self.NPSound = CurTime()+math.random(2,5)
-		end]]
+		if rel == "foe" and !self.Switched then 
+			self.Switched = true
+			timer.Simple( math.random(5,10), function()
+				if IsValid(self) then
+					self.Switched = false
+				end
+			end )
+			self:SetEnemy(dmg:GetAttacker()) 
+		end
 	end
 end
 
@@ -1436,7 +1438,7 @@ function ENT:CustomBehaviour(ent,range)
 	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
 	elseif los and !self.DoneMelee and range < self.ChaseRange^2 then
-		self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+		self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,false)
 	end
 	if range > self.ShootDist^2 then
 		self.StopShoot = true
@@ -1662,7 +1664,7 @@ function ENT:CustomBehaviour(ent,range)
 				return
 			end
 			if self.StopShoot then
-				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,true)
 			end
 			if !IsValid(ent) then return end
 	
@@ -1742,7 +1744,7 @@ function ENT:CustomBehaviour(ent,range)
 		
 		else
 		
-			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false)
+			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false,true)
 		
 		end
 		
@@ -1872,17 +1874,17 @@ local se = {
 	[2] = "Step Left"
 }
 
-function ENT:StartChasing( ent, anim, speed, los )
+function ENT:StartChasing( ent, anim, speed, los, far )
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
-	self:ChaseEnt(ent,los)
+	self:ChaseEnt(ent,los,far)
 end
 
 ENT.NextUpdateT = CurTime()
 
 ENT.UpdateDelay = 0.5
 
-function ENT:ChaseEnt(ent,los)
+function ENT:ChaseEnt(ent,los,far)
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )
@@ -1912,9 +1914,9 @@ function ENT:ChaseEnt(ent,los)
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
 			if dist < self.MeleeRange^2 then
 				return self:DoMelee()
-			elseif los and dist < self.ShootDist^2 and dist > 250^2 then
+			elseif los and !far and dist < self.ShootDist^2 and dist > 250^2 then
 				return "Got far"
-			elseif los and dist < self.ShootDist^2 then
+			elseif los and far and dist < self.ShootDist^2 then
 				return "GainedDistance"
 			elseif dist > self.LoseEnemyDistance^2 then
 				self:OnLoseEnemy()

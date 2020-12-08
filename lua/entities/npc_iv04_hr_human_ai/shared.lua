@@ -446,7 +446,8 @@ function ENT:OnInjured(dmg)
 		self:SetEnemy(dmg:GetAttacker()) 
 	end
 	if IsValid(self.Enemy) then
-		if self:Health() < self.StartHealth/2 and !self.Covered then
+		--print(#self:PossibleTargets())
+		if (self:Health() < self.StartHealth/2 or #self:PossibleTargets() > 4 )and !self.Covered then
 			self.Covered = true
 			self.NeedsToCover = true
 			timer.Simple( math.random(10,20), function()
@@ -587,8 +588,18 @@ function ENT:FindCoverSpots(ent,r)
 	local tbl = {}
 	local found = false
 	for k, nav in pairs(navs) do
+		if NavCovers then
+			local covers = NavCovers[nav:GetID()]
+			if istable(covers) and #covers > 0 then
+				for i = 1, #covers do
+					if !ent:VisibleVec(covers[i]) then
+						tbl[#tbl+1] = covers[i]
+					end
+				end
+			end
+		end
 		if !nav:IsVisible( ent:WorldSpaceCenter() ) then
-			tbl[nav:GetID()] = nav
+			tbl[nav:GetID()] = nav:GetRandomPoint()
 		end
 	end
 	return tbl, dire
@@ -1109,7 +1120,7 @@ function ENT:CustomBehaviour(ent,range)
 			local tbl,dire = self:FindCoverSpots(ent,r)
 			if table.Count(tbl) > 0 or #tbl > 0 then
 				local area = table.Random(tbl)
-				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				self:MoveToPosition( area, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 				self.Weapon:AI_PrimaryAttack()
 			else
 				local dir = dire+self:GetRight()*1
@@ -1138,7 +1149,7 @@ function ENT:CustomBehaviour(ent,range)
 			local tbl = self:FindCoverSpots(ent)
 			if table.Count(tbl) > 0 or #tbl > 0 then
 				local area = table.Random(tbl)
-				self:MoveToPosition( area:GetRandomPoint(), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				self:MoveToPosition( area, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 				return
 			end
 		end
@@ -1499,6 +1510,9 @@ function ENT:OnOtherKilled( victim, info )
 				end
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
+		end
+		if victim == self.Enemy then
+			self:GetATarget()
 		end
 		timer.Simple( 60, function()
 			if IsValid(self) then

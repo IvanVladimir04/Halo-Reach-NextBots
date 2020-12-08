@@ -1,0 +1,1 @@
+CreateConVar( "halo_reach_nextbots_ai_type", "Offensive", FCVAR_ARCHIVE, "Type of AI the Halo Reach NextBots will spawn with (if you change this after spawning one its AI type won't change), possible values are Defensive, Offensive and Static. Note not all kind of nextbots can be affected by this!" )
