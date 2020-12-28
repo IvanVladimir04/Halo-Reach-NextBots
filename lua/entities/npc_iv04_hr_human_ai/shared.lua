@@ -45,6 +45,8 @@ ENT.CountedVehicles = 0
 
 ENT.IsUNSC = true
 
+ENT.CollisionMask = MASK_NPCSOLID
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -208,6 +210,10 @@ ENT.TotalHolds = {
 	["revolver"] = true,
 	["rpg"] = true
 }
+
+function ENT:GetAmmoCount( no )
+	return self.Weapon:Clip1()
+end
 
 function ENT:SetupHoldtypes()
 	local hold = self.Weapon.HoldType_Aim
@@ -436,17 +442,17 @@ function ENT:OnInjured(dmg)
 			end )
 		end
 	end
-	if rel == "foe" and !self.Switched then 
-		self.Switched = true
-		timer.Simple( math.random(5,10), function()
-			if IsValid(self) then
-				self.Switched = false
-			end
-		end )
-		self:SetEnemy(dmg:GetAttacker()) 
-	end
 	if IsValid(self.Enemy) then
 		--print(#self:PossibleTargets())
+		if rel == "foe" and !self.Switched then 
+			self.Switched = true
+			timer.Simple( math.random(3,6), function()
+				if IsValid(self) then
+					self.Switched = false
+				end
+			end )
+			self:SetEnemy(dmg:GetAttacker()) 
+		end
 		if (self:Health() < self.StartHealth/2 or #self:PossibleTargets() > 4 )and !self.Covered then
 			self.Covered = true
 			self.NeedsToCover = true
@@ -455,6 +461,10 @@ function ENT:OnInjured(dmg)
 					self.Covered = false
 				end
 			end )
+		end
+	else
+		if rel == "foe" then
+			self:SetEnemy(dmg:GetAttacker()) 
 		end
 	end
 	local total = dmg:GetDamage()
@@ -549,6 +559,7 @@ function ENT:ThrowGrenade()
 			self.ThrowedGrenade = false
 		end
 	end )
+	self.ThrowingGrenade = true
 	local grenade
 	timer.Simple( 0.8, function()
 		if IsValid(self) then
@@ -579,6 +590,7 @@ function ENT:ThrowGrenade()
 		end
 	end )
 	self:PlaySequenceAndMove(self.GrenadeAnim,1,self:GetForward(),40,0.8)
+	self.ThrowingGrenade = false
 end
 
 function ENT:FindCoverSpots(ent,r)
@@ -588,13 +600,11 @@ function ENT:FindCoverSpots(ent,r)
 	local tbl = {}
 	local found = false
 	for k, nav in pairs(navs) do
-		if NavCovers then
-			local covers = NavCovers[nav:GetID()]
-			if istable(covers) and #covers > 0 then
-				for i = 1, #covers do
-					if !ent:VisibleVec(covers[i]) then
-						tbl[#tbl+1] = covers[i]
-					end
+		local covers = nav:GetHidingSpots(3)
+		if istable(covers) and #covers > 0 then
+			for i = 1, #covers do
+				if !ent:VisibleVec(covers[i]) then
+					tbl[#tbl+1] = covers[i]
 				end
 			end
 		end
@@ -1295,7 +1305,7 @@ function ENT:CustomBehaviour(ent,range)
 			end
 			if !IsValid(ent) then return end
 	
-			local wait = math.random(2,3)
+			local wait = math.random(1,2)
 			if math.random(1,2) == 1 then
 				local anim
 				local speed
@@ -1313,7 +1323,7 @@ function ENT:CustomBehaviour(ent,range)
 					dire = (self:GetRight()*r2)
 				else
 					dir = (self:GetForward()*-1)
-					dire = (self:GetRight()*r2)
+					dire = dir
 				end
 				local switch = math.Rand(0.3,0.7)
 				timer.Simple( wait*switch, function()
@@ -1326,6 +1336,7 @@ function ENT:CustomBehaviour(ent,range)
 					anim = self.CrouchMoveAnim
 					speed = self.MoveSpeed
 					mul = 1
+					dire = dir
 				elseif re == 2 then
 					anim = self.WalkAnim
 					speed = self.MoveSpeed
@@ -1511,14 +1522,70 @@ function ENT:OnOtherKilled( victim, info )
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
 		end
-		if victim == self.Enemy then
-			self:GetATarget()
-		end
 		timer.Simple( 60, function()
 			if IsValid(self) then
 				self.CountedEnemies = self.CountedEnemies-1
 			end
 		end )
+	end
+	if victim == self.Enemy then
+		local new = self:GetATarget()
+		if !IsValid(new) and math.random(1,2) == 1 then
+			self.SpecificGoal = victim:GetPos()
+			local func = function()
+				if self.IsInVehicle then return end
+				self:MoveToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+				local lim = math.random(4,6)
+				local old = self.Weapon.Fire_AngleOffset
+				self.Weapon.Fire_AngleOffset = Angle(math.AngleDifference(self:GetAimVector():Angle().p,self:EyeAngles().p),math.AngleDifference(self:EyeAngles().y,self:GetAimVector():Angle().y),0)
+				for i = 1, lim do
+					timer.Simple( (self.Weapon.Primary.Delay*i), function()
+						if IsValid(self) then
+							self.Weapon:ShootBullets()
+							self.Weapon:FiringEffects()
+							self.Weapon:EmitSound( self.Weapon.Sound, self.Weapon.Sound_Vol, self.Weapon.Sound_Pitch, 1, CHAN_WEAPON )
+							self:OnFiring()
+							if i == lim then self.SpecificGoal = nil self.Weapon.Fire_AngleOffset = old end
+						end
+					end )
+				end
+			end
+			table.insert(self.StuffToRunInCoroutine,func)
+		end
+	end
+end
+
+function ENT:KeyDown(s)
+	local fuckoff = true
+	return false
+end
+
+function ENT:ViewPunch()
+	-- STFU
+end
+
+function ENT:GetEyeTrace(pos)
+	return util.TraceLine({start = self:GetShootPos(), endpos = pos, filter = self})
+end
+
+function ENT:GetAimVector(pos)
+	if self.IsControlled then
+		return self.DPly:GetAimVector()
+	end
+	local dir
+	if self.SpecificGoal then
+		dir = (self.SpecificGoal-self:GetShootPos()):GetNormalized()
+	end
+	if IsValid(self.Enemy) then
+		local p = self.Enemy:WorldSpaceCenter()
+		if pos then p = pos end
+		if self.GetShootPos then
+			return (p-self:GetShootPos()):GetNormalized()
+		else
+			return (p-self:WorldSpaceCenter()):GetNormalized()
+		end
+	else
+		return dir or self:GetForward()
 	end
 end
 
@@ -1556,7 +1623,7 @@ function ENT:ChaseEnt(ent,los)
 				return "Give up"
 			end
 			if dist < self.MeleeRange^2 then
-				return self:Melee()
+				return self:DoMelee()
 			elseif dist > self.LoseEnemyDistance^2 then
 				self:OnLoseEnemy()
 				self:SetEnemy(nil)
@@ -1693,8 +1760,11 @@ function ENT:BodyUpdate()
 	local di = 0
 	local p
 	local dip = 0
-	if IsValid(self.Enemy) then
-		goal = self.Enemy:WorldSpaceCenter()
+	if IsValid(self.Enemy) or self.SpecificGoal then
+		goal = self.SpecificGoal
+		if IsValid(self.Enemy) then
+			goal = self.Enemy:WorldSpaceCenter()
+		end
 		local an = (goal-self:WorldSpaceCenter()):Angle()
 		y = an.y
 		di = math.AngleDifference(self:GetAngles().y,y)
@@ -1739,7 +1809,7 @@ function ENT:BodyUpdate()
 	end
 	self:SetPoseParameter("aim_yaw",-di)
 	self:SetPoseParameter("aim_pitch",-dip)
-	if !self.DoingFlinch and self:Health() > 0 and !self.DoingMelee and !self.Taunting then
+	if !self.DoingFlinch and self:Health() > 0 and !self.ThrowingGrenade and !self.DoingMelee and !self.Taunting and !self.ThrowGrenade then
 		self:BodyMoveXY()
 	end
 	self:FrameAdvance()
