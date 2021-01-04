@@ -103,6 +103,7 @@ ENT.StartWeapons = {
 }
 
 function ENT:OnInitialize()
+	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	self:Give(self.StartWeapons[math.random(#self.StartWeapons)])
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)

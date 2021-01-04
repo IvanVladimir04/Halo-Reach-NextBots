@@ -104,6 +104,7 @@ end
 
 function ENT:OnInitialize()
 	self.StartPosition = self:GetPos()
+	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	self:DoInit()
 	self:SetupHoldtypes()
 end
