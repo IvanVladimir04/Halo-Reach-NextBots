@@ -104,6 +104,8 @@ ENT.StartWeapons = {
 
 function ENT:OnInitialize()
 	self:Give(self.StartWeapons[math.random(#self.StartWeapons)])
+	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
+	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)
 	self:SetupHoldtypes()
 	self:DoInit()
 end
@@ -1424,7 +1426,7 @@ function ENT:CustomBehaviour(ent,range)
 		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
 			self.SeenVehicles[obstr] = true
 			self.CountedVehicles = self.CountedVehicles+1
-		elseif self:CheckRelationships(obstr) == "foe" then
+		elseif ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
 			ent = obstr
 			self:SetEnemy(ent)
 		end
@@ -1536,7 +1538,7 @@ function ENT:CustomBehaviour(ent,range)
 			return
 		end
 		if !IsValid(ent) then return end
-		local wait = math.random(2,3)
+		local wait = math.Rand(0,1)+(4.5-self.Difficulty)
 		if los then
 			if math.random(1,3) == 1 then
 				local anim
@@ -1652,6 +1654,8 @@ function ENT:CustomBehaviour(ent,range)
 			coroutine.wait(r)
 		end
 		
+		self.Weapon:AI_PrimaryAttack()
+		
 		if los then
 		
 			local should, dif = self:ShouldFace(ent)
@@ -1667,8 +1671,7 @@ function ENT:CustomBehaviour(ent,range)
 				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,true)
 			end
 			if !IsValid(ent) then return end
-	
-			local wait = math.random(2,3)
+			local wait = math.Rand(0,1)+(2.5-(self.Difficulty*0.5))
 			if math.random(1,3) != 1 then
 				local anim
 				local speed
@@ -1743,7 +1746,7 @@ function ENT:CustomBehaviour(ent,range)
 			coroutine.wait(wait)
 		
 		else
-		
+
 			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false,true)
 		
 		end
@@ -1893,7 +1896,7 @@ function ENT:ChaseEnt(ent,los,far)
 	if ( !path:IsValid() ) then return "Failed" end
 	local saw = false
 	while ( path:IsValid() and IsValid(ent) ) do
-		if !self.DoingLose then
+		if !los and !self.DoingLose then
 			self.DoingLose = true
 			timer.Simple( 15, function()
 				if !IsValid(self) then return end
@@ -1909,11 +1912,18 @@ function ENT:ChaseEnt(ent,los,far)
 		end
 		if self.NextUpdateT < CurTime() then
 			self.NextUpdateT = CurTime()+0.4
-			local cansee = self:CanSee( ent:GetPos() + ent:OBBCenter(), ent )
+			local cansee, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 			saw = cansee
+			--print(cansee,los)
+			if IsValid(obstr) and ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
+				self:SetEnemy(obstr)
+				return "Got A New Target"
+			end
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
 			if dist < self.MeleeRange^2 then
 				return self:DoMelee()
+			elseif cansee and !los then
+				return "Got LOS Back"
 			elseif los and !far and dist < self.ShootDist^2 and dist > 250^2 then
 				return "Got far"
 			elseif los and far and dist < self.ShootDist^2 then
@@ -1954,6 +1964,7 @@ function ENT:OnHaveEnemy(ent)
 	self.LastSeenEnemyPos = ent:GetPos()
 	if new then
 		--self:Speak("Alert")
+		self:ResetAI()
 	else
 		if self.LastTarget == ent then
 			--self:Speak("OldEnemySighted")

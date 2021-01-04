@@ -1063,7 +1063,7 @@ function ENT:CustomBehaviour(ent,range)
 		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
 			self.SeenVehicles[obstr] = true
 			self.CountedVehicles = self.CountedVehicles+1
-		elseif self:CheckRelationships(obstr) == "foe" then
+		elseif ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
 			ent = obstr
 			self:SetEnemy(ent)
 		end
@@ -1612,6 +1612,10 @@ function ENT:ChaseEnt(ent,los)
 		if self.NextUpdateT < CurTime() then
 			self.NextUpdateT = CurTime()+self.UpdateDelay
 			local cansee, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
+			if IsValid(obstr) and ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
+				self:SetEnemy(obstr)
+				return "New Target"
+			end
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
 			if !los and cansee then
 				return "Obtained LOS"
