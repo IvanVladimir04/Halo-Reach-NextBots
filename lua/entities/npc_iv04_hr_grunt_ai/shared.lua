@@ -386,7 +386,12 @@ function ENT:Wander()
 	if self.IsFollowingPlayer and IsValid(self.FollowingPlayer) then
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
 		if dist > 300^2 then
-			self:WanderToPosition( (self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			local goal = self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+			local navs = navmesh.Find(goal,256,100,20)
+			local nav = navs[math.random(#navs)]
+			local pos = goal
+			if nav then pos = nav:GetRandomPoint() end
+			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )
 		else
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
@@ -525,7 +530,7 @@ function ENT:OnOtherKilled( victim, info )
 	elseif rel == "friend" then
 		--print(victim.IsElite,victim.IsLeader,victim.IsUltra)
 		--print(victim.CovRank,self.CovRank)
-		if math.random(1,2) == 1 and ( ( victim.CovRank and victim.CovRank > self.CovRank ) or victim.IsElite ) then
+		if math.random(1,2) == 1 and ( ( victim.CovRank and victim.CovRank > self.CovRank ) or ( victim.IsElite or victim.IsBrute ) ) then
 			local r1 = math.random(100)
 			local r2 = self.CovRank*20
 			--print(r1,r2)
