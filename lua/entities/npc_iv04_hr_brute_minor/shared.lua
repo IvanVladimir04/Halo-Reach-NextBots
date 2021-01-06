@@ -43,6 +43,46 @@ function ENT:DoInit()
 	self.ShouldWander = false
 end
 
+ENT.DeathHitGroups = {
+	[7] = "Head",
+	[1] = "Guts"
+}
+
+ENT.RandDeath = {
+	[1] = 2,
+	[2] = 3,
+	[3] = 5
+}
+
+function ENT:DetermineDeathAnim( info )
+	local origin = info:GetAttacker():GetPos()
+	local damagepos = info:GetDamagePosition()
+	local ang = (damagepos-origin):Angle()
+	local y = ang.y - self:GetAngles().y
+	if y < 1 then y = y + 360 end
+	--print(y)
+	local anim
+	if self.DeathHitGroup and self.DeathHitGroups[self.DeathHitGroup] then
+		local typ = self.DeathHitGroups[self.DeathHitGroup]
+		if typ == "Head" then
+			anim = "Death_Front_Gut_1"
+		else
+			if ( y <= 90 or y >= 270 ) then
+				anim = "Death_Back_Gut_"..math.random(1,2)..""
+			elseif ( y < 270 and y > 90 ) then -- front
+				anim = "Death_Front_Gut_2"
+			end
+		end
+	else
+		anim = "Death_Front_Gut_"..math.random(1,2)..""
+	end
+	local dm = info:GetDamageType()
+	if dm == DMG_BLAST or ( info:GetDamage() > 45 and dmgtypes[dm] ) then
+		anim = "Dead_Airborne"
+	end
+	return anim
+end
+
 list.Set( "NPC", "npc_iv04_hr_brute_minor", {
 	Name = "Brute Minor",
 	Class = "npc_iv04_hr_brute_minor",
