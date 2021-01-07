@@ -141,18 +141,41 @@ end
 
 function ENT:OnLeaveGround(ent)
 	if self:Health() <= 0 then 
-		self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne_"..math.random(1,2).."")))
+		if self.IsBrute then
+			self:StartActivity(self:GetSequenceActivity(self:LookupSequence(self.AirDeathAnim)))
+		else
+			self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne_"..math.random(1,2).."")))
+		end
+	else
+		if self.Leaped and self.IsBrute and self.IsAChasingEnemy then
+			self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Leap_Hammer")))
+		end
 	end
 end
 
 function ENT:OnLandOnGround(ent)
 	if self.FlyingDead then
 		self.HasLanded = true
+	else
+		if self.Leaped and self.IsAChasingEnemy and self.IsBrute then
+			local func = function()
+				timer.Simple( 0.8, function()
+					if IsValid(self) then
+						self.Weapon:MeleeAttack()
+					end
+				end )
+				self:PlaySequenceAndWait("Hammer_Melee2")
+				self.Leaped = false
+			end
+			table.insert(self.StuffToRunInCoroutine,func)
+			self:ResetAI()
+		end
 	end
 end
 
 function ENT:Speak(voice)
 	local character = self.Voices["Elite"]
+	if self.IsBrute then character = self.Voices["Brute"] end
 	if character[voice] and istable(character[voice]) then
 		local sound = table.Random(character[voice])
 		self:EmitSound(sound,100)
@@ -176,6 +199,8 @@ function ENT:BeforeThink()
 	end
 end
 
+ENT.CanTrade = true
+
 function ENT:Use( activator )
 	if !self.CanUse then return end
 	if self:CheckRelationships(activator) == "friend" and activator:IsPlayer() then
@@ -196,7 +221,7 @@ function ENT:Use( activator )
 					self.CanUse = true
 				end
 			end )
-		elseif IsValid(ply:GetActiveWeapon()) and IsValid(self.Weapon) and self.Weapon:GetClass() != ply:GetActiveWeapon():GetClass() and self.TotalHolds[ply:GetActiveWeapon().HoldType_Aim] then
+		elseif self.CanTrade and IsValid(ply:GetActiveWeapon()) and IsValid(self.Weapon) and self.Weapon:GetClass() != ply:GetActiveWeapon():GetClass() and self.TotalHolds[ply:GetActiveWeapon().HoldType_Aim] then
 			self.CanUse = false
 			local stop = false
 			for i = 1, 200 do
@@ -262,6 +287,10 @@ ENT.PistolHolds = {
 	["revolver"] = true
 }
 
+ENT.HammerHolds = {
+	["melee2"] = true
+}
+
 ENT.TotalHolds = {
 	["crossbow"] = true,
 	["ar2"] = true,
@@ -299,8 +328,30 @@ function ENT:SetupHoldtypes()
 	if self.WeaponBursts[self.Weapon:GetClass()] then
 		self.Weapon.BurstLength = self.WeaponBursts[self.Weapon:GetClass()]
 	end
+	--print(hold)
 	if self.IsBrute then
-		if self.RifleHolds[hold] then
+		if self.HammerHolds[hold] then
+			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Hammer"))}
+			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Hammer"))}
+			self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Hammer")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer1")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer2")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer3"))}
+			self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Hammer"))}
+			self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Hammer")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer1")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer2")),self:GetSequenceActivity(self:LookupSequence("Run_Hammer3"))}
+			self.MeleeAnim = {"Hammer_Melee1","Hammer_Melee2","Hammer_Melee3","Hammer_Melee4"}
+			self.MeleeBackAnim = "Hammer_Melee_Back"
+			--self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Rifle_"..math.random(1,3)..""))
+			--self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Rifle"))
+			self.CalmTurnLeftAnim = "Hammer_Turn_Left_Idle"
+			self.CalmTurnRightAnim = "Hammer_Turn_Right_Idle"
+			self.TurnLeftAnim = "Hammer_Turn_Left_Idle"
+			self.TurnRightAnim = "Hammer_Turn_Right_Idle"
+			self.SurpriseAnim = "Taunt_Hammer_Point"
+			self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_Rifle"))}
+			self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Rifle"))}
+			self.GrenadeAnim = "Attack_GRENADE_Throw"
+			self.WarthogPassengerIdle = "Sit_Rifle"
+			self.IsAChasingEnemy = true
+			self.CanMelee = false
+		elseif self.RifleHolds[hold] then
 			self.Weapon.BurstLength = math.random(3,5)
 			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Rifle"))}
 			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Rifle"))}
@@ -315,7 +366,7 @@ function ENT:SetupHoldtypes()
 			self.CalmTurnRightAnim = "Rifle_Turn_Right_Idle"
 			self.TurnLeftAnim = "Rifle_Turn_Left_Idle"
 			self.TurnRightAnim = "Rifle_Turn_Right_Idle"
-			self.SurpriseAnim = "Surprised_Front"
+			self.SurpriseAnim = "Taunt_Rifle_Surprise"
 			self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_Rifle"))}
 			self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Rifle"))}
 			self.GrenadeAnim = "Attack_GRENADE_Throw"
@@ -429,7 +480,7 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 		if IsValid(p) then
 			p:Wake()
 			local d = ent:GetPos()-self:GetPos()
-			p:SetVelocity(d*5)
+			p:SetVelocity(d*1)
 		end
 	end
 	if ent:IsVehicle() and self.DriveThese[ent:GetModel()] and !self.SeenVehicles[ent] then
@@ -887,7 +938,9 @@ function ENT:OnInjured(dmg)
 			end
 		end )
 	else
+		if dmg:GetDamage() > 0 then
 			ParticleEffect( "blood_impact_elite", dmg:GetDamagePosition(), Angle(0,0,0), self )
+		end
 	end
 	if self.HasArmor then
 		--print(self.Shield, "before")
@@ -968,52 +1021,23 @@ function ENT:OnInjured(dmg)
 			self:ResetAI()
 		end
 	end]]
-	--[[if self:Health() - math.abs(total) < (self.StartHealth*0.5) and !self.Reacted then
+	if self:Health() - math.abs(total) < (self.StartHealth*0.5) and !self.Reacted then
 		self.Reacted = true
 		if math.random(1,2) == 1 then
-			self:Speak("Berserk")
+			self:Speak("OnBerserk")
 			self.Berserk = true
 			local func = function()
-				self:PlaySequenceAndWait("berserk_pistol")
+				local anim = "Taunt_Berserk"
+				if self.IsBrute then anim = "Berserk_"..math.random(1,2).."" end
+				self:PlaySequenceAndWait(anim)
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
 		end
 	end
-	if rel == "friend" and dmg:GetAttacker():IsPlayer() then
-		if self.NPSound < CurTime() then
-			self:Speak("HurtFriendPlayer")
-			self.NPSound = CurTime()+math.random(1,4)
-			return
-		end
-	elseif rel == "friend" then
-		if self.NPSound < CurTime() then
-			self.BeenInjured = true
-			self:Speak("HurtFriend")
-			self.NPSound = CurTime()+math.random(1,4)
-			timer.Simple( self.NPSound-CurTime(), function()
-				if IsValid(self) then
-					self.BeenInjured = false
-				end
-			end )
-			local at = dmg:GetAttacker()
-			if at.IsElite then
-				timer.Simple( math.random(1,2), function()
-					if IsValid(at) then
-						if math.random(1,2) == 1 then
-							at:Speak("HurtFriendResponse")
-						else
-							at:Speak("DamagedAlly")
-						end
-					end
-				end )
-			end
-			return
-		end
-	end]]
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	if !IsValid(self.Enemy) then
 		if rel == "foe" then
-			--self:Speak("Surprise")
+			self:Speak("OnAlert")
 			self:SetEnemy(dmg:GetAttacker())
 		end
 	else
@@ -1034,10 +1058,33 @@ ENT.Variations = {
 	[ACT_FLINCH_STOMACH] = {["Back"] = "flinch_back_gut", ["Front"] = "flinch_front_gut"}
 }
 
+ENT.HeadHitGroup = 7
+
 function ENT:OnTraceAttack( info, dir, trace )
 	--print(trace.HitGroup)
-	if trace.HitGroup == 1 and self.Shield < 1 then
-		info:ScaleDamage(3)
+	if trace.HitGroup == self.HeadHitGroup then
+		if ( !self.HasHelmet and ( !self.HasArmor or self.Shield < 1) ) then
+			info:ScaleDamage(3)
+		elseif ( self.Shield <= 0 or !self.HasArmor ) and self.HasHelmet then
+			self.HasHelmet = false
+			local prop = ents.Create("prop_physics")
+			prop:SetModel(self.HelmetModel)
+			prop:SetPos(info:GetDamagePosition())
+			prop:SetOwner(self)
+			prop:SetAngles(self:GetAngles())
+			prop:Spawn()
+			self:SetBodygroup(self.HelmetBodygroup,1)
+			info:ScaleDamage(0)
+			if IsValid(prop:GetPhysicsObject()) then
+				prop:GetPhysicsObject():Wake()
+				prop:GetPhysicsObject():SetVelocity( trace.Normal*info:GetDamage()+self:GetUp()*100 )
+			end
+			timer.Simple( 10, function()
+				if IsValid(prop) then
+					prop:Remove()
+				end
+			end )
+		end
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.Shield > 0 and self.HasArmor then
@@ -1159,7 +1206,7 @@ function ENT:OnOtherKilled( victim, info )
 			if attacker:IsPlayer() and self.FriendlyToPlayers then
 				self.NoticedKills = self.NoticedKills+1
 				if self.NoticedKills > 1 then
-					self:Speak("AllianceBroken")
+					--self:Speak("AllianceBroken")
 					self.FriendlyToPlayers = false
 					self.LastAllyKill = CurTime()
 					local last = self.LastAllyKill
@@ -1169,7 +1216,7 @@ function ENT:OnOtherKilled( victim, info )
 								self.FriendlyToPlayers = true
 								self.NoticedKills = 0
 								self:SetEnemy(nil)
-								self:Speak("AllianceReformed")
+								--self:Speak("AllianceReformed")
 							end
 						end
 					end )
@@ -1183,17 +1230,17 @@ function ENT:OnOtherKilled( victim, info )
 									v.FriendlyToPlayers = true
 									v.NoticedKills = 0
 									v:SetEnemy(nil)
-									v:Speak("AllianceReformed")
+									--v:Speak("AllianceReformed")
 								end
 							end
 						end )
 					end
 				else
-					self:Speak("FriendKilledByPlayer")
+					--self:Speak("FriendKilledByPlayer")
 				end
 				
 			elseif attacker:IsPlayer() and !self.FriendlyToPlayers then
-				self:Speak("FriendKilledByEnemyPlayer")
+				--self:Speak("FriendKilledByEnemyPlayer")
 				self.LastAllyKill = CurTime()
 				local last = self.LastAllyKill
 				timer.Simple( 30, function()
@@ -1202,37 +1249,37 @@ function ENT:OnOtherKilled( victim, info )
 							self.NoticedKills = 0
 							self.FriendlyToPlayers = true
 							self:SetEnemy(nil)
-							self:Speak("AllianceReformed")
+							--self:Speak("AllianceReformed")
 						end
 					end
 				end )
 			elseif attacker.Faction == "FACTION_COVENANT" then
-				self:Speak("FriendKilledByCovenant")
+				--self:Speak("FriendKilledByCovenant")
 				
 			elseif ( attacker:IsNPC() and attacker.IsVJBaseSNPC and string.StartWith(attacker:GetClass(), "npc_vj_flood") ) or victim.HasBeenLatchedOn then
 				-- Killed by flood
-				self:Speak("FriendKilledByFlood")
+				--self:Speak("FriendKilledByFlood")
 				
 			elseif self:CheckRelationships(attacker) == "friend" then
-				self:Speak("FriendKilledByFriend")
+				--self:Speak("FriendKilledByFriend")
 				
 			elseif victim:IsPlayer() then
 				if info:GetAttacker() == self then
-					self:Speak("KilledFriendPlayer")
-					self:NearbyReply("KilledFriendPlayerAlly")
+					--self:Speak("KilledFriendPlayer")
+					--self:NearbyReply("KilledFriendPlayerAlly")
 				else
-					self:Speak("FriendPlayerDie")
+					--self:Speak("FriendPlayerDie")
 				end
 				
 			else
 				if info:GetAttacker() == self then
-					self:Speak("KilledFriend")
-					self:NearbyReply("KilledFriendAlly")
+					--self:Speak("KilledFriend")
+					--self:NearbyReply("KilledFriendAlly")
 				else
 					if self.SawAlliesDie then
-						self:Speak("NearMassacre")
+						--self:Speak("NearMassacre")
 					else
-						self:Speak("FriendKilledByEnemy")
+						--self:Speak("FriendKilledByEnemy")
 					end
 				end
 				
@@ -1248,7 +1295,7 @@ function ENT:OnOtherKilled( victim, info )
 					self.MentionedSpree = false
 				end
 			end )
-			self:Speak("KillingSpree")
+			--self:Speak("KillingSpree")
 		end
 		timer.Simple( 30, function()
 			if IsValid(self) then
@@ -1256,12 +1303,12 @@ function ENT:OnOtherKilled( victim, info )
 			end
 		end )
 		if victim:IsPlayer() then
-			self:Speak("KilledEnemyPlayer")
+			self:Speak("OnKillPlayer")
 			spoke = true
 			for id, v in ipairs(self:LocalAllies()) do
 				if !v.SpokeAllyKill then
 					v.SpokeAllyKill = true
-					v:Speak("KilledEnemyPlayerAlly")
+					--v:Speak("KilledEnemyPlayerAlly")
 					timer.Simple( math.random(2,4), function()
 						if IsValid(v) then
 							v.SpokeAllyKill = false
@@ -1272,7 +1319,7 @@ function ENT:OnOtherKilled( victim, info )
 			end
 		elseif ( victim:IsNPC() and victim.IsVJBaseSNPC and string.StartWith(victim:GetClass(), "npc_vj_flood") ) then	
 			if victim.HasDeathRagdoll then
-				self:Speak("KilledFloodCombat")
+				--self:Speak("KilledFloodCombat")
 				spoke = true
 				for id, v in ipairs(self:LocalAllies()) do
 					if !v.SpokeAllyKill then
@@ -1287,12 +1334,12 @@ function ENT:OnOtherKilled( victim, info )
 					end
 				end
 			else
-				self:Speak("KilledEnemyFloodCarrier")
+				--self:Speak("KilledEnemyFloodCarrier")
 				spoke = true
 				for id, v in ipairs(self:LocalAllies()) do
 					if !v.SpokeAllyKill then
 						v.SpokeAllyKill = true
-						v:Speak("KilledEnemyFloodCarrierAlly")
+						--v:Speak("KilledEnemyFloodCarrierAlly")
 						timer.Simple( math.random(2,4), function()
 							if IsValid(v) then
 								v.SpokeAllyKill = false
@@ -1305,7 +1352,7 @@ function ENT:OnOtherKilled( victim, info )
 			
 		elseif victim.timeDeath then -- Sentinel
 			--print("die robot")
-			self:Speak("KilledEnemySentinel")
+			--self:Speak("KilledEnemySentinel")
 			spoke = true
 		end
 		local found = false
@@ -1320,20 +1367,20 @@ function ENT:OnOtherKilled( victim, info )
 			if math.random(1,3) == 1 then
 				local func = function()
 					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[1], self.MoveSpeed )
-					self:Speak("Taunt")
+					self:Speak("OnTaunt")
 				end
 				table.insert(self.StuffToRunInCoroutine,func)
 			end
 		elseif !spoke then
 			if info:GetDamageType() == DMG_BLAST then
-				self:Speak("KilledEnemyGrenade")
+				--self:Speak("KilledEnemyGrenade")
 			elseif IsValid(self.Vehicle) then
-				self:Speak("KilledEnemyMountedWeapon")
+				--self:Speak("KilledEnemyMountedWeapon")
 			elseif IsValid(info:GetInflictor()) and self:CheckRelationships(info:GetInflictor():GetOwner()) == "friend" then
-				self:Speak("KilledEnemyGrenade")
-				self:NearbyReply("AllyKillGrenade")
+				--self:Speak("KilledEnemyGrenade")
+				--self:NearbyReply("AllyKillGrenade")
 			else
-				self:Speak("KilledEnemyBullet")
+				--self:Speak("KilledEnemyBullet")
 			end
 		end
 	end
@@ -1343,7 +1390,7 @@ function ENT:ThrowGrenade(range,ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then return end
 	local pos = ent:GetPos()
-	--self:Speak("GrenadeThrowing")
+	self:Speak("OnGrenadeThrow")
 	timer.Simple( 0.3, function()
 		if IsValid(self) and !self.DoingFlinch then
 			ent = ent or self.Enemy
@@ -1377,22 +1424,26 @@ function ENT:HasToReload()
 end
 
 function ENT:DoMeleeDamage()
-	local damage = self.MeleeDamage
-	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
-		if v != self and self:CheckRelationships(v) != "friend" then
-			local d = DamageInfo()
-			d:SetDamage( damage )
-			d:SetAttacker( self )
-			d:SetInflictor( self )
-			d:SetDamageType( DMG_SLASH )
-			d:SetDamagePosition( v:NearestPoint( self:WorldSpaceCenter() ) )
-			v:TakeDamageInfo(d)
-			--v:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
-			if v:IsPlayer() then
-				v:ViewPunch( self.ViewPunchPlayers )
-			end
-			if IsValid(v:GetPhysicsObject()) then
-				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
+	if self.IsAChasingEnemy then
+		self.Weapon:MeleeAttack()
+	else
+		local damage = self.MeleeDamage
+		for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
+			if v != self and self:CheckRelationships(v) != "friend" then
+				local d = DamageInfo()
+				d:SetDamage( damage )
+				d:SetAttacker( self )
+				d:SetInflictor( self )
+				d:SetDamageType( DMG_SLASH )
+				d:SetDamagePosition( v:NearestPoint( self:WorldSpaceCenter() ) )
+				v:TakeDamageInfo(d)
+				--v:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
+				if v:IsPlayer() then
+					v:ViewPunch( self.ViewPunchPlayers )
+				end
+				if IsValid(v:GetPhysicsObject()) then
+					v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
+				end
 			end
 		end
 	end
@@ -1482,6 +1533,9 @@ function ENT:CustomBehaviour(ent,range)
 		self.CanThrowGrenade = false
 	end
 	if !IsValid(ent) then return end
+	if self.IsAChasingEnemy then
+		return self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,false)
+	end
 	local reloaded = false
 	if self.AIType == "Static" then
 	
@@ -1798,7 +1852,9 @@ function ENT:DoMelee()
 	end	
 	self.DoneMelee = true
 	self.DoingMelee = true
-	timer.Simple( math.random(5,10), function()
+	local t = math.random(5,10)
+	if self.IsAChasingEnemy then t = 2 end
+	timer.Simple( t, function()
 		if IsValid(self) then
 			self.DoneMelee = false
 		end
@@ -1949,11 +2005,21 @@ function ENT:ChaseEnt(ent,los,far)
 				return "Got A New Target"
 			end
 			local dist = self:GetPos():DistToSqr(ent:GetPos())
+			if !self.Leaped and self.IsBrute and self.IsAChasingEnemy and dist > 400^2 and dist < 600^2 and math.random(1,100) <= self.LeapChance then
+				local ang = (self.Enemy:GetPos()-self:GetPos()):GetNormalized():Angle()
+				self:SetAngles(Angle(0,ang.y,0))
+				self.Leaped = true
+				self.loco:JumpAcrossGap(self:GetPos()+self:GetForward()*512,self:GetForward())
+				while (!self.loco:IsOnGround()) do
+					coroutine.wait(0.01)
+				end
+				return "Jumped"
+			end
 			if dist < self.MeleeRange^2 then
 				return self:DoMelee()
 			elseif cansee and !los then
 				return "Got LOS Back"
-			elseif los and !far and dist < self.ShootDist^2 and dist > 250^2 then
+			elseif los and !self.IsAChasingEnemy and !far and dist < self.ShootDist^2 and dist > 250^2 then
 				return "Got far"
 			elseif los and far and dist < self.ShootDist^2 then
 				return "GainedDistance"
@@ -1992,13 +2058,13 @@ function ENT:OnHaveEnemy(ent)
 	end
 	self.LastSeenEnemyPos = ent:GetPos()
 	if new then
-		--self:Speak("Alert")
+		self:Speak("OnAlert")
 		self:ResetAI()
 	else
 		if self.LastTarget == ent then
 			--self:Speak("OldEnemySighted")
 		else
-			--self:Speak("SightedNewEnemy")
+			self:Speak("OnAlertMoreFoes")
 		end
 	end
 	self:AlertAllies(ent)
@@ -2021,14 +2087,14 @@ function ENT:AlertAllies(ent) -- We find allies in sphere and we alert them
 			v:SetEnemy(ent)
 			if doset then
 				if v.Speak then
-					v:Speak("Surprise")
+					v:Speak("OnAlert")
 				end
 				if v.OnHaveEnemy then
 					v:OnHaveEnemy(ent)
 				end
 				timer.Simple( math.random(2,4), function()
 					if IsValid(v) and IsValid(ent) then
-						v:Speak("AlertAllyResponse")
+						--v:Speak("AlertAllyResponse")
 					end
 				end )
 			else
@@ -2145,7 +2211,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:BecomeRagdoll(DamageInfo())
+			rag = self:BecomeRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self.FlyingDead = true
@@ -2205,8 +2271,10 @@ function ENT:DoAnimationEvent(a)
 		if CLIENT then wep = self:GetNWEntity("wep") end
 		if !CLIENT then
 			--local set = self.AnimSets[self.Weapon:GetClass()] or self.AnimSets["Rifle"]
-			local a,len = self:LookupSequence(self:SelectWeightedSequence(self.ReloadAnim))
-			self:DoGesture(self.ReloadAnim)
+			if self.ReloadAnim then
+				local a,len = self:LookupSequence(self:SelectWeightedSequence(self.ReloadAnim))
+				self:DoGesture(self.ReloadAnim)
+			end
 			local func = function()
 				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
 				coroutine.wait(len)
@@ -2298,7 +2366,7 @@ function ENT:BodyUpdate()
 	end
 	self:SetPoseParameter("aim_yaw",-di)
 	self:SetPoseParameter("aim_pitch",-dip)
-	if !self.DoingFlinch and self:Health() > 0 and !self.DoingMelee and !self.Taunting then
+	if !self.DoingFlinch and self:Health() > 0 and !self.Leaped and !self.DoingMelee and !self.Taunting then
 		self:BodyMoveXY()
 	end
 	self:FrameAdvance()

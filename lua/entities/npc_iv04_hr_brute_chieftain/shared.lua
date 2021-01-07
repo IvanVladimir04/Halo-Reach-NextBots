@@ -1,8 +1,8 @@
 AddCSLuaFile()
 ENT.Base 			= "npc_iv04_hr_elite_ai"
 ENT.PrintName = "Brute"
-ENT.StartHealth = 200
-ENT.Models = {"models/halo_reach/characters/covenant/brute_minor.mdl"}
+ENT.StartHealth = 300
+ENT.Models = {"models/halo_reach/characters/covenant/brute_chieftain.mdl"}
 
 ENT.MeleeDamage = 55
 
@@ -12,7 +12,7 @@ ENT.AllowGrenade = false
 
 ENT.IsBrute = true
 
-ENT.HasArmor = false
+ENT.HasArmor = true
 
 ENT.ActionTime = 4.5
 
@@ -25,8 +25,10 @@ ENT.DriveThese = {
 }
 
 ENT.StartWeapons = {
-	[1] = "astw2_haloreach_spiker",
-	[2] = "astw2_haloreach_plasma_repeater"
+	[1] = "astw2_haloreach_fuel_rod",
+	[2] = "astw2_haloreach_plasma_launcher",
+	--[3] = "astw2_haloreach_plasma_turret",
+	[3] = "astw2_haloreach_gravityhammer"
 }
 
 ENT.RifleHolds = {
@@ -39,6 +41,23 @@ ENT.RifleHolds = {
 	["physgun"] = true,
 	["rpg"] = true
 }
+
+ENT.CanTrade = false
+
+ENT.LeapChance = 50
+
+function ENT:OnInitialize()
+	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
+	local wep = self.StartWeapons[math.random(#self.StartWeapons)]
+	if wep != "astw2_haloreach_gravityhammer" then
+		self:SetModel("models/halo_reach/characters/covenant/brute_chieftain_alt.mdl")
+	end
+	self:Give(wep)
+	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
+	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)
+	self:SetupHoldtypes()
+	self:DoInit()
+end
 
 function ENT:DoInit()
 	--print(marinevariant)
@@ -66,13 +85,12 @@ ENT.DeathHitGroups = {
 
 ENT.HasHelmet = true
 
-ENT.HelmetModel = "models/halo_reach/characters/covenant/brute_helmet_minor_prop.mdl"
+ENT.HelmetBodygroup = 5
 
-ENT.HelmetBodygroup = 4
+ENT.HelmetModel = "models/halo_reach/characters/covenant/brute_helmet_chieftain_prop.mdl"
+
 
 ENT.HeadHitGroup = 1
-
-ENT.CanTrade = false
 
 function ENT:DetermineDeathAnim( info )
 	local origin = info:GetAttacker():GetPos()
@@ -97,14 +115,14 @@ function ENT:DetermineDeathAnim( info )
 		anim = "Death_Front_Gut_"..math.random(1,2)..""
 	end
 	local dm = info:GetDamageType()
-	if dm == DMG_BLAST then
-		anim = "Dead Airborne"
+	if dm == DMG_BLAST or ( info:GetDamage() > 45 and dmgtypes[dm] ) then
+		anim = "Dead_Airborne"
 	end
 	return anim
 end
 
-list.Set( "NPC", "npc_iv04_hr_brute_minor", {
-	Name = "Brute Minor",
-	Class = "npc_iv04_hr_brute_minor",
+list.Set( "NPC", "npc_iv04_hr_brute_chieftain", {
+	Name = "Brute Chieftain",
+	Class = "npc_iv04_hr_brute_chieftain",
 	Category = "Halo Reach"
 } )
