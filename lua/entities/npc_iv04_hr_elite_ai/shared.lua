@@ -2153,7 +2153,7 @@ function ENT:DetermineDeathAnim( info )
 		anim = self.RandDeath[math.random(#self.RandDeath)]
 	end
 	local dm = info:GetDamageType()
-	if dm == DMG_BLAST or ( info:GetDamage() > 45 and dmgtypes[dm] ) then
+	if dm == DMG_BLAST then
 		anim = "Dead_Airborne_"..math.random(1,2)..""
 	end
 	return anim
