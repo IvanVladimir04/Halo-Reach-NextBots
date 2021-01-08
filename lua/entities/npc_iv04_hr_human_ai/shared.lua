@@ -1415,6 +1415,17 @@ function ENT:OnOtherKilled( victim, info )
 			if self.SawAllyDie and !self.SawAlliesDie then self.SawAlliesDie = true end
 			if !self.SawAllyDie then self.SawAllyDie = true end
 			local attacker = info:GetAttacker()
+			if !IsValid(self.Enemy) then
+				if self:CheckRelationships(attacker) == "foe" then
+					local ang = (attacker:GetPos()-self:GetPos()):Angle()
+					local dif = math.AngleDifference(ang.y,self:GetAngles().y)
+					local func = function()
+						self:TurnTo(dif,false)
+					end
+					table.insert(self.StuffToRunInCoroutine,func)
+					self:ResetAI()
+				end
+			end
 			if attacker:IsPlayer() and self.FriendlyToPlayers then
 				self.NoticedKills = self.NoticedKills+1
 				if self.NoticedKills > 1 then
@@ -1452,7 +1463,6 @@ function ENT:OnOtherKilled( victim, info )
 				end )
 			elseif attacker.Faction == "FACTION_COVENANT" then
 				--self:Speak("FriendKilledByCovenant")
-				
 			elseif ( attacker:IsNPC() and attacker.IsVJBaseSNPC and string.StartWith(attacker:GetClass(), "npc_vj_flood") ) or victim.HasBeenLatchedOn then
 				-- Killed by flood
 				--self:Speak("FriendKilledByFlood")

@@ -1,7 +1,7 @@
 AddCSLuaFile()
 ENT.Base 			= "npc_iv04_hr_elite_ai"
 ENT.PrintName = "Brute"
-ENT.StartHealth = 300
+ENT.StartHealth = 350
 ENT.Models = {"models/halo_reach/characters/covenant/brute_chieftain.mdl"}
 
 ENT.MeleeDamage = 55
