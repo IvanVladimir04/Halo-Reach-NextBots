@@ -14,7 +14,7 @@ ENT.IsBrute = true
 
 ENT.HasArmor = true
 
-ENT.ActionTime = 4.5
+ENT.ActionTime = 3.5
 
 ENT.IsElite = false
 
@@ -115,7 +115,7 @@ function ENT:DetermineDeathAnim( info )
 		anim = "Death_Front_Gut_"..math.random(1,2)..""
 	end
 	local dm = info:GetDamageType()
-	if dm == DMG_BLAST or ( info:GetDamage() > 45 and dmgtypes[dm] ) then
+	if dm == DMG_BLAST then
 		anim = "Dead_Airborne"
 	end
 	return anim

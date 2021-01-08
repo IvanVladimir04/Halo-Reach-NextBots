@@ -942,6 +942,7 @@ function ENT:OnInjured(dmg)
 			ParticleEffect( "blood_impact_elite", dmg:GetDamagePosition(), Angle(0,0,0), self )
 		end
 	end
+	local total = dmg:GetDamage()
 	if self.HasArmor then
 		--print(self.Shield, "before")
 		self.ShieldActual = self.Shield
@@ -976,7 +977,6 @@ function ENT:OnInjured(dmg)
 		end )
 	end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
-	local total = dmg:GetDamage()
 	--print(self.Shield, "before")
 	self.HealthActual = self:Health()
 	self.HealthH = CurTime()
@@ -1029,8 +1029,18 @@ function ENT:OnInjured(dmg)
 			local func = function()
 				local anim = "Taunt_Berserk"
 				if self.IsBrute then anim = "Berserk_"..math.random(1,2).."" end
-				self:PlaySequenceAndWait(anim)
+				local act = self:GetActivity()
+				
+				self:StartActivity(self:GetSequenceActivity(self:LookupSequence(anim)))
+				self.Berserking = true
+				while (self:GetCycle() != 1 ) do
+					coroutine.yield()
+				end
+				self.Berserking = false
+				self:StartActivity(act)
 			end
+			self.ActionTime = self.ActionTime*0.8 -- Act 20% faster
+			self.Weapon.BurstLength = self.Weapon.BurstLength*1.20 -- Bursts of weapons are 20% larger
 			table.insert(self.StuffToRunInCoroutine,func)
 		end
 	end
@@ -2160,7 +2170,7 @@ end
 
 function ENT:DoKilledAnim()
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
-		if self.KilledDmgInfo:GetDamage() <= 150 then
+		if self.KilledDmgInfo:GetDamage() <= 150 or ( self.DeathHitGroup and self.DeathHitGroups[self.DeathHitGroup] == "Head" ) then
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
 			if anim == true then 
 				local wep = ents.Create(self.Weapon:GetClass())
@@ -2271,12 +2281,14 @@ function ENT:DoAnimationEvent(a)
 		if CLIENT then wep = self:GetNWEntity("wep") end
 		if !CLIENT then
 			--local set = self.AnimSets[self.Weapon:GetClass()] or self.AnimSets["Rifle"]
+			local a,len
 			if self.ReloadAnim then
-				local a,len = self:LookupSequence(self:SelectWeightedSequence(self.ReloadAnim))
+				a,len = self:LookupSequence(self:SelectWeightedSequence(self.ReloadAnim))
 				self:DoGesture(self.ReloadAnim)
 			end
 			local func = function()
 				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+				if !len then len = 2 end
 				coroutine.wait(len)
 				self:SetAmmo(wep:GetMaxClip1())
 				wep:SetClip1(wep:GetMaxClip1())
@@ -2366,7 +2378,7 @@ function ENT:BodyUpdate()
 	end
 	self:SetPoseParameter("aim_yaw",-di)
 	self:SetPoseParameter("aim_pitch",-dip)
-	if !self.DoingFlinch and self:Health() > 0 and !self.Leaped and !self.DoingMelee and !self.Taunting then
+	if !self.DoingFlinch and self:Health() > 0 and !self.Berserking and !self.Leaped and !self.DoingMelee and !self.Taunting then
 		self:BodyMoveXY()
 	end
 	self:FrameAdvance()

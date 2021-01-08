@@ -334,7 +334,12 @@ function ENT:DoCustomIdle()
 		end
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
 		if dist > 300^2 then
-			self:WanderToPosition( (self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			local goal = self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+			local navs = navmesh.Find(goal,256,100,20)
+			local nav = navs[math.random(#navs)]
+			local pos = goal
+			if nav then pos = nav:GetRandomPoint() end
+			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )	
 		end
 	elseif self.AIType == "Defensive" then
 		local dist = self:GetRangeSquaredTo(self.StartPosition)
@@ -1174,7 +1179,7 @@ function ENT:CustomBehaviour(ent,range)
 			return
 		end
 		if !IsValid(ent) then return end
-		local wait = math.random(2,3)
+		local wait = math.Rand(1,1.5)
 		if los then
 			if math.random(1,3) == 1 then
 				local anim
@@ -1306,7 +1311,7 @@ function ENT:CustomBehaviour(ent,range)
 			end
 			if !IsValid(ent) then return end
 	
-			local wait = math.random(1,2)
+			local wait = math.Rand(1,1.5)
 			if math.random(1,2) == 1 then
 				local anim
 				local speed
@@ -1541,7 +1546,7 @@ function ENT:OnOtherKilled( victim, info )
 				self.Weapon.Fire_AngleOffset = Angle(math.AngleDifference(self:GetAimVector():Angle().p,self:EyeAngles().p),math.AngleDifference(self:EyeAngles().y,self:GetAimVector():Angle().y),0)
 				for i = 1, lim do
 					timer.Simple( (self.Weapon.Primary.Delay*i), function()
-						if IsValid(self) then
+						if IsValid(self) and IsValid(self.Weapon) then
 							self.Weapon:ShootBullets()
 							self.Weapon:FiringEffects()
 							self.Weapon:EmitSound( self.Weapon.Sound, self.Weapon.Sound_Vol, self.Weapon.Sound_Pitch, 1, CHAN_WEAPON )
@@ -1697,6 +1702,7 @@ end
 function ENT:Shoot()
 	if !IsValid(self.Weapon) then return end
 	if self.StopShoot then return end
+	if self:Health() < 1 then return end
 	self.Weapon:AI_PrimaryAttack()
 end
 
@@ -1938,7 +1944,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:BecomeRagdoll(DamageInfo())
+			rag = self:BecomeRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self.FlyingDead = true
