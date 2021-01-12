@@ -457,6 +457,55 @@ function ENT:SetupHoldtypes()
 			self.AllowGrenade = true
 			self.CanShootCrouch = true
 			self.CanMelee = true
+		elseif hold == "physgun" then
+			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Turret"))}
+			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Turret"))}
+			self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Turret"))}
+			self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Turret"))}
+			self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Turret"))}
+			self.MeleeAnim = {"Rifle_Melee_1","Rifle_Melee_2"}
+			self.MeleeBackAnim = "Rifle_Melee_Back"
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Turret"))
+			
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Turret"))
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Physgun"))
+			self.CalmTurnLeftAnim = "Turret_Turn_Left_Idle"
+			self.CalmTurnRightAnim = "Turret_Turn_Right_Idle"
+			self.TurnLeftAnim = "Turret_Turn_Left_Idle"
+			self.TurnRightAnim = "Turret_Turn_Right_Idle"
+			self.SurpriseAnim = "Surprised_2handed"
+			self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Turret"))}
+			self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Turret"))}
+			self.GrenadeAnim = "Attack_GRENADE_Throw"
+			self.WarthogPassengerIdle = "Sit_Turret"
+			self.AllowGrenade = false
+			self.CanShootCrouch = false
+			self.CanCrouch = false
+			self.CanMelee = false
+		elseif hold == "melee" or hold == "knife" then
+			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Sword"))}
+			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Sword"))}
+			self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Sword"))}
+			self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Sword"))}
+			self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Sword"))}
+			self.MeleeAnim = {"Pistol_Melee_1","Pistol_Melee_2"}
+			self.MeleeBackAnim = "Pistol_Melee_Back"
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Sword"))
+			
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Pistol"))
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Sword"))
+			self.CalmTurnLeftAnim = "Sword_Turn_Left_Idle"
+			self.CalmTurnRightAnim = "Sword_Turn_Right_Idle"
+			self.TurnLeftAnim = "Sword_Turn_Left_Idle"
+			self.TurnRightAnim = "Sword_Turn_Right_Idle"
+			self.SurpriseAnim = "Surprised_2handed"
+			self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_Sword"))}
+			self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Cwalk_Sword"))}
+			self.GrenadeAnim = "Attack_GRENADE_Throw"
+			self.WarthogPassengerIdle = "Sit_Sword"
+			self.AllowGrenade = true
+			self.CanShootCrouch = true
+			self.CanMelee = true
 		end
 	end
 end
@@ -1511,6 +1560,9 @@ function ENT:CustomBehaviour(ent,range)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
 	if !IsValid(self.Enemy) then return else ent = self.Enemy end
+	if self.IsAChasingEnemy then
+		return self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,false)
+	end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	if IsValid(obstr) then	
 		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
@@ -1543,9 +1595,6 @@ function ENT:CustomBehaviour(ent,range)
 		self.CanThrowGrenade = false
 	end
 	if !IsValid(ent) then return end
-	if self.IsAChasingEnemy then
-		return self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,false)
-	end
 	local reloaded = false
 	if self.AIType == "Static" then
 	
@@ -1883,7 +1932,11 @@ function ENT:DoMelee()
 			end
 		end
 	end )
-	self:PlaySequenceAndPWait(id,1,self:GetPos())
+	if self.IsAChasingEnemy then
+		self:PlaySequenceAndWait(id)
+	else
+		self:PlaySequenceAndPWait(id,1,self:GetPos())
+	end
 end
 
 function ENT:RunToPosition( pos, anim, speed )

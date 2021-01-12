@@ -127,3 +127,70 @@ list.Set( "NPC", "npc_iv04_hr_brute_captain", {
 	Class = "npc_iv04_hr_brute_captain",
 	Category = "Halo Reach"
 } )
+
+function ENT:BodyUpdate()
+	local act = self:GetActivity()
+	if !self.loco:GetVelocity():IsZero() then
+		local goal = self:GetPos()+self.loco:GetVelocity()
+		local y = (goal-self:GetPos()):Angle().y
+		local di = math.AngleDifference(self:GetAngles().y,y)
+		self:SetPoseParameter("move_yaw",di)
+		self:SetPoseParameter("walk_yaw",di)
+	end
+	local look = false
+	local goal
+	local y
+	local di = 0
+	local p
+	local dip = 0
+	if IsValid(self.Enemy) then
+		goal = self.Enemy:WorldSpaceCenter()
+		local an = (goal-self:WorldSpaceCenter()):Angle()
+		y = an.y
+		di = math.AngleDifference(self:GetAngles().y,y)
+		p = an.p
+		dip = math.AngleDifference(self:GetAngles().p,p)
+		if self.IsInVehicle then
+			if !self.Transitioned and self.VehicleRole == "Gunner" then
+				local vy = math.AngleDifference(self.Vehicle:GetAngles().y+self.LTPP,y)
+				local vp = math.AngleDifference(self.Vehicle:GetAngles().p+self.LTP,p)
+				self.Transitioned = true
+				timer.Simple(0.01, function()
+					if IsValid(self) then
+						self.Transitioned = false
+					end
+				end )
+				if math.abs(vy) > 5 then
+					self.LTPP = self.Vehicle:GetPoseParameter("turret_yaw")
+					local i
+					if vy < 0 then
+						i = 2
+					else
+						i = -2
+					end
+					self:SetAngles(Angle(self.Vehicle:GetAngles().p,self:GetAngles().y+i,self.Vehicle:GetAngles().r))
+					self.Vehicle:SetPoseParameter("turret_yaw",self.LTPP+i)
+					self.GunnerShoot = false
+				else
+					self.GunnerShoot = true
+				end
+				if math.abs(vp) > 2 then
+					self.LTP = self.Vehicle:GetPoseParameter("spin_cannon")
+					local i
+					if (vp/2) <= self.LTP then
+						i = -1
+					else
+						i = 1
+					end
+					self.Vehicle:SetPoseParameter("spin_cannon",self.LTP+i)
+				end
+			end
+		end
+	end
+	self:SetPoseParameter("aim_yaw",-di)
+	self:SetPoseParameter("aim_pitch",-dip)
+	if !self.DoingFlinch and self:Health() > 0 and !self.DoingMelee and !self.Berserking and !self.Leaped and !self.DoingMelee and !self.Taunting then
+		self:BodyMoveXY()
+	end
+	self:FrameAdvance()
+end
