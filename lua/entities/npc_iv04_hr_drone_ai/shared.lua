@@ -261,7 +261,7 @@ if SERVER then
 
 	function ENT:Think()
 		
-		if self.InFlight and !self.FlyingDead then -- Stay in the air you fool
+		if self.InFlight and ( self:Health() > 0 ) then -- Stay in the air you fool
 		
 			if ( self.ACheck < CurTime() and ( self:GetSequence() != self:LookupSequence("Flight_Idle") or self:GetCycle() > 0.9 ) ) and !self.loco:IsOnGround() then
 				self.ACheck = CurTime()+self.ACheckDel
