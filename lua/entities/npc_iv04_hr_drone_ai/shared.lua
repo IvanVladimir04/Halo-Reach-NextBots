@@ -261,7 +261,7 @@ if SERVER then
 
 	function ENT:Think()
 		
-		if self.InFlight then -- Stay in the air you fool
+		if self.InFlight and !self.FlyingDead then -- Stay in the air you fool
 		
 			if ( self.ACheck < CurTime() and ( self:GetSequence() != self:LookupSequence("Flight_Idle") or self:GetCycle() > 0.9 ) ) and !self.loco:IsOnGround() then
 				self.ACheck = CurTime()+self.ACheckDel
@@ -906,6 +906,9 @@ function ENT:DetermineDeathAnim( info )
 end
 
 function ENT:DoKilledAnim()
+	if self.OldGravity then
+		self.loco:SetGravity(self.OldGravity)
+	end
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		--[[if self.KilledDmgInfo:GetDamage() <= 150 then
 			self:Speak("OnDeath")
