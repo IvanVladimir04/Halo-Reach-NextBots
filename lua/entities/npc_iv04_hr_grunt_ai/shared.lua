@@ -300,19 +300,19 @@ function ENT:OnInjured(dmg)
 	if dmg:GetDamage() < 1 then return end
 		--ParticleEffect( "blood_impact_grunt", dmg:GetDamagePosition(), Angle(0,0,0), self )
 	if dmg:GetAttacker() == self.Enemy then
-		--self:Speak("HurtEnemy")
+		self:Speak("OnDamagedFoe")
 	end
 	if !IsValid(self.Enemy) then
 		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
-			--self:Speak("Surprise")
+			self:Speak("OnSurprise")
 			self:SetEnemy(dmg:GetAttacker())
 		end
 	else
 		if self.NPSound < CurTime() then
 			if dmg:GetDamage() > 10 then
-				--self:Speak("PainMajor")
+				self:Speak("OnHurt")
 			else
-				--self:Speak("PainMinor")
+				self:Speak("OnHurtLarge")
 			end
 			self.NPSound = CurTime()+math.random(2,5)
 		end
@@ -391,7 +391,7 @@ function ENT:Wander()
 			local nav = navs[math.random(#navs)]
 			local pos = goal
 			if nav then pos = nav:GetRandomPoint() end
-			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )
+			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		else
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
@@ -413,7 +413,7 @@ function ENT:Wander()
 				end
 			end )
 			if !self.SpokeSearch then
-				--self:Speak("SearchQuery")
+				self:Speak("OnInvestigate")
 				for id, v in ipairs(self:LocalAllies()) do
 					if !v.SpokeSearch then
 						v.SpokeSearch = true
@@ -439,7 +439,7 @@ function ENT:Wander()
 				end
 			end
 			if !self.SpokeIdle then
-				--self:Speak("Idle")
+				self:Speak("OnIdle")
 				self.SpokeIdle = true
 				timer.Simple( math.random(7,10), function()
 					if IsValid(self) then
@@ -500,9 +500,8 @@ function ENT:OnOtherKilled( victim, info )
 	if rel == "foe" and victim == self.Enemy then
 		if !victim.BeenNoticed then
 			victim.BeenNoticed = true
-			--self:Speak("KilledEnemy")
 			if victim:IsPlayer() then
-				--self:NearbyReply("KilledEnemyPlayerAlly")
+				self:NearbyReply("OnKillPlayer")
 			end
 		end
 		local found = false
@@ -516,12 +515,12 @@ function ENT:OnOtherKilled( victim, info )
 		if !found then
 			if math.random(1,3) == 1 then
 				if math.random(1,2) == 1 then
-					--self:Speak("Taunt")
+					self:Speak("OnTaunt")
 				else
-					--self:Speak("Celebration")
+					self:Speak("OnVictory")
 				end
 				local func = function()
-					self:PlaySequenceAndWait("Celebrate")
+					--self:PlaySequenceAndWait("Celebrate")
 					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 				end
 				table.insert(self.StuffToRunInCoroutine,func)
@@ -536,7 +535,9 @@ function ENT:OnOtherKilled( victim, info )
 			--print(r1,r2)
 			if r1 <= r2 then
 				self.Kamikaze = true
+				self:Speak("OnKamikaze")
 			else
+				self:Speak("OnFlee")
 				self.Spooked = true
 				timer.Simple( math.random(5,10), function()
 					if IsValid(self) then
@@ -578,7 +579,7 @@ function ENT:RunAround()
 	util.Effect("BloodImpact",eff)
 	local dir = self:GetForward()+self:GetRight()*r
 	local goal = self:GetPos()+(dir*900)
-	self.loco:SetDesiredSpeed(self.MoveSpeed)
+	self.loco:SetDesiredSpeed(self.MoveSpeed*self.MoveSpeedMultiplier)
 	while (self:Health() > 0 ) do
 		if self:GetSequence() != self:LookupSequence("stunned_run") then
 			self:SetSequence("stunned_run")
@@ -713,6 +714,7 @@ function ENT:CustomBehaviour(ent)
 		if !self.InKamikaze then
 			return self:GoCrazyAalALalALa(ent) -- Funny reference
 		else
+			self:Speak("OnCharge")
 			return self:StartChasing(ent,ACT_RUN_AGITATED,self.MoveSpeed*self.MoveSpeedMultiplier,true,true)
 		end
 	end
@@ -721,7 +723,7 @@ function ENT:CustomBehaviour(ent)
 	if !self.IsSniper and ent.GetEnemy and ent:GetEnemy() == self and los then
 		if math.random(1,100) <= self.DodgeChance and !self.Dodged then
 			local anim = seqs[math.random(1,2)]
-			--self:Speak("Dive")
+			self:Speak("OnDodge")
 			self:Dodge(anim)
 		end
 	end
@@ -826,7 +828,7 @@ function ENT:ThrowAGrenade(ent)
 			self.ThrowedGrenade = false
 		end
 	end )
-	--self:Speak("ThrowGrenade")
+	self:Speak("OnGrenadeThrow")
 	self:PlaySequenceAndWait("throw_grenade")
 end
 
@@ -1049,10 +1051,10 @@ function ENT:OnHaveEnemy(ent)
 	end
 	local func = function()
 		if new then
-			--self:Speak("SightedNewEnemy")
+			self:Speak("OnAlertMoreFoes")
 		else
 			if self.LastTarget == ent then
-				--self:Speak("OldEnemySighted")
+				self:Speak("OnAlert")
 			else
 				--self:Speak("SightedEnemyRecentCombat")
 			end
@@ -1145,6 +1147,7 @@ end
 function ENT:DoKilledAnim()
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		if self.KilledDmgInfo:GetDamage() <= 150 then
+			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
 			if anim == true then 
 				local wep = ents.Create(self.Weapon:GetClass())
@@ -1175,6 +1178,7 @@ function ENT:DoKilledAnim()
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
 		else
+			self:Speak("OnDeathPainful")
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
 			wep:SetAngles(self.Weapon:GetAngles())
@@ -1190,6 +1194,7 @@ function ENT:DoKilledAnim()
 			rag = self:CreateRagdoll(DamageInfo())
 		end
 	else
+		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2
