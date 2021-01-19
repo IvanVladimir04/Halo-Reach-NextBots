@@ -136,6 +136,7 @@ function ENT:Give(class)
 end
 
 function ENT:OnInitialize()
+	self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
 	self:DoInit()
 	self:Give("astw2_haloreach_plasma_pistol")
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
@@ -382,11 +383,6 @@ function ENT:OnInjured(dmg)
 	end
 end
 
-ENT.Variations = {
-	[ACT_FLINCH_CHEST] = {["Back"] = "flinch_back_chest", ["Front"] = "flinch_front_chest"},
-	[ACT_FLINCH_STOMACH] = {["Back"] = "flinch_back_gut", ["Front"] = "flinch_front_gut"}
-}
-
 function ENT:DoGestureSeq(seq)
 	local an = seq
 	if isstring(seq) then
@@ -405,7 +401,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	local hg = trace.HitGroup
-	if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
+	--[[if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true
 		self.DoingFlinch = true
 		timer.Simple( math.random(1,2), function()
@@ -424,7 +420,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 		end
 		table.insert(self.StuffToRunInCoroutine,func)
 		self:ResetAI()
-	end
+	end]]
 end
 
 function ENT:LocalAllies()
@@ -548,30 +544,6 @@ function ENT:OnOtherKilled( victim, info )
 	elseif rel == "friend" then
 		--print(victim.IsElite,victim.IsLeader,victim.IsUltra)
 		--print(victim.CovRank,self.CovRank)
-		if math.random(1,2) == 1 and ( ( victim.CovRank and victim.CovRank > self.CovRank ) or ( victim.IsElite or victim.IsBrute ) ) then
-			local r1 = math.random(100)
-			local r2 = self.CovRank*20
-			--print(r1,r2)
-			if r1 <= r2 then
-				self.Kamikaze = true
-				self:Speak("OnKamikaze")
-			else
-				self:Speak("OnFlee")
-				self.Spooked = true
-				timer.Simple( math.random(5,10), function()
-					if IsValid(self) then
-						self.Spooked = false
-					end
-				end )
-				local func = function()
-					while (self.Spooked) do
-						self:Flee()
-						coroutine.wait(0.01)
-					end
-				end
-				table.insert(self.StuffToRunInCoroutine,func)
-			end
-		else
 			if info:GetAttacker():IsPlayer() then
 				--self:Speak("FriendKilledByPlayer")
 			else
@@ -583,9 +555,6 @@ function ENT:OnOtherKilled( victim, info )
 					--self:Speak("FriendDied")
 				end
 			end
-		
-		end
-		
 	end
 end
 
@@ -938,7 +907,7 @@ end
 
 function ENT:DoKilledAnim()
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
-		if self.KilledDmgInfo:GetDamage() <= 150 then
+		--[[if self.KilledDmgInfo:GetDamage() <= 150 then
 			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
 			if anim == true then 
@@ -969,7 +938,7 @@ function ENT:DoKilledAnim()
 				end
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
-		else
+		else]]
 			self:Speak("OnDeathPainful")
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
@@ -984,7 +953,7 @@ function ENT:DoKilledAnim()
 				end)
 			end
 			rag = self:CreateRagdoll(DamageInfo())
-		end
+		--end
 	else
 		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
