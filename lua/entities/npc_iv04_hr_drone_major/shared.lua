@@ -19,6 +19,13 @@ ENT.StartWeapons = {
 	[3] = "astw2_haloreach_needler"
 }
 
+ENT.Gibs = {
+	[1] = "models/halo_reach/characters/covenant/gibs/drone_abdomen_major.mdl",
+	[2] = "models/halo_reach/characters/covenant/gibs/drone_arm_major.mdl",
+	[3] = "models/halo_reach/characters/covenant/gibs/drone_leg_major.mdl",
+	[4] = "models/halo_reach/characters/covenant/gibs/drone_thorax_major.mdl"
+}
+
 list.Set( "NPC", "npc_iv04_hr_drone_major", {
 	Name = "Drone Major",
 	Class = "npc_iv04_hr_drone_major",
