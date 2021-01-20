@@ -80,6 +80,8 @@ ENT.HeadHitGroup = 1
 
 ENT.CanTrade = false
 
+ENT.BloodEffect = "halo_reach_blood_impact_brute"
+
 function ENT:OnInitialize()
 	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	local wep = self.StartWeapons[math.random(#self.StartWeapons)]

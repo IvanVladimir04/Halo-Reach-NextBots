@@ -339,7 +339,7 @@ function ENT:DoCustomIdle()
 			local nav = navs[math.random(#navs)]
 			local pos = goal
 			if nav then pos = nav:GetRandomPoint() end
-			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )	
+			self:WanderToPosition( (pos), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )	
 		end
 	elseif self.AIType == "Defensive" then
 		local dist = self:GetRangeSquaredTo(self.StartPosition)
@@ -1545,12 +1545,13 @@ function ENT:OnOtherKilled( victim, info )
 		end )
 	end
 	if victim == self.Enemy then
+		local spot = victim:GetPos()
 		local new = self:GetATarget()
-		if !IsValid(new) and math.random(1,2) == 1 then
-			self.SpecificGoal = victim:GetPos()
+		if !IsValid(new) and self.AIType == "Offensive" and math.random(1,2) == 1 then
+			self.SpecificGoal = spot
 			local func = function()
 				if self.IsInVehicle then return end
-				self:MoveToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+				self:WanderToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 				local lim = math.random(4,6)
 				local old = self.Weapon.Fire_AngleOffset
 				self.Weapon.Fire_AngleOffset = Angle(math.AngleDifference(self:GetAimVector():Angle().p,self:EyeAngles().p),math.AngleDifference(self:EyeAngles().y,self:GetAimVector():Angle().y),0)

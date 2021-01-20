@@ -18,6 +18,8 @@ ENT.ActionTime = 4.5
 
 ENT.IsElite = false
 
+ENT.BloodEffect = "halo_reach_blood_impact_brute"
+
 ENT.DriveThese = {
 	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = false,
 	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = false,

@@ -118,6 +118,12 @@ function ENT:FireAnimationEvent(pos,ang,event,name)
 	end]]
 end
 
+ENT.PerchChances = {
+	["Static"] = 40,
+	["Defensive"] = 55,
+	["Offensive"] = 70
+}
+
 function ENT:Give(class)
 	local wep = ents.Create(class)
 	local attach = self:GetAttachment(1)
@@ -136,14 +142,17 @@ function ENT:Give(class)
 end
 
 function ENT:OnInitialize()
+	self.PerchOffChances = self.PerchChances[GetConVar("halo_reach_nextbots_ai_type"):GetString()]
+	self.Del = 1.25-(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()*0.25)
 	self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
 	self:DoInit()
-	self:Give("astw2_haloreach_plasma_pistol")
+	--self:Give("astw2_haloreach_plasma_pistol")
+	self:Give(self.StartWeapons[math.random(#self.StartWeapons)])
+	self:SetBodygroup(3,1)
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 	local relo = self.Weapon.AI_Reload
 	self:SetNWEntity("wep",self.Weapon)
-	self:SetBodygroup(0,math.random(0,1))
 	self.Weapon.AI_Reload = function()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
@@ -199,6 +208,13 @@ function ENT:OnLandOnGround(ent)
 		self.HasLanded = true
 	elseif self.OldSeq then
 		self:ResetSequence(self.OldSeq)
+	elseif self.InFlight then
+		self.InFlight = false
+		local func = function()
+			self:PlaySequenceAndWait("Flight_Land")
+		end
+		table.insert(self.StuffToRunInCoroutine,func)
+		self:ResetAI()
 	end
 end
 
@@ -230,12 +246,14 @@ ENT.CheckT = 0
 
 ENT.CheckDel = 0.3
 
+ENT.PathGoalTolerance = 60
+
 function ENT:MoveToPos( pos )
 	local goal = pos
 	local dire = (goal-self:GetPos()):GetNormalized()
 	local reached = false
 	while (!reached) do
-		if GetConVar("ai_disabled"):GetBool() then
+		if GetConVar("ai_disabled"):GetBool() or self.Perching then
 			reached = true
 		end
 		if self.CheckT < CurTime() then
@@ -263,9 +281,11 @@ if SERVER then
 		
 		if self.InFlight and ( self:Health() > 0 ) then -- Stay in the air you fool
 		
-			if ( self.ACheck < CurTime() and ( self:GetSequence() != self:LookupSequence("Flight_Idle") or self:GetCycle() > 0.9 ) ) and !self.loco:IsOnGround() then
+			if ( !self.Perched and !self.Perching and self.ACheck < CurTime() and ( self:GetSequence() != self:LookupSequence("Flight_Idle") or self:GetCycle() > 0.9 ) ) and !self.loco:IsOnGround() then
 				self.ACheck = CurTime()+self.ACheckDel
 				self:ResetSequence("Flight_Idle")
+			elseif self.Perched and self:GetCycle() > 0.9 then
+				self:ResetSequence(self.IdlePerchAnim)
 			end
 		
 			if !self.FlyGoal then 
@@ -314,11 +334,46 @@ local thingstoavoid = {
 	["prop_ragdoll"] = true
 }
 
+function ENT:OnTouchWorld( world )
+	if self.InFlight and !self.Perched and !self.Perching then
+		self.Perching = true
+		timer.Simple( 4, function()
+			if IsValid(self) then self.Perching = false end
+		end )
+		self.OG = self.FlyGoal
+		self.FlyGoal = nil
+		local wpos = world:NearestPoint(self:WorldSpaceCenter())
+		local stickpos = self:NearestPoint(wpos)
+		--print(CurTime(),"hey world",self.loco:GetVelocity(),stickpos)
+		local dir = (stickpos-wpos):GetNormalized()
+		local ang = dir:Angle()
+		local ang2 = self:GetAimVector():Angle()
+		local ang3 = self.loco:GetVelocity():Angle().y-180
+		if ang3 < 0 then ang3 = ang3+360 end
+		self:SetAngles(Angle(self:GetAngles().p,ang.y+math.AngleDifference(ang3,(stickpos-wpos):Angle().y),self:GetAngles().r))
+		local y1 = ang.y
+		local y2 = ang2.y 
+		local dif = math.AngleDifference( y2, y1 )
+		if dif < 0 then dif = dif+360 end
+		--print(dif)
+		if dif > 180 then
+			self.AttachSeq = "Perch_Wall_Attach_Left_Start"
+			self.IdlePerchAnim = "Perch_Wall_Attach_Left_Idle"
+			self.GetOffPerchAnim = "Perch_Wall_Attach_Left_End"
+		else
+			self.AttachSeq = "Perch_Wall_Attach_Right_Start"
+			self.IdlePerchAnim = "Perch_Wall_Attach_Right_Idle"
+			self.GetOffPerchAnim = "Perch_Wall_Attach_Right_End"
+		end
+		self:ResetAI()
+	end
+end
+
 function ENT:OnContact( ent ) -- When we touch someBODY
-	if ent == game.GetWorld() then return "no" end
-	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
-		local d = ent:GetPos()-self:GetPos()
-		ent:SetVelocity(d*5)
+	if ent == game.GetWorld() then return self:OnTouchWorld(ent) end
+	if (ent:GetClass() == "prop_physics") or (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
+		local d = self:GetPos()-ent:GetPos()
+		self.loco:SetVelocity(d)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )
@@ -353,9 +408,59 @@ function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
 	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
+	if self.HasArmor then
+		ht = ht + self.Shield
+	end
+	if self.HasArmor and self.Shield > 0 then
+		self:SetBodygroup(4,1)
+		self.LShieldHurt = CurTime()
+		local h = self.LShieldHurt
+		timer.Simple( 1, function()
+			if IsValid(self) and h == self.LShieldHurt then
+				self:SetBodygroup(4,0)
+			end
+		end )
+	else
+		if dmg:GetDamage() > 0 then
+			ParticleEffect( "halo_reach_blood_impact_drone", self:WorldSpaceCenter(), Angle(0,0,0), self )
+		end
+	end
+	local total = dmg:GetDamage()
+	if self.HasArmor then
+		--print(self.Shield, "before")
+		self.ShieldActual = self.Shield
+		self.ShieldH = CurTime()
+		local shield = self.ShieldH
+		local dm = dmg:GetDamage()
+		total = dm-self.Shield
+		if total < 0 then total = 0 end
+		if dmg:IsBulletDamage() then
+			dmg:SubtractDamage(self.Shield*2)
+			self.Shield = self.Shield-math.abs(dm/2)
+		else
+			dmg:SubtractDamage(self.Shield)
+			self.Shield = self.Shield-math.abs(dm)
+		end
+		if self.Shield < 0 then self.Shield = 0 end
+		local shild = self.Shield
+		timer.Simple( 3, function()
+			if IsValid(self) and shield == self.ShieldH then
+				local stop = false
+				for i = 1, 10 do
+					timer.Simple( 0.35*i, function()
+						if IsValid(self) and shield == self.ShieldH and !stop then
+							self.Shield = self.Shield+self.ShieldRegen
+							if self.Shield > self.MaxShield then self.Shield = self.MaxShield
+								stop = true
+							end
+						end
+					end )
+				end
+			end
+		end )
+	end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
 	if dmg:GetDamage() < 1 then return end
-		--ParticleEffect( "blood_impact_grunt", dmg:GetDamagePosition(), Angle(0,0,0), self )
 	if dmg:GetAttacker() == self.Enemy then
 		self:Speak("OnDamagedFoe")
 	end
@@ -396,7 +501,7 @@ function ENT:DoGestureSeq(seq)
 end
 
 function ENT:OnTraceAttack( info, dir, trace )
-	if trace.HitGroup == 1 then
+	if trace.HitGroup == 1 and ( !self.HasArmor or self.Shield < 1) then
 		info:ScaleDamage(3)
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
@@ -564,60 +669,52 @@ function ENT:OnLostSeenEnemy(ent)
 	end
 end
 
-function ENT:TurnTo(dif,calm)
-	calm = calm or false
-	local seq
-	local e
-	if dif < 0 then
-		e = 1
-		if calm then
-			seq = self.CalmTurnLeftAnim
-		else
-			seq = self.TurnLeftAnim
-		end
-	else
-		e = -1
-		if calm then
-			seq = self.CalmTurnRightAnim
-		else
-			seq = self.TurnRightAnim
-		end
-	end
-	local id, len = self:LookupSequence(seq)
-	local t
-	if math.abs(dif) > 140 then
-		t = 1
-	else
-		t = math.abs(dif)/140
-	end
-	self:SetSequence(seq)
-	self:ResetSequenceInfo()
-	self:SetCycle( 0 )
-	self:SetPlaybackRate( 1 )
-	local z = len*t
-	for i = 1, 140*t do
-		timer.Simple( (0.001*i)+z, function()
-			if IsValid(self) then
-				self:SetAngles(self:GetAngles()+Angle(0,e,0))
-			end
-		end )
-	end
-	coroutine.wait(z)
-	self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
-end
-
 function ENT:CustomBehaviour(ent)
 	if !IsValid(ent) then return end
 	if !ent:IsOnGround() then return self:StartShooting(ent) end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
+	if !self.InFlight then
+		self.InFlight = true
+		self.OldGravity = self.loco:GetGravity()
+		self.loco:SetGravity(0)
+		self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
+		self:PlaySequenceAndWait("Flight_Takeoff")
+		self:SetSequence("Flight_Idle")
+		self.loco:Jump()
+		self:MoveToPos(self.FlyGoal)
+	end
+	if self.Perching and !self.Perched then
+		--print("perch")
+		self:PlaySequenceAndWait(self.AttachSeq)
+		self.Perched = true
+	end
 	if los then
 		if IsValid(ent) then
 			self.LastSeenEnemyPos = ent:GetPos()
 		end
 		self:StartShooting(ent)
-		self:MoveToPos(Vector(self:GetPos().x+(math.random(512,-512)*math.Rand(0,1)),self:GetPos().y+(math.random(512,-512)*math.Rand(0,1)),self.FlyGoal.z))
-		self.FlyGoal = self:GetPos()
+		if !self.Perched then
+			self:MoveToPos(Vector(self:GetPos().x+(math.random(512,-512)*math.Rand(0,1)),self:GetPos().y+(math.random(512,-512)*math.Rand(0,1)),self.FlyGoal.z))
+			self.FlyGoal = self:GetPos()
+		else
+			if !self.RPerch and !self.Perching then
+				self.RPerch = true
+				timer.Simple( math.random(3,6), function()
+					if IsValid(self) then
+						self.RPerch = false
+					end
+				end )
+				if math.random(100) < self.PerchOffChances then
+					self:PlaySequenceAndWait(self.GetOffPerchAnim)
+					self.FlyGoal = self.OG
+					self.Perched = false
+					self.loco:SetVelocity(self:GetForward()*self.MoveSpeed*self.MoveSpeedMultiplier)
+					--print("no perch")
+				end
+			end
+		end
+		coroutine.wait(self.Del)
 	elseif !los then
 		if IsValid(obstr) then
 			local ros = self:CheckRelationships(obstr)
@@ -654,7 +751,7 @@ function ENT:FireWep()
 	for i = 1, self:GetCurrentWeaponProficiency()+2 do
 		timer.Simple( math.random(0.2,0.4)*i, function()
 			if IsValid(self) then
-				self:DoGestureSeq(self.FireAnim)
+				--self:DoGestureSeq(self.FireAnim)
 				if IsValid(self.Weapon) then
 					self.Weapon:AI_PrimaryAttack()
 				end
@@ -721,9 +818,11 @@ function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	print(cycle)
 	print(type)
 	print(options)]]
-	--[[if options == self.ShootEvent then
-		self:ShootBullet(self.Enemy)
-	end]]
+	if options == "event_halo_reach_drones_toggle_wings_on" then
+		self:SetBodygroup(3,0)
+	elseif options == "event_halo_reach_drones_toggle_wings_off" then
+		self:SetBodygroup(3,1)
+	end
 end
 
 local se = {
@@ -910,38 +1009,42 @@ function ENT:DoKilledAnim()
 		self.loco:SetGravity(self.OldGravity)
 	end
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
-		--[[if self.KilledDmgInfo:GetDamage() <= 150 then
+		if self.DeathHitGroup == 1 then
 			self:Speak("OnDeath")
-			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
-			if anim == true then 
-				local wep = ents.Create(self.Weapon:GetClass())
-				wep:SetPos(self.Weapon:GetPos())
-				wep:SetAngles(self.Weapon:GetAngles())
-				wep:Spawn()
-				self.Weapon:Remove()
-				self:CreateRagdoll(DamageInfo())
-				return
-			end
-			local seq, len = self:LookupSequence(anim)
-			timer.Simple( len, function()
-				if IsValid(self) then
-					local wep = ents.Create(self.Weapon:GetClass())
-					wep:SetPos(self.Weapon:GetPos())
-					wep:SetAngles(self.Weapon:GetAngles())
-					wep:Spawn()
-					self.Weapon:Remove()
-					if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
-						timer.Simple( 60, function()
-							if IsValid(wep) then
-								wep:Remove()
-							end
-						end)
+			ParticleEffect( "halo_reach_blood_impact_drone", self:WorldSpaceCenter(), Angle(0,0,0), self )
+			local wep = ents.Create(self.Weapon:GetClass())
+			wep:SetPos(self.Weapon:GetPos())
+			wep:SetAngles(self.Weapon:GetAngles())
+			wep:Spawn()
+			self.Weapon:Remove()
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(wep) then
+						wep:Remove()
 					end
-					self:CreateRagdoll(DamageInfo())
+				end)
+			end
+			for i = 1, #self.Gibs do
+				local mdl = self.Gibs[i]
+				local gib = ents.Create("prop_physics")
+				gib:SetModel(mdl)
+				gib:SetPos(self:WorldSpaceCenter())
+				gib:Spawn()
+				local phys = gib:GetPhysicsObject()
+				if IsValid(phys) then
+					phys:Wake()
+					phys:SetVelocity((self:GetUp()*400)+self:GetForward()*math.random(100,-100))
 				end
-			end )
-			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
-		else]]
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(gib) then
+							gib:Remove()
+						end
+					end)
+				end
+			end
+			self:Remove()
+		else
 			self:Speak("OnDeathPainful")
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
@@ -956,10 +1059,13 @@ function ENT:DoKilledAnim()
 				end)
 			end
 			rag = self:CreateRagdoll(DamageInfo())
-		--end
+		end
 	else
 		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
+		if !self.loco:IsOnGround() then
+			self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
+		end
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2
 		local force = self.KilledDmgInfo:GetDamage()*1.5
@@ -1019,12 +1125,6 @@ function ENT:DoAnimationEvent(a)
 		end )
 		if !CLIENT then
 			--local set = self.AnimSets[self.Weapon:GetClass()] or self.AnimSets["Rifle"]
-			local a,len = self:LookupSequence("pistol_reload")
-			local func = function()
-				self:PlaySequenceAndWait(a)
-			end
-			table.insert(self.StuffToRunInCoroutine,func)
-			self:ResetAI()
 		end
 	end
 end

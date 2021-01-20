@@ -18,6 +18,8 @@ ENT.ActionTime = 3.5
 
 ENT.IsElite = false
 
+ENT.BloodEffect = "halo_reach_blood_impact_brute"
+
 ENT.DriveThese = {
 	["models/snowysnowtime/vehicles/haloreach/warthog.mdl"] = false,
 	["models/snowysnowtime/vehicles/haloreach/warthog_rocket.mdl"] = false,
@@ -45,6 +47,10 @@ ENT.RifleHolds = {
 ENT.CanTrade = false
 
 ENT.LeapChance = 50
+
+ENT.Shield = 100
+
+ENT.MaxShield = 100
 
 function ENT:OnInitialize()
 	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
