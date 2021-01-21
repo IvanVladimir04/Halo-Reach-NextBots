@@ -298,10 +298,7 @@ function ENT:OnInjured(dmg)
 	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
 	if dmg:GetDamage() < 1 then return end
-		--ParticleEffect( "blood_impact_grunt", dmg:GetDamagePosition(), Angle(0,0,0), self )
-	if dmg:GetAttacker() == self.Enemy then
-		self:Speak("OnDamagedFoe")
-	end
+	ParticleEffect( "halo_reach_blood_impact_grunt", dmg:GetDamagePosition(), Angle(0,0,0), self )
 	if !IsValid(self.Enemy) then
 		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
 			self:Speak("OnSurprise")
@@ -863,6 +860,15 @@ end
 function ENT:ShootBullet(ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then return end
+	if !self.ShootQuote and math.random(1,4) == 1 then
+		self.ShootQuote = true
+		timer.Simple( 5, function()
+			if IsValid(self) then
+				self.ShootQuote = false
+			end
+		end )
+		self:Speak("OnDamagedFoe")
+	end
 	self:FireWep()
 	--self:CustomBehaviour(ent)
 end

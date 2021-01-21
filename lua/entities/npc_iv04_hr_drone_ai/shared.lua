@@ -52,8 +52,6 @@ ENT.FlinchMove = {
 	[7] = 0
 }
 
---ENT.Footsteps = { "doom_3/zombie_pistol/step1.ogg", "doom_3/zombie_pistol/step2.ogg", "doom_3/zombie_pistol/step3.ogg", "doom_3/zombie_pistol/step4.ogg" }
-
 local dmgtypes = {
 	[DMG_CLUB] = true,
 	[DMG_SLASH] = true
@@ -246,11 +244,12 @@ ENT.CheckT = 0
 
 ENT.CheckDel = 0.3
 
-ENT.PathGoalTolerance = 60
+ENT.PathGoalTolerance = 80
 
 function ENT:MoveToPos( pos )
 	local goal = pos
-	local dire = (goal-self:GetPos()):GetNormalized()
+	if !goal then return end
+	local dire = (goal-self:WorldSpaceCenter()):GetNormalized()
 	local reached = false
 	while (!reached) do
 		if GetConVar("ai_disabled"):GetBool() or self.Perching then
@@ -258,7 +257,7 @@ function ENT:MoveToPos( pos )
 		end
 		if self.CheckT < CurTime() then
 			self.CheckT = CurTime()+self.CheckDel
-			dire = (goal-self:GetPos()):GetNormalized()
+			dire = (goal-self:WorldSpaceCenter()):GetNormalized()
 			if self:NearestPoint(goal):DistToSqr(goal) < self.PathGoalTolerance^2 then
 				reached = true
 			end
@@ -422,7 +421,7 @@ function ENT:OnInjured(dmg)
 		end )
 	else
 		if dmg:GetDamage() > 0 then
-			ParticleEffect( "halo_reach_blood_impact_drone", self:WorldSpaceCenter(), Angle(0,0,0), self )
+			ParticleEffect( "halo_reach_blood_impact_drone", dmg:GetDamagePosition(), Angle(0,0,0), self )
 		end
 	end
 	local total = dmg:GetDamage()
@@ -461,9 +460,6 @@ function ENT:OnInjured(dmg)
 	end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
 	if dmg:GetDamage() < 1 then return end
-	if dmg:GetAttacker() == self.Enemy then
-		self:Speak("OnDamagedFoe")
-	end
 	if !IsValid(self.Enemy) then
 		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
 			self:Speak("OnSurprise")
@@ -505,7 +501,9 @@ function ENT:OnTraceAttack( info, dir, trace )
 		info:ScaleDamage(3)
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
-	local hg = trace.HitGroup
+	if self.HasArmor and self.Shield > 0 then
+		ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+	end
 	--[[if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true
 		self.DoingFlinch = true
@@ -546,11 +544,25 @@ function ENT:Wander()
 	if self.IsControlled then return end
 	if self.InFlight then
 		self.InFlight = false
+		self:MoveToPos(self.StartPoint)
 		self.loco:SetGravity(self.OldGravity)
+		local search = false
 		while (!self.loco:IsOnGround()) do
+			if !search then
+				local target = self:SearchEnemy()
+				search = true
+				timer.Simple( 0.4, function()
+					if IsValid(self) then
+						search = false
+					end
+				end )
+				if target then
+					return self:CustomBehaviour(self.Enemy)
+				end
+			end
 			coroutine.wait(0.01)
 		end
-		self:PlaySequenceAndWait("Fly_Land")
+		self:PlaySequenceAndWait("Flight_Land")
 	end
 		if self.Alerted then
 			if self:GetSequence() != self:LookupSequence("Pistol_Idle") then
@@ -632,6 +644,7 @@ function ENT:OnOtherKilled( victim, info )
 				break
 			end
 		end
+		self:GetATarget()
 		if !found then
 			if math.random(1,3) == 1 then
 				if math.random(1,2) == 1 then
@@ -671,13 +684,13 @@ end
 
 function ENT:CustomBehaviour(ent)
 	if !IsValid(ent) then return end
-	if !ent:IsOnGround() then return self:StartShooting(ent) end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
-	if !self.InFlight then
+	if !self.InFlight and !self.Perching then
 		self.InFlight = true
 		self.OldGravity = self.loco:GetGravity()
 		self.loco:SetGravity(0)
+		self.StartPoint = self:GetPos()
 		self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
 		self:PlaySequenceAndWait("Flight_Takeoff")
 		self:SetSequence("Flight_Idle")
@@ -696,7 +709,7 @@ function ENT:CustomBehaviour(ent)
 		self:StartShooting(ent)
 		if !self.Perched then
 			self:MoveToPos(Vector(self:GetPos().x+(math.random(512,-512)*math.Rand(0,1)),self:GetPos().y+(math.random(512,-512)*math.Rand(0,1)),self.FlyGoal.z))
-			self.FlyGoal = self:GetPos()
+			--self.FlyGoal = self:GetPos()
 		else
 			if !self.RPerch and !self.Perching then
 				self.RPerch = true
@@ -729,6 +742,15 @@ end
 function ENT:StartShooting(ent)
 	ent = ent or self.Enemy or self:GetEnemy()
 	if !IsValid(ent) then return end
+	if !self.ShootQuote and math.random(1,4) == 1 then
+		self.ShootQuote = true
+		timer.Simple( 5, function()
+			if IsValid(self) then
+				self.ShootQuote = false
+			end
+		end )
+		self:Speak("OnDamagedFoe")
+	end
 	self:ShootBullet(ent)
 end
 
@@ -919,11 +941,12 @@ function ENT:ChaseEnt(ent,los,kamikaze)
 end
 
 function ENT:OnHaveEnemy(ent)
-	if !self.InFlight then
+	if !self.InFlight and !self.Perching then
 		self.InFlight = true
 		self.OldGravity = self.loco:GetGravity()
 		self.loco:SetGravity(0)
 		self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
+		self.StartPoint = self:GetPos()
 		local func = function()
 			self:PlaySequenceAndWait("Flight_Takeoff")
 			self:SetSequence("Flight_Idle")
@@ -1005,13 +1028,15 @@ function ENT:DetermineDeathAnim( info )
 end
 
 function ENT:DoKilledAnim()
+	self:SetBodygroup(3,1)
 	if self.OldGravity then
 		self.loco:SetGravity(self.OldGravity)
+		self.loco:SetVelocity(Vector(0,0,0))
 	end
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		if self.DeathHitGroup == 1 then
 			self:Speak("OnDeath")
-			ParticleEffect( "halo_reach_blood_impact_drone", self:WorldSpaceCenter(), Angle(0,0,0), self )
+			ParticleEffect( "halo_reach_blood_impact_drone_gib", self:WorldSpaceCenter(), Angle(0,0,0), self )
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
 			wep:SetAngles(self.Weapon:GetAngles())
@@ -1063,6 +1088,8 @@ function ENT:DoKilledAnim()
 	else
 		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
+		self.FlyGoal = nil
+		self.InFlight = false
 		if !self.loco:IsOnGround() then
 			self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
 		end

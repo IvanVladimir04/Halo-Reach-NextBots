@@ -1,10 +1,14 @@
 AddCSLuaFile()
 ENT.Base 			= "npc_iv04_hr_elite_ai"
 ENT.PrintName = "Elite"
-ENT.StartHealth = 190
+ENT.StartHealth = 150
 ENT.Models = {"models/halo_reach/characters/covenant/elite_specops.mdl"}
 
 ENT.CovRank = 3
+
+ENT.Shield = 125
+
+ENT.MaxShield = 125
 
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_plasma_rifle",

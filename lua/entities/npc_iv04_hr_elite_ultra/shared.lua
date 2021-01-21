@@ -6,6 +6,10 @@ ENT.Models = {"models/halo_reach/characters/covenant/elite_ultra.mdl"}
 
 ENT.CovRank = 3
 
+ENT.Shield = 110
+
+ENT.MaxShield = 110
+
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_concussion_rifle",
 	[2] = "astw2_haloreach_plasma_repeater",

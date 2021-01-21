@@ -494,12 +494,12 @@ function ENT:SetupHoldtypes()
 			self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Sword"))}
 			self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Sword"))}
 			self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Run_Sword"))}
-			self.MeleeAnim = {"Pistol_Melee_1","Pistol_Melee_2"}
-			self.MeleeBackAnim = "Pistol_Melee_Back"
-			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Sword"))
-			
+			self.MeleeAnim = {"Sword_Melee_1","Sword_Melee_2","Sword_Melee_3","Sword_Melee_4","Sword_Melee_5"}
+			self.MeleeBackAnim = nil
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Sword_Melee_1"))
+			self.MeleeDamage = 200
 			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Pistol"))
-			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Sword"))
+			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Sword_Melee_1"))
 			self.CalmTurnLeftAnim = "Sword_Turn_Left_Idle"
 			self.CalmTurnRightAnim = "Sword_Turn_Right_Idle"
 			self.TurnLeftAnim = "Sword_Turn_Left_Idle"
@@ -510,8 +510,9 @@ function ENT:SetupHoldtypes()
 			self.GrenadeAnim = "Attack_GRENADE_Throw"
 			self.WarthogPassengerIdle = "Sit_Sword"
 			self.AllowGrenade = true
-			self.CanShootCrouch = true
+			self.CanShootCrouch = false
 			self.CanMelee = true
+			self.IsAChasingEnemy = true
 		end
 	end
 end
@@ -1153,7 +1154,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.Shield > 0 and self.HasArmor then
-		ParticleEffect( "impact_shield_elite", info:GetDamagePosition(), Angle(0,0,0), self )
+		ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
 	end
 	--if !self.DoingFlinch and info:GetDamage() > self.FlinchDamage then
 		--if self.FlinchHitgroups[trace.HitGroup] then
@@ -1489,12 +1490,13 @@ function ENT:HasToReload()
 end
 
 function ENT:DoMeleeDamage()
-	if self.IsAChasingEnemy then
+	if self.IsAChasingEnemy and self.IsBrute then
 		self.Weapon:MeleeAttack()
 	else
 		local damage = self.MeleeDamage
 		for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
 			if v != self and self:CheckRelationships(v) != "friend" then
+				local h = v:Health()
 				local d = DamageInfo()
 				d:SetDamage( damage )
 				d:SetAttacker( self )
@@ -1508,6 +1510,9 @@ function ENT:DoMeleeDamage()
 				end
 				if IsValid(v:GetPhysicsObject()) then
 					v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
+				end
+				if ( v:IsNPC() or v:IsNextBot() or v:IsPlayer() ) and h > 0 then
+					break
 				end
 			end
 		end

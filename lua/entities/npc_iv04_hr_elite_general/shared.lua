@@ -6,6 +6,10 @@ ENT.Models = {"models/halo_reach/characters/covenant/elite_general.mdl"}
 
 ENT.CovRank = 3
 
+ENT.Shield = 125
+
+ENT.MaxShield = 125
+
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_energysword",
 	[2] = "astw2_haloreach_concussion_rifle",

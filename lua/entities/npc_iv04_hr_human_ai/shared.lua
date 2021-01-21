@@ -558,7 +558,7 @@ function ENT:DoMeleeDamage()
 	end
 end
 
-function ENT:ThrowGrenade()
+function ENT:ThrowGrenade(dist)
 	self.ThrowedGrenade = true
 	timer.Simple( math.random(5,10), function()
 		if IsValid(self) then
@@ -591,7 +591,9 @@ function ENT:ThrowGrenade()
 			if IsValid(prop) then
 				prop:Wake()
 				prop:EnableGravity(true)
-				prop:SetVelocity( (self:GetAimVector() * 500)+(self:GetUp()*(math.random(10,50)*5)) )
+				local vel = (self:GetUp()*(math.random(10,50)*5))
+				vel = vel+((self:GetAimVector() * 600))
+				prop:SetVelocity( vel )
 			end
 		end
 	end )
@@ -1114,7 +1116,7 @@ function ENT:CustomBehaviour(ent,range)
 		if !IsValid(ent) then return end
 		if los then
 			if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
-				return self:ThrowGrenade()
+				return self:ThrowGrenade(range)
 			else
 				if self.CanShootCrouch and math.random(1,2) == 1 then
 					self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
@@ -1231,7 +1233,7 @@ function ENT:CustomBehaviour(ent,range)
 				end
 			else
 				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
-					return self:ThrowGrenade()
+					return self:ThrowGrenade(range)
 				else
 					if self.CanShootCrouch and math.random(1,2) == 1 then
 						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
@@ -1372,7 +1374,7 @@ function ENT:CustomBehaviour(ent,range)
 				end
 			else
 				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
-					return self:ThrowGrenade()
+					return self:ThrowGrenade(range)
 				else
 					if self.CanShootCrouch and math.random(1,2) == 1 then
 						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
