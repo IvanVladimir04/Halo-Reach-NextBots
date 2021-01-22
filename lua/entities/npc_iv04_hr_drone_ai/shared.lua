@@ -443,7 +443,12 @@ function ENT:OnInjured(dmg)
 			dmg:SubtractDamage(self.Shield)
 			self.Shield = self.Shield-math.abs(dm)
 		end
-		if self.Shield < 0 then self.Shield = 0 end
+		if self.Shield < 0 then 
+			self.Shield = 0 
+			if self.ShieldActual > 0 then
+				ParticleEffect( "iv04_halo_reach_elite_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+			end
+		end
 		local shild = self.Shield
 		timer.Simple( 3, function()
 			if IsValid(self) and shield == self.ShieldH then
@@ -505,7 +510,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.HasArmor and self.Shield > 0 then
-		ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+		ParticleEffect( "halo_reach_shield_impact_effect", self:WorldSpaceCenter(), Angle(0,0,0), self )
 	end
 	--[[if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true

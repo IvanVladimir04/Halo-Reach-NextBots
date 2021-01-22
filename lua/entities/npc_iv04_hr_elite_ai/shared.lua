@@ -1014,7 +1014,7 @@ function ENT:OnInjured(dmg)
 		if self.Shield < 0 then 
 			self.Shield = 0 
 			if self.ShieldActual > 0 then
-				ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+				ParticleEffect( "iv04_halo_reach_elite_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
 			end
 		end
 		local shild = self.Shield

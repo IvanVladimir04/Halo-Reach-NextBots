@@ -1549,6 +1549,10 @@ ENT.CountedAllies = 0
 
 ENT.MentionedAllySpree = false
 
+function ENT:OnPlasmaNadeStuck()
+	self:Speak("OnPanic")
+end
+
 function ENT:OnOtherKilled( victim, info )
 	if victim == self then return end
 	if self:Health() < 1 then return end
@@ -1628,7 +1632,7 @@ function ENT:OnOtherKilled( victim, info )
 					--self:NearbyReply("KilledFriendAlly")
 				else
 					if self.SawAlliesDie then
-						self:Speak("OnPanic")
+						--self:Speak("OnPanic")
 						local AI = self.AIType
 						self.AIType = "Defensive"
 						local func = function()
@@ -1690,7 +1694,7 @@ function ENT:OnOtherKilled( victim, info )
 		end )
 	end
 	if victim == self.Enemy then
-		local spot = victim:WorldSpaceCenter()
+		local spot = victim:WorldSpaceCenter() or self.RegisteredTargetPositions[victim]
 		local new = self:GetATarget()
 		if !IsValid(new) and self.AIType == "Offensive" and !self.ShootCorpseFilter[self:GetActiveWeapon():GetClass()] then
 			if victim:IsPlayer() and !self.CommentedTraitorDeath then
@@ -1702,7 +1706,7 @@ function ENT:OnOtherKilled( victim, info )
 				end )
 				self:Speak("OnKillPlayer")
 			end
-			if math.random(1,2) == 1 then
+			if math.random(1,2) == 1 and isvector(spot) then
 				self.SpecificGoal = spot
 				local func = function()
 					if self.IsInVehicle then return end
