@@ -225,9 +225,12 @@ end
 
 function ENT:Speak(voice)
 	local character = self.Voices["Grunt"]
+	if self.CurrentSound then self.CurrentSound:Stop() end
 	if character[voice] and istable(character[voice]) then
 		local sound = table.Random(character[voice])
-		self:EmitSound(sound,100)
+		self.CurrentSound = CreateSound(self,sound)
+		self.CurrentSound:SetSoundLevel(100)
+		self.CurrentSound:Play()
 	end
 end
 

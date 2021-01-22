@@ -1,10 +1,12 @@
 AddCSLuaFile()
 
+include("voices.lua")
+
 ENT.Base 			= "npc_iv04_base"
 ENT.PrintName = "Hunter"
-ENT.StartHealth = 200
+ENT.StartHealth = 300
 ENT.MoveSpeed = 50
-ENT.MoveSpeedMultiplier = 4
+ENT.MoveSpeedMultiplier = 6
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
@@ -20,9 +22,13 @@ ENT.DodgeChance = 20
 ENT.StepChance = 20]]
 ENT.AttractAlliesRange = 600
 
-ENT.MeleeRange = 100
+ENT.MeleeRange = 120
+
+ENT.MeleeConeAngle = 120
 
 ENT.MeleeDistance = 180
+
+ENT.ChaseRange = 400
 
 -- Flinching
 
@@ -42,7 +48,7 @@ ENT.FlinchHitgroups = {
 
 --ENT.Footsteps = { "doom_3/zombie_pistol/step1.ogg", "doom_3/zombie_pistol/step2.ogg", "doom_3/zombie_pistol/step3.ogg", "doom_3/zombie_pistol/step4.ogg" }
 
-ENT.MeleeDamage = 75
+ENT.MeleeDamage = 120
 
 ENT.NPSound = 0
 
@@ -56,12 +62,9 @@ ENT.Shield = 50
 
 ENT.Faction = "FACTION_COVENANT"
 
---ENT.StepEvent = "D3HumanNextbot.Step"
+ENT.MeleeEvent = "event_halo_reach_hunter_melee"
 
-local seqs = {
-	[1] = "dive_left",
-	[2] = "dive_right"
-}
+--ENT.StepEvent = "D3HumanNextbot.Step"
 
 function ENT:FireAnimationEvent(pos,ang,event,name)
 	--[[print(pos)
@@ -75,35 +78,38 @@ function ENT:FireAnimationEvent(pos,ang,event,name)
 end
 
 function ENT:OnInitialize()
+	self.MeleeDamage = (self.MeleeDamage*(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt())*0.5)
 	self:DoInit()
 end
 
 function ENT:DoInit()
 	--print(marinevariant)
 	--self:SetCollisionBounds(Vector(-30,-30,0),Vector(30,30,80))
+	self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Run"))}
+	
 	self:SetBloodColor(DONT_BLEED)
 	self.ShouldWander = false
-	self.CrouchWalkAnim = ACT_WALK_CROUCH_AIM
+	self.CrouchWalkAnim = self:GetSequenceActivity(self:LookupSequence("Move_Crouched"))
 end
 
 function ENT:OnLeaveGround(ent)
-	if self.loco:GetVelocity():IsZero() then
-		self.OldSeq = self:GetSequence()
+	if self:Health() <= 0 then 
+		self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
 	else
-		self.OldSeq = self:SelectWeightedSequence(self.RunAnim[1])
+		self.LastTimeOnGround = CurTime()
 	end
-	self.LastTimeOnGround = CurTime()
-	self:StartActivity(self.IdleAnim[1])
 end
 
 function ENT:OnLandOnGround(ent)
-	if self.LastTimeOnGround then
+	if self.FlyingDead then
+		self.HasLanded = true
+	elseif self.LastTimeOnGround then
 		local t = CurTime()-self.LastTimeOnGround
 		local seq
 		if t < 3 then
-			seq = "land_soft"
+			seq = "Land_Soft"
 		else
-			seq = "land_hard"
+			seq = "Land_Hard"
 		end
 		local func = function()
 			self:PlaySequenceAndWait(seq)
@@ -111,13 +117,12 @@ function ENT:OnLandOnGround(ent)
 		end
 		table.insert(self.StuffToRunInCoroutine,func)
 		self:ResetAI()
-	elseif self.OldSeq then
-		self:ResetSequence(self.OldSeq)
 	end
 end
 
 function ENT:Speak(voice)
 	local character = self.Voices["Hunter"]
+	--if self.CurrentSound then self.CurrentSound:Stop() end
 	if character[voice] and istable(character[voice]) then
 		local sound = table.Random(character[voice])
 		self:EmitSound(sound,100)
@@ -185,12 +190,46 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 	end
 end
 
+ENT.Gibs = {
+	[1] = "models/halo_reach/characters/covenant/hunter_armor_prop.mdl",
+	[2] = "models/halo_reach/characters/covenant/hunter_armor_spike_large_prop.mdl",
+	[3] = "models/halo_reach/characters/covenant/hunter_armor_spike_small_prop.mdl"
+}
+
 function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
 	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
-		ParticleEffect( "blood_impact_hunter", dmg:GetDamagePosition(), Angle(0,0,0), self )
+	if !self.BrokenBack and dmg:GetDamageType() == DMG_BLAST then
+		self.BackHealth = self.BackHealth-dmg:GetDamage()
+		if self.BackHealth <= 0 then
+			self.BrokenBack = true
+			self:SetBodygroup(1,1)
+			for i = 1, #self.Gibs do
+				local mdl = self.Gibs[i]
+				local gib = ents.Create("prop_physics")
+				gib:SetModel(mdl)
+				gib:SetPos(self:WorldSpaceCenter()+self:GetUp()*60+self:GetForward()*-40)
+				gib:Spawn()
+				local phys = gib:GetPhysicsObject()
+				if IsValid(phys) then
+					phys:Wake()
+					phys:SetVelocity((self:GetUp()*400)+self:GetForward()*math.random(100,-100))
+				end
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(gib) then
+							gib:Remove()
+						end
+					end)
+				end
+			end
+		end
+	end
+	if dmg:GetDamage() > 0 then
+		ParticleEffect( "halo_reach_blood_impact_hunter", dmg:GetDamagePosition(), Angle(0,0,0), self )
+	end
 	if !IsValid(self.Enemy) then
 		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
 			--self:Speak("Surprise")
@@ -199,9 +238,9 @@ function ENT:OnInjured(dmg)
 	else
 		if self.NPSound < CurTime() then
 			if dmg:GetDamage() > 10 then
-				self:Speak("PainMajor")
+				self:Speak("OnHurtLarge")
 			else
-				self:Speak("PainMinor")
+				self:Speak("OnHurt")
 			end
 			self.NPSound = CurTime()+math.random(2,5)
 		end
@@ -209,8 +248,8 @@ function ENT:OnInjured(dmg)
 end
 
 ENT.Variations = {
-	[ACT_FLINCH_CHEST] = {["Back"] = "flinch_back_chest", ["Front"] = "flinch_front_chest"},
-	[ACT_FLINCH_STOMACH] = {["Back"] = "flinch_back_gut", ["Front"] = "flinch_front_gut"}
+	[ACT_FLINCH_CHEST] = {["Back"] = "Flinch_Back_Chest", ["Front"] = "Flinch_Front_Chest"},
+	[ACT_FLINCH_STOMACH] = {["Back"] = "Flinch_Back_Gut", ["Front"] = "Flinch_Front_Gut"}
 }
 
 function ENT:DoGestureSeq(seq)
@@ -230,13 +269,19 @@ local normalgroups = {
 	[3] = true
 }
 
+ENT.BackHealth = 100
+
 function ENT:OnTraceAttack( info, dir, trace )
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	--print(trace.HitGroup)
 	if !normalgroups[trace.HitGroup] then
-		info:ScaleDamage( 0.25 )
+		if info:GetDamageType() == DMG_BLAST then
+			info:ScaleDamage( 0.25 )
+		else
+			info:ScaleDamage( 0 )
+		end
 	end
-	if !self.DoingFlinch  then
+	if !self.DoingFlinch and info:GetDamage() > 15 and math.random(1,2) == 1 then
 		if self.FlinchHitgroups[trace.HitGroup] then
 			local act
 			if self.Variations[self.FlinchHitgroups[trace.HitGroup]] then
@@ -260,7 +305,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 				end
 			end )
 			local func = function()
-				self:DoGestureSeq(id)
+				self:PlaySequenceAndWait(id)
 				--self:StartActivity(self.IdleAnim[1])
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
@@ -289,7 +334,7 @@ function ENT:Wander()
 			local nav = navs[math.random(#navs)]
 			local pos = goal
 			if nav then pos = nav:GetRandomPoint() end
-			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )
+			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		else
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
@@ -307,6 +352,9 @@ function ENT:Wander()
 			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			coroutine.wait(1)
 		else
+			if self:GetActivity() != ACT_IDLE then
+				self:StartActivity(ACT_IDLE)
+			end
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
 					if IsValid(self) and !IsValid(self.Enemy) then
@@ -328,7 +376,7 @@ function ENT:OnOtherKilled( victim, info )
 	if rel == "foe" and victim == self.Enemy then
 		if !victim.BeenNoticed then
 			victim.BeenNoticed = true
-			self:Speak("KilledEnemy")
+			self:Speak("OnVictory")
 		end
 		local found = false
 		if !istable(self.temptbl) then self.temptbl = {} end
@@ -351,77 +399,50 @@ function ENT:OnOtherKilled( victim, info )
 			end
 		end
 		if !found then
-			if math.random(1,3) == 1 then
-				local func = function()
-					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[1], self.MoveSpeed*self.MoveSpeedMultiplier )
-					self.IdleAnim = {ACT_IDLE}
-				end
-				table.insert(self.StuffToRunInCoroutine,func)
-			end
+
 		end
+	elseif rel == "friend" and victim:GetClass() == self:GetClass() then
+		self.Berserk = true
+		self.RageBonus = 0.83
 	end
 end
 
-function ENT:RunAround()	
-	local r = math.random(1,2)
-	if r == 2 then r = -1 end
-	local t = CurTime()+math.random(2,3)
-	local eff = EffectData()
-	eff:SetOrigin(self.Latcher:GetPos())
-	util.Effect("BloodImpact",eff)
-	local dir = self:GetForward()+self:GetRight()*r
-	local goal = self:GetPos()+(dir*900)
-	self.loco:SetDesiredSpeed(self.MoveSpeed)
-	while (self:Health() > 0 ) do
-		if self:GetSequence() != self:LookupSequence("stunned_run") then
-			self:SetSequence("stunned_run")
-		end
-		if t < CurTime() then
-			local tim = math.random(2,4)
-			t = CurTime()+tim
-			r = math.random(1,2)
-			if r == 2 then r = -1 end
-			local eff = EffectData()
-			eff:SetOrigin(self.Latcher:GetPos())
-			util.Effect("BloodImpact",eff)
-			dir = self:GetForward()+self:GetRight()*r
-			goal = self:GetPos()+(dir*900)
-			self:TakeDamage(20,self,self)
-			timer.Simple( tim/2, function()
+function ENT:OnLostSeenEnemy(ent)
+	if ent == self.Enemy then
+		if !self.OnLostContactSpoke then
+			self.OnLostContactSpoke = true
+			timer.Simple( math.random(5,10) ,function()
 				if IsValid(self) then
-					local eff = EffectData()
-					eff:SetOrigin(self.Latcher:GetPos())
-					util.Effect("BloodImpact",eff)
+					self.OnLostContactSpoke = false
 				end
 			end )
+			self:Speak("OnLostContact")
 		end
-		self.loco:Approach(goal,1)
-		self.loco:FaceTowards(goal)
-		coroutine.wait(0.01)
 	end
 end
-
-
 
 function ENT:CustomBehaviour(ent)
 	if !IsValid(ent) then return end
-	if !ent:IsOnGround() then return self:StartShooting(ent) end
+	--if !ent:IsOnGround() then return self:StartShooting(ent) end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
-	if !self.IsSniper and ent.GetEnemy and ent:GetEnemy() == self and los then
-		if math.random(1,100) <= self.DodgeChance and !self.Dodged then
-			local anim = seqs[math.random(1,2)]
-			self:Speak("Dive")
-			self:Dodge(anim)
-		end
-	end
 	if los then
 		if IsValid(ent) then
 			self.LastSeenEnemyPos = ent:GetPos()
 		end
-		if dist < 300^2 then
+		if dist < self.ChaseRange^2 then
 			self:StartChasing(ent,self.RunAnim[math.random(1,#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
 		else
+			if !self.Taunting and math.random(1,3) == 1 then
+				self.Taunting = true
+				self:Speak("OnTaunt")
+				timer.Simple( math.random(5,10), function()
+					if IsValid(self) then
+						self.Taunting = false
+					end
+				end )
+				return self:PlaySequenceAndWait("Taunt")
+			end
 			self:StartShooting(ent)
 		end
 	elseif !los then
@@ -429,10 +450,13 @@ function ENT:CustomBehaviour(ent)
 	end
 end
 
+ENT.RageBonus = 1
+
 function ENT:GetNear(ent)
-	local t = math.random(3,6)
+	local t = (math.random(3,6))/self.RageBonus
 	local stop = false
 	local shoot = false
+	self:Speak("SFXOnBeamCharge")
 	timer.Simple( t, function()
 		if IsValid(self) then
 			stop = true
@@ -469,14 +493,8 @@ end
 function ENT:StartShooting(ent)
 	ent = ent or self.Enemy or self:GetEnemy()
 	if !IsValid(ent) then return end
-	local crouch = math.random(1,2)
-	if crouch == 1 then
-		self:StartActivity( ACT_COWER )
-		timer.Simple( 2, function()
-			if IsValid(self) then
-				self:ShootBullet(ent)
-			end
-		end )
+	if math.random(1,2) == 1 then
+		self:Speak("SFXOnBeamCharge")
 		for i = 1, 30 do
 			timer.Simple( 0.1*i, function()
 				if IsValid(self) and IsValid(ent) then
@@ -484,7 +502,13 @@ function ENT:StartShooting(ent)
 				end
 			end )
 		end
-		coroutine.wait(3)
+		timer.Simple( 2/self.RageBonus, function()
+			if IsValid(self) then
+				self:ShootBullet(ent)
+			end
+		end )
+		self:ResetSequence( "Crouch_Unarmed_Idle" )
+		coroutine.wait(3/self.RageBonus)
 	else
 		self:GetNear(ent)
 	end
@@ -501,57 +525,22 @@ end
 function ENT:ShootBullet(ent)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then return end
-	self:DoGestureSeq("fuel_rod_fire")
+	self:DoGestureSeq("Fuel_Rod_Fire")
 	self:FireWep()
 	--self:CustomBehaviour(ent)
 end
 
 function ENT:FireWep()
-	local ent = ents.Create("astw2_halo_ce_fuel_rod_launched")
+	local ent = ents.Create("astw2_haloreach_fuelrod_projectile")
 	ent:SetPos(self:GetShootPos())
 	ent:SetAngles(self:GetAngles())
 	ent:SetOwner(self)
 	ent:Spawn()
-	self:EmitSound("halo/combat_evolved/weapons/fuelrodcannon_fire.ogg",100)
+	self:Speak("SFXOnBeamFire")
 	local phys = ent:GetPhysicsObject()
 	if IsValid(phys) then
-		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(math.Rand(0.3,0))+self:GetRight()*(math.Rand(0.4,-0.4)))))*1000)
+		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(math.Rand(0.3,0)))))*1000)
 	end
-end
-
-function ENT:Dodge( name, speed )
-
-	self.Dodged = true
-	
-	timer.Simple( math.random(3,5), function()
-		if IsValid(self) then
-			self.Dodged = false
-		end
-	end )
-
-	self.loco:SetDesiredSpeed( self.MoveSpeed*self.MoveSpeedMultiplier )
-	local len = self:SetSequence( name )
-	self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
-	speed = speed or 1
-
-	self:ResetSequenceInfo()
-	self:SetCycle( 0 )
-	self:SetPlaybackRate( speed )
-
-	local dir = -1
-	
-	if name == "dive_right" then dir = 1 end
-	
-	for i = 1, len*20 do
-		timer.Simple( i*0.05, function()
-			if IsValid(self) then
-				self.loco:Approach(self:GetPos()+self:GetRight()*dir,1)
-			end
-		end )
-	end
-
-	coroutine.wait( len / speed )
-
 end
 
 function ENT:GetShootPos()
@@ -577,18 +566,14 @@ function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	print(cycle)
 	print(type)
 	print(options)]]
-	--[[if options == self.ShootEvent then
-		self:ShootBullet(self.Enemy)
-	end]]
+	if options == self.MeleeEvent then
+		self:DoMeleeDamage()
+	end
 end
-
-local se = {
-	[1] = "Step Right",
-	[2] = "Step Left"
-}
 
 function ENT:DoMeleeDamage()
 	local damage = self.MeleeDamage
+	util.ScreenShake( self:WorldSpaceCenter(), 5, 5, 0.5, 500 )
 	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
 		if v != self and self:CheckRelationships(v) != "friend" then
 			local d = DamageInfo()
@@ -610,38 +595,73 @@ function ENT:DoMeleeDamage()
 end
 
 function ENT:Melee()
-	self:Speak("Melee")
-	timer.Simple( 0.85, function()
-		if IsValid(self) then
-			self:DoMeleeDamage()
-		end
-	end )
+	self:Speak("OnMelee")
 	local ang = self:GetAimVector():Angle()
-	self:SetAngles(Angle(self:GetAngles().p,ang.y,self:GetAngles().r))
-	local name = "melee"
-	self.loco:SetDesiredSpeed( self.MoveSpeed*(self.MoveSpeedMultiplier/2) )
+	local name = "Melee_"..math.random(1,3)..""
+	local move = false
+	local angl = true
+	local yd = 0
+	local dir = 1
+	local dir2 = 0
+	if IsValid(self.Enemy) then
+		local ydif = math.AngleDifference(self:GetAngles().y,ang.y)
+		if ydif < 0 then ydif = ydif+360 end
+		--print(ydif)
+		if ydif >= 315 or ydif < 45 then
+			self:SetAngles(Angle(self:GetAngles().p,ang.y,self:GetAngles().r))
+			move = true
+			angl = false
+		elseif ydif >= 225 and ydif < 315 then -- Left
+			name = "Melee_Left"
+			yd = 45
+			dir = 0
+			dir2 = -1
+			move = true
+		elseif ydif < 225 and ydif >= 135 then -- Back
+			dir = -1
+			name = "Melee_Back"
+			yd = -180
+			move = true
+		elseif ydif >= 45 and ydif < 135 then -- Right
+			dir = 0
+			dir2 = 1
+			name = "Melee_Right"
+			yd = -45
+			move = true
+		end
+	end	
 	local len = self:SetSequence( name )
-	self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
+	if move then
+		local dist = self:GetSequenceMoveDist(self:LookupSequence(name))
+		self.loco:SetDesiredSpeed( (dist/(len)) )
+	end
+	--self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
 	speed = speed or 1
 
 	self:ResetSequenceInfo()
 	self:SetCycle( 0 )
 	self:SetPlaybackRate( speed )
-
-	local dir = 1
 	
-	for i = 1, len*15 do
-		timer.Simple( (i*0.05), function()
-			if IsValid(self) then
-				self.loco:Approach(self:GetPos()+self:GetForward()*dir,1)
-			end
-		end )
+	if move then
+		for i = 1, len*10 do
+			timer.Simple( (i*0.1), function()
+				if IsValid(self) then
+					self.loco:Approach(self:GetPos()+self:GetForward()*dir+self:GetRight()*dir2,1)
+				end
+			end )
+		end
 	end
 
-	coroutine.wait( len / speed )
+	coroutine.wait( (len / speed) )
+	self:SetAngles(self:GetAngles()+Angle(0,yd,0))
 end
 
 function ENT:StartChasing( ent, anim, speed, los )
+	if los then
+		self:Speak("OnCharge")
+	else
+		self:Speak("OnInvestigate")
+	end
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
 	self:ChaseEnt(ent,los)
@@ -719,7 +739,10 @@ function ENT:OnHaveEnemy(ent)
 		new = false
 	end
 	if new then
-		self.IdleAnim = {ACT_COWER}
+		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence( "Crouch_Unarmed_Idle" ))}
+		self:Speak("OnAlert")
+	else
+		self:Speak("OnWarnIncoming")
 	end
 	self.LastSeenEnemyPos = ent:GetPos()
 	self:AlertAllies(ent)
@@ -745,15 +768,65 @@ function ENT:AlertAllies(ent) -- We find allies in sphere and we alert them
 	end
 end
 
-function ENT:DoKilled( info )
-	if self.loco:IsOnGround() then
-		if info:GetDamageType() == DMG_BLAST then
-			self:Speak("DeathViolent")
+function ENT:DoKilledAnim()
+	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
+		if self.KilledDmgInfo:GetDamage() <= 150 then
+			self:Speak("OnDeath")
+			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
+			if anim == true then 
+				local rag = self:CreateRagdoll(self.KilledDmgInfo)
+				return
+			end
+			local seq, len = self:LookupSequence(anim)
+			timer.Simple( len, function()
+				if IsValid(self) then
+					local rag
+					if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+						timer.Simple( 60, function()
+							if IsValid(rag) then
+								rag:Remove()
+							end
+						end)
+					end
+					rag = self:CreateRagdoll(DamageInfo())
+				end
+			end )
+			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
 		else
-			self:Speak("DeathQuiet")
+			self:Speak("OnDeathPainful")
+			local rag
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(rag) then
+						rag:Remove()
+					end
+				end)
+			end
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
-		self:Speak("DeathFalling")
+		self:Speak("OnDeathThrown")
+		self.FlyingDead = true
+		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
+		dir = dir+self:GetUp()*2
+		local force = self.KilledDmgInfo:GetDamage()*1.5
+		self:SetAngles(Angle(0,dir:Angle().y,0))
+		self.loco:Jump()
+		self.loco:SetVelocity(dir*force)
+		coroutine.wait(0.5)
+		while (!self.HasLanded) do
+			coroutine.wait(0.01)
+		end
+		self:PlaySequenceAndWait("Dead_Land")
+		local rag
+		if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+			timer.Simple( 60, function()
+				if IsValid(rag) then
+					rag:Remove()
+				end
+			end)
+		end
+		rag = self:CreateRagdoll(DamageInfo())
 	end
 end
 
@@ -766,141 +839,27 @@ function ENT:DetermineDeathAnim( info )
 	--print(y)
 	local anim
 	if ( y <= 45 or y >= 315 ) then
-		anim = "die_back_gut"
+		anim = "Die_Back_Gut"
 	elseif ( y > 45 and y <= 135 ) then -- left
-		anim = "die_left_gut"
+		anim = "Die_Left_Gut"
 	elseif ( y < 225 and y > 135 ) then -- front
-		anim = "die_front_gut"
+		anim = "Die_Front_Gut"
 	elseif y >= 225 then -- right
-		anim = "die_right_gut"
+		anim = "Die_Right_Gut"
 	end
+	if math.random(1,3) == 1 then anim = "Die_Head" end
 	if info:GetDamageType() == DMG_BLAST then
-		anim = "dead_airborne"
+		anim = "Dead_Airborne"
 	end
 	return anim
 end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	local anim = self:DetermineDeathAnim( dmginfo )
-	self:DoKilled(dmginfo)
-	local corpse = ents.Create("prop_dynamic")
-	corpse:SetPos(self:GetPos())
-	corpse:SetModel(self:GetModel())
-	corpse:SetAngles(self:GetAngles())
-	corpse:Spawn()
-	corpse:Activate()
-	corpse:ResetSequenceInfo()
-	
-	for i = 1, #self:GetBodyGroups() do
-		local tbl = self:GetBodyGroups()[i]
-		local set = self:GetBodygroup(tbl.id)
-		corpse:SetBodygroup(tbl.id,set)
-	end
-	local id, len = corpse:LookupSequence(anim)
-	corpse:SetSequence(id)
-	if anim == "dead_airborne" then
-		local name = "RestInPeace"..corpse:EntIndex()..""
-		local prop = ents.Create("prop_physics")
-		prop:SetModel("models/Combine_Helicopter/helicopter_bomb01.mdl")
-		prop:SetPos(corpse:GetPos()+corpse:GetUp()*40)
-		prop:SetNoDraw(true)
-		prop:Spawn()
-		prop:Activate()
-		corpse:SetParent(prop)
-		local phys = prop:GetPhysicsObject()
-		if IsValid(phys) then
-			phys:Wake()
-			local di = (corpse:GetPos()-dmginfo:GetDamagePosition()):GetNormalized()
-			corpse:SetAngles(Angle(corpse:GetAngles().p,di:Angle().y,corpse:GetAngles().r))
-			local dir = di+corpse:GetUp()*2
-			phys:ApplyForceCenter( dir*(dmginfo:GetDamage()*50) )
-		end
-		local stop = false
-		local eng
-		prop:AddCallback( "PhysicsCollide", function( ent, data )
-			eng = data.HitNormal:Angle()
-			local tr = util.TraceLine( {
-				start = ent:GetPos(),
-				endpos = ent:GetPos()+Vector(0,0,-40),
-				filter = {ent,corpse}
-			} )
-			stop = tr.Hit
-		end )
-		timer.Create( name, 0.2, 0, function()
-			if IsValid(corpse) then
-				if stop then
-					local body = ents.Create("prop_dynamic")
-					--body:SetPos(corpse:GetPos())
-					body:SetModel(corpse:GetModel())
-					body:SetAngles(Angle(eng.p-90,eng.y,eng.r))
-					body:Spawn()
-					body:Activate()
-					body:ResetSequenceInfo()
-					local i, le = body:LookupSequence("dead_land")
-				--	local tr = util.TraceLine( {
-				--		start = corpse:GetPos(),
-				--		endpos = corpse:GetPos()+Vector(0,0-100),
-				--		filter = {prop,corpse,body}
-				--	} )
-				--	if tr.Hit then
-					body:SetPos(prop:NearestPoint(prop:GetPos()+Vector(0,0,-100)))
-				--	end
-					body:ResetSequence(i)
-					if IsValid(prop) then prop:Remove() end
-					timer.Simple( le-0.1, function()
-						if IsValid(body) then
-							body:SetPlaybackRate(0)
-						end
-					end )
-					undo.ReplaceEntity( corpse, body )
-					corpse:Remove()
-					if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
-						timer.Simple( 30, function()
-							if IsValid(body) then
-								body:Remove()
-							end
-						end)
-					end
-					timer.Remove(name)
-				else
-					if corpse:GetCycle() > 0.9  then
-						corpse:ResetSequence("dead_airborne")
-					end
-				end
-			else
-				timer.Remove(name)
-			end
-		end )
-	else
-		timer.Simple( len-0.1, function()
-			if IsValid(corpse) then
-				corpse:SetPlaybackRate(0)
-			end
-		end )
-		if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
-			timer.Simple( 30, function()
-				if IsValid(corpse) then
-					corpse:Remove()
-				end
-			end)
-		end
-	end
-	--corpse:SetCycle(1)
-	corpse:SetPlaybackRate(1)
-	corpse.Faction = self.Faction
-	if !corpse:IsOnGround() then
-		local tr = util.TraceLine( {
-			start = self:GetPos(),
-			endpos = self:GetPos()+self:GetUp()*-999999,
-			filter = {self,corpse}
-		} )
-		if tr.Hit then
-			corpse:SetPos(tr.HitPos)
-		end
-	end
-	undo.ReplaceEntity( self, corpse )
-	self:Remove()
+	self.KilledDmgInfo = dmginfo
+	self.BehaveThread = nil
+	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
+	coroutine.resume( self.DrownThread )
 end
 
 -- Basic ASTW 2 compatibility

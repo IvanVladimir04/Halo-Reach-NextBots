@@ -182,25 +182,22 @@ end
 function ENT:Speak(voice)
 	local character = self.Voices["Elite"]
 	if self.IsBrute then character = self.Voices["Brute"] end
+	if self.CurrentSound then self.CurrentSound:Stop() end
 	if character[voice] and istable(character[voice]) then
 		local sound = table.Random(character[voice])
-		self:EmitSound(sound,100)
+		self.CurrentSound = CreateSound(self,sound)
+		self.CurrentSound:SetSoundLevel(100)
+		self.CurrentSound:Play()
 	end
 end
 
 function ENT:BeforeThink()
 	local valid = IsValid(self.Enemy)
 	if self.NISound < CurTime() and !valid then
-		if istable(self.IdleSound) then
-			local snd = table.Random(self.IdleSound)
-			self:EmitSound(snd,100)
-		end
+		self:Speak("OnIdle")
 		self.NISound = CurTime()+self.IdleSoundDelay
 	elseif self.NISound < CurTime() and valid then
-		if istable(self.IdleCombatSound) then
-			local snd = table.Random(self.IdleCombatSound)
-			self:EmitSound(snd,100)
-		end
+		self:Speak("OnAttack")
 		self.NISound = CurTime()+self.IdleSoundDelay
 	end
 end
@@ -1014,7 +1011,12 @@ function ENT:OnInjured(dmg)
 			dmg:SubtractDamage(self.Shield)
 			self.Shield = self.Shield-math.abs(dm)
 		end
-		if self.Shield < 0 then self.Shield = 0 end
+		if self.Shield < 0 then 
+			self.Shield = 0 
+			if self.ShieldActual > 0 then
+				ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+			end
+		end
 		local shild = self.Shield
 		timer.Simple( 3, function()
 			if IsValid(self) and shield == self.ShieldH then
@@ -1154,7 +1156,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.Shield > 0 and self.HasArmor then
-		ParticleEffect( "halo_reach_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )
+		ParticleEffect( "halo_reach_shield_impact_effect", self:WorldSpaceCenter(), Angle(0,0,0), self )
 	end
 	--if !self.DoingFlinch and info:GetDamage() > self.FlinchDamage then
 		--if self.FlinchHitgroups[trace.HitGroup] then

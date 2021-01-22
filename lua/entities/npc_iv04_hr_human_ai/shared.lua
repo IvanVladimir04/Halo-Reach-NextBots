@@ -47,6 +47,8 @@ ENT.IsUNSC = true
 
 ENT.CollisionMask = MASK_NPCSOLID
 
+ENT.SearchJustAsSpawned = false
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -74,6 +76,51 @@ ENT.FlinchMove = {
 	[7] = 0
 }
 
+ENT.ShootCorpseFilter = {
+    ["astw2_haloreach_concussion_rifle"] = true,
+    ["astw2_haloreach_grenade_launcher_falcon"] = true,
+    ["astw2_haloreach_fuel_rod"] = true,
+    ["astw2_haloreach_grenade_launcher"] = true,
+    ["astw2_haloreach_rocket_launcher"] = true,
+    ["astw2_haloreach_sniper_rifle"] = true,
+    ["astw2_haloreach_spartan_laser"] = true,
+    ["astw2_haloreach_needler"] = true,
+    ["astw2_halo2a_rocketlauncher"] = true,
+    ["astw2_halo2a_fuelrod"] = true,
+    ["astw2_halo2_fuelrod"] = true,
+    ["astw2_halo2_rocketlauncher"] = true,
+    ["astw2_halo3_fuelrod"] = true,
+    ["astw2_halo3_rocketlauncher"] = true,
+    ["astw2_halo3_spartanlaser"] = true,
+    ["astw2_halo4_concussion_rifle"] = true,
+    ["astw2_halo4_fuel_rod"] = true,
+    ["astw2_halo4_rail_gun"] = true,
+    ["astw2_halo4_rocket_launcher"] = true,
+    ["astw2_halo4_spartan_laser"] = true,
+    ["astw2_halo_cea_fuel_rod"] = true,
+    ["astw2_halo_cea_rocket_launcher"] = true,
+    ["astw2_halo_cea_rocket_launcher"] = true,
+    ["astw2_halo_ce_fuel_rod"] = true,
+    ["astw2_halo_ce_rocket_launcher"] = true,
+    ["astw2_halo_custom_gauss_sniper"] = true,
+    ["astw2_halo_soi_needle_launcher"] = true,
+    ["astw2_halo_soi_rocket_launcher"] = true,
+    ["astw2_halo_soi_spartan_laser"] = true,
+    ["astw2_halo_spv3_rocket_launcher"] = true,
+    ["astw2_nightfire_sentinel"] = true,
+    ["astw2_nightfire_scorpion"] = true,
+    ["astw2_nightfire_miltek"] = true,
+    ["astw2_asw_grenadelauncher"] = true,
+    ["astw2_gow_boomshot"] = true,
+    ["astw2_gow_booshka"] = true,
+    ["astw2_gow_torquebow"] = true,
+    ["astw2_gow_trapbow"] = true,
+    ["astw2_tr5_gl"] = true,
+    ["astw2_tr3_rocket"] = true,
+    ["astw2_tr3_gl"] = true,
+    ["astw2_tr2_gl"] = true
+}
+
 ENT.UsableWeps = {
 	["astw2_haloreach_assault_rifle"] = true,
 	["astw2_haloreach_dmr"] = true,
@@ -83,6 +130,11 @@ ENT.UsableWeps = {
 	["astw2_haloreach_sniper_rifle"] = true,
 	["astw2_haloreach_spartan_laser"] = true,
 	["astw2_haloreach_needler"] = true
+}
+
+ENT.PossibleVoices = {
+	[1] = "Trooper1",
+	[2] = "Trooper3"
 }
 
 function ENT:Give(class)
@@ -104,13 +156,24 @@ end
 
 function ENT:OnInitialize()
 	self.StartPosition = self:GetPos()
+	self.VoiceType = self.PossibleVoices[math.random(#self.PossibleVoices)]
 	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	self:DoInit()
 	self:SetupHoldtypes()
 end
 
 function ENT:DoInit()
+end
 
+function ENT:Speak(voice)
+	local character = self.Voices[self.VoiceType]
+	if self.CurrentSound then self.CurrentSound:Stop() end
+	if character[voice] and istable(character[voice]) then
+		local sound = table.Random(character[voice])
+		self.CurrentSound = CreateSound(self,sound)
+		self.CurrentSound:SetSoundLevel(100)
+		self.CurrentSound:Play()
+	end
 end
 
 function ENT:GetCurrentWeaponProficiency()
@@ -162,6 +225,7 @@ function ENT:Use( activator )
 									self:Give(gift)
 									self:SetupHoldtypes()
 									self.CanUse = true
+									if math.random(1,2) == 1 then self:Speak("OnTrade") end
 									--[[local clone = ents.Create(self:GetClass())
 									clone:SetPos(self:GetPos())
 									clone:SetAngles(self:GetAngles())
@@ -247,6 +311,9 @@ function ENT:SetupHoldtypes()
 		self.CalmTurnRightAnim = "Pistol_Holstered_Turn_Right_Idle"
 		self.TurnLeftAnim = "Pistol_Turn_Left_Idle"
 		self.TurnRightAnim = "Pistol_Turn_Right_Idle"
+		self.AirAnim = "Jump_Pistol"
+		self.LandAnim = "Land_Pistol_Soft"
+		self.LandHardAnim = "Land_Pistol_Hard"
 		self.SurpriseAnim = "Surprised_1handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
@@ -287,6 +354,9 @@ function ENT:SetupHoldtypes()
 		self.CalmTurnRightAnim = "Passive_Turn_Right_Idle"
 		self.TurnLeftAnim = "Rifle_Turn_Left_Idle"
 		self.TurnRightAnim = "Rifle_Turn_Right_Idle"
+		self.AirAnim = "Jump_Ar"
+		self.LandAnim = "Land_Soft"
+		self.LandHardAnim = "Land_Hard"
 		self.SurpriseAnim = "Surprised_2handed"
 		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle_Crouch"))}
 		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle_Crouch"))}
@@ -303,6 +373,9 @@ function ENT:SetupHoldtypes()
 		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile"))}
 		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Missile"))
 		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Missile"))
+		self.AirAnim = "Jump_Missile"
+		self.LandAnim = "Land_Soft"
+		self.LandHardAnim = "Land_Hard"
 		self.CalmTurnLeftAnim = "Missile_Turn_Left_Idle"
 		self.CalmTurnRightAnim = "Missile_Turn_Right_Idle"
 		self.TurnLeftAnim = "Missile_Turn_Left_Idle"
@@ -368,6 +441,20 @@ function ENT:DoCustomIdle()
 end
 
 function ENT:OnHaveEnemy(ent)
+	if !self.HasSeenEnemies then
+		self.HasSeenEnemies = true
+		self:Speak("OnAlert")
+	else
+		if !self.SpokeMore then
+			self:Speak("OnAlertMoreFoes")
+			self.SpokeMore = true
+			timer.Simple( math.random(5,10), function()
+				if IsValid(self) then
+					self.SpokeMore = false
+				end
+			end )
+		end
+	end
 	if !self.IsInVehicle then
 		if !self.BeenSurprised and math.random(1,3) == 1 then
 			self.BeenSurprised = true
@@ -423,12 +510,31 @@ end
 function ENT:OnLeaveGround(ent)
 	if self:Health() <= 0 then 
 		self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
+	else
+		self.LastTimeOnGround = CurTime()
+		local t = self.LastTimeOnGround
+		timer.Simple( 0.6, function()
+			if IsValid(self) and self.LastTimeOnGround == t then
+				self:ResetSequence(self.AirAnim)
+			end
+		end )
 	end
 end
 
 function ENT:OnLandOnGround(ent)
 	if self.FlyingDead then
 		self.HasLanded = true
+	elseif self.LastTimeOnGround then
+		local seq = self.LandAnim
+		if ( CurTime() - self.LastTimeOnGround ) > 1 then
+			seq = self.LandHardAnim
+		end
+		self.LastTimeOnGround = CurTime()
+		local func = function()
+			self:PlaySequenceAndWait(seq)
+		end
+		table.insert(self.StuffToRunInCoroutine,func)
+		self:ResetAI()
 	end
 end
 
@@ -473,6 +579,27 @@ function ENT:OnInjured(dmg)
 			self:SetEnemy(dmg:GetAttacker()) 
 		end
 	end
+	if !self.SpokeInjured then
+		self.SpokeInjured = true
+		timer.Simple( math.random(5,10), function()
+			if IsValid(self) then
+				self.SpokeInjured = false
+			end
+		end )
+		if dmg:GetDamage() > 10 then
+			self:Speak("OnHurtLarge")
+		else
+			if math.random(1,2) == 1 then
+				self:Speak("OnHurt")
+			else
+				timer.Simple( math.random(0.5,1.5), function()
+					if IsValid(self) then
+						self:Speak("OnUnderAttack")
+					end
+				end )
+			end
+		end
+	end
 	local total = dmg:GetDamage()
 	--print(self.Shield, "before")
 	self.HealthActual = self:Health()
@@ -510,6 +637,7 @@ function ENT:HasToReload()
 end
 
 function ENT:DoMelee()
+	self:Speak("OnMelee")
 	if IsValid(self.Enemy) then
 		local ang = (self.Enemy:GetPos()-self:GetPos()):GetNormalized():Angle()
 		self:SetAngles(Angle(0,ang.y,0))
@@ -567,6 +695,7 @@ function ENT:ThrowGrenade(dist)
 	end )
 	self.ThrowingGrenade = true
 	local grenade
+	self:Speak("OnGrenadeThrow")
 	timer.Simple( 0.8, function()
 		if IsValid(self) then
 			grenade = ents.Create("astw2_haloreach_frag_thrown")
@@ -1062,6 +1191,10 @@ function ENT:GetInfoNum(no,yes)
     return 1
 end
 
+function ENT:OnLostSeenEnemy(ent)
+	self:Speak("OnLostContact")
+end
+
 function ENT:CustomBehaviour(ent,range)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
@@ -1168,6 +1301,9 @@ function ENT:CustomBehaviour(ent,range)
 			if table.Count(tbl) > 0 or #tbl > 0 then
 				local area = table.Random(tbl)
 				self:MoveToPosition( area, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				if math.random(1,2) == 1 then
+					self:Speak("OnCover")
+				end
 				return
 			end
 		end
@@ -1271,6 +1407,9 @@ function ENT:CustomBehaviour(ent,range)
 			return
 		elseif self.NeedsToCover then
 			local r = math.random(3,4)
+			if math.random(1,2) == 1 then
+				self:Speak("OnCover")
+			end
 			self.NeedsToCover = false
 			local dir = self:GetForward()*-1
 			timer.Simple( r*0.25, function()
@@ -1309,6 +1448,7 @@ function ENT:CustomBehaviour(ent,range)
 				return
 			end
 			if self.StopShoot then
+				self:Speak("OnCharge")
 				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
 			end
 			if !IsValid(ent) then return end
@@ -1390,6 +1530,8 @@ function ENT:CustomBehaviour(ent,range)
 		
 		else
 		
+			self:Speak("OnInvestigate")
+		
 			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false)
 		
 		end
@@ -1431,7 +1573,7 @@ function ENT:OnOtherKilled( victim, info )
 			if attacker:IsPlayer() and self.FriendlyToPlayers then
 				self.NoticedKills = self.NoticedKills+1
 				if self.NoticedKills > 1 then
-					--self:Speak("AllianceBroken")
+					self:Speak("OnBetrayal")
 					self.FriendlyToPlayers = false
 					self.LastAllyKill = CurTime()
 					local last = self.LastAllyKill
@@ -1441,12 +1583,12 @@ function ENT:OnOtherKilled( victim, info )
 								self.FriendlyToPlayers = true
 								self.NoticedKills = 0
 								self:SetEnemy(nil)
-								--self:Speak("AllianceReformed")
+								self:Speak("OnForgive")
 							end
 						end
 					end )
 				else
-					--self:Speak("FriendKilledByPlayer")
+					self:Speak("OnKillAlly")
 				end
 				
 			elseif attacker:IsPlayer() and !self.FriendlyToPlayers then
@@ -1459,7 +1601,7 @@ function ENT:OnOtherKilled( victim, info )
 							self.NoticedKills = 0
 							self.FriendlyToPlayers = true
 							self:SetEnemy(nil)
-							--self:Speak("AllianceReformed")
+							self:Speak("OnForgive")
 						end
 					end
 				end )
@@ -1486,6 +1628,7 @@ function ENT:OnOtherKilled( victim, info )
 					--self:NearbyReply("KilledFriendAlly")
 				else
 					if self.SawAlliesDie then
+						self:Speak("OnPanic")
 						local AI = self.AIType
 						self.AIType = "Defensive"
 						local func = function()
@@ -1519,7 +1662,7 @@ function ENT:OnOtherKilled( victim, info )
 					self.MentionedSpree = false
 				end
 			end )
-			--self:Speak("KillingSpree")
+			self:Speak("OnTaunt")
 			self.Taunting = true
 			timer.Simple( 2, function()
 				if IsValid(self) then
@@ -1547,29 +1690,42 @@ function ENT:OnOtherKilled( victim, info )
 		end )
 	end
 	if victim == self.Enemy then
-		local spot = victim:GetPos()
+		local spot = victim:WorldSpaceCenter()
 		local new = self:GetATarget()
-		if !IsValid(new) and self.AIType == "Offensive" and math.random(1,2) == 1 then
-			self.SpecificGoal = spot
-			local func = function()
-				if self.IsInVehicle then return end
-				self:WanderToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
-				local lim = math.random(4,6)
-				local old = self.Weapon.Fire_AngleOffset
-				self.Weapon.Fire_AngleOffset = Angle(math.AngleDifference(self:GetAimVector():Angle().p,self:EyeAngles().p),math.AngleDifference(self:EyeAngles().y,self:GetAimVector():Angle().y),0)
-				for i = 1, lim do
-					timer.Simple( (self.Weapon.Primary.Delay*i), function()
-						if IsValid(self) and IsValid(self.Weapon) then
-							self.Weapon:ShootBullets()
-							self.Weapon:FiringEffects()
-							self.Weapon:EmitSound( self.Weapon.Sound, self.Weapon.Sound_Vol, self.Weapon.Sound_Pitch, 1, CHAN_WEAPON )
-							self:OnFiring()
-							if i == lim then self.SpecificGoal = nil self.Weapon.Fire_AngleOffset = old end
-						end
-					end )
-				end
+		if !IsValid(new) and self.AIType == "Offensive" and !self.ShootCorpseFilter[self:GetActiveWeapon():GetClass()] then
+			if victim:IsPlayer() and !self.CommentedTraitorDeath then
+				self.CommentedTraitorDeath = true
+				timer.Simple( math.random(2,3), function()
+					if IsValid(self) then
+						self.CommentedTraitorDeath = false
+					end
+				end )
+				self:Speak("OnKillPlayer")
 			end
-			table.insert(self.StuffToRunInCoroutine,func)
+			if math.random(1,2) == 1 then
+				self.SpecificGoal = spot
+				local func = function()
+					if self.IsInVehicle then return end
+					coroutine.wait(1)
+					self:MoveToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+					self:Speak("OnShootCorpse")
+					local lim = math.random(4,6)
+					local old = self.Weapon.Fire_AngleOffset
+					self.Weapon.Fire_AngleOffset = Angle(math.AngleDifference(self:GetAimVector():Angle().p,self:EyeAngles().p),math.AngleDifference(self:EyeAngles().y,self:GetAimVector():Angle().y),0)
+					for i = 1, lim do
+						timer.Simple( (self.Weapon.Primary.Delay*i), function()
+							if IsValid(self) and IsValid(self.Weapon) then
+								self.Weapon:ShootBullets()
+								self.Weapon:FiringEffects()
+								self.Weapon:EmitSound( self.Weapon.Sound, self.Weapon.Sound_Vol, self.Weapon.Sound_Pitch, 1, CHAN_WEAPON )
+								self:OnFiring()
+								if i == lim then self.SpecificGoal = nil self.Weapon.Fire_AngleOffset = old end
+							end
+						end )
+					end
+				end
+				table.insert(self.StuffToRunInCoroutine,func)
+			end
 		end
 	end
 end
@@ -1620,6 +1776,10 @@ ENT.UpdateDelay = 0.5
 
 ENT.TraceMask = MASK_ALL
 
+function ENT:OnLoseEnemy()
+	self:Speak("OnInvestigateFail")
+end
+
 function ENT:ChaseEnt(ent,los)
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
@@ -1627,6 +1787,7 @@ function ENT:ChaseEnt(ent,los)
 	if !IsValid(ent) then return end
 	path:Compute( self, ent:GetPos() )
 	if ( !path:IsValid() ) then return "Failed" end
+	local t = CurTime()+15
 	while ( path:IsValid() and IsValid(ent) ) do
 		if self.NextUpdateT < CurTime() then
 			self.NextUpdateT = CurTime()+self.UpdateDelay
@@ -1647,7 +1808,7 @@ function ENT:ChaseEnt(ent,los)
 			end
 			if dist < self.MeleeRange^2 then
 				return self:DoMelee()
-			elseif dist > self.LoseEnemyDistance^2 then
+			elseif dist > self.LoseEnemyDistance^2 or (!cansee and !los and CurTime() > t) then
 				self:OnLoseEnemy()
 				self:SetEnemy(nil)
 				return "Lost enemy"
@@ -1721,6 +1882,15 @@ end
 
 function ENT:OnFiring()
 	self:DoGesture(self.ShootAnim)
+	if !self.SayingOnFiring then
+		self:Speak("OnAttack")
+		self.SayingOnFiring = true
+		timer.Simple( math.random(8,16), function()
+			if IsValid(self) then
+				self.SayingOnFiring = false
+			end
+		end )
+	end
 end
 
 function ENT:PlaySequenceAndPWait( name, speed, p )
@@ -1769,14 +1939,32 @@ function ENT:Think()
     end
 end]]
 
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,100)
+	end
+end
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
-	if !self.loco:GetVelocity():IsZero() then
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+		if !self.LMove then
+			self.LMove = CurTime()+0.3
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.3
+			end
+		end
 		local goal = self:GetPos()+self.loco:GetVelocity()
 		local y = (goal-self:GetPos()):Angle().y
 		local di = math.AngleDifference(self:GetAngles().y,y)
 		self:SetPoseParameter("move_yaw",di)
 		self:SetPoseParameter("walk_yaw",di)
+	else
+		self.LMove = nil
 	end
 	local look = false
 	local goal
@@ -1847,6 +2035,15 @@ function ENT:DoAnimationEvent(a)
 		if !CLIENT then
 			--local set = self.AnimSets[self.Weapon:GetClass()] or self.AnimSets["Rifle"]
 			local a,len = self:LookupSequence(self:SelectWeightedSequence(self.ReloadAnim))
+			if !self.SayingOnReload and self:Health() > 0 and IsValid(self.Enemy) then
+				self.SayingOnReload = true
+				self:Speak("OnReload")
+				timer.Simple( math.random(8,15), function()
+					if IsValid(self) then
+						self.SayingOnReload = false
+					end
+				end )
+			end
 			self:DoGesture(self.ReloadAnim)
 			local func = function()
 				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
@@ -1907,6 +2104,7 @@ end
 function ENT:DoKilledAnim()
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		if self.KilledDmgInfo:GetDamage() <= 150 then
+			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
 			if anim == true then 
 				local wep = ents.Create(self.Weapon:GetClass())
@@ -1941,6 +2139,7 @@ function ENT:DoKilledAnim()
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
 		else
+			self:Speak("OnDeathPainful")
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
 			wep:SetAngles(self.Weapon:GetAngles())
@@ -1960,6 +2159,7 @@ function ENT:DoKilledAnim()
 			rag = self:BecomeRagdoll(self.KilledDmgInfo)
 		end
 	else
+		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2

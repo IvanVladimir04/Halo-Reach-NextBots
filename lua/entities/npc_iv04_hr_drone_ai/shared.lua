@@ -218,9 +218,12 @@ end
 
 function ENT:Speak(voice)
 	local character = self.Voices["Drone"]
+	if self.CurrentSound then self.CurrentSound:Stop() end
 	if character[voice] and istable(character[voice]) then
 		local sound = table.Random(character[voice])
-		self:EmitSound(sound,100)
+		self.CurrentSound = CreateSound(self,sound)
+		self.CurrentSound:SetSoundLevel(100)
+		self.CurrentSound:Play()
 	end
 end
 
@@ -652,11 +655,6 @@ function ENT:OnOtherKilled( victim, info )
 				else
 					self:Speak("OnVictory")
 				end
-				local func = function()
-					--self:PlaySequenceAndWait("Celebrate")
-					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
-				end
-				table.insert(self.StuffToRunInCoroutine,func)
 			end
 		end
 	elseif rel == "friend" then
