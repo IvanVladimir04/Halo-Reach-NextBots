@@ -193,7 +193,7 @@ ENT.Voices = {
 ["OnMelee"] = { "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_1.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_10.ogg",
 			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_11.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_12.ogg",
 			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_13.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_14.ogg",
-			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_15.ogg", 'halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_16.ogg",
+			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_15.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_16.ogg",
 			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_2.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_3.ogg",
 			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_4.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_5.ogg",
 			"halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_6.ogg", "halo_reach/dialog/combat/trooper2/default/02_combat/melee_attack/melee_attack_7.ogg",
