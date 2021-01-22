@@ -1882,7 +1882,7 @@ end
 
 function ENT:OnFiring()
 	self:DoGesture(self.ShootAnim)
-	if !self.SayingOnFiring then
+	if !self.SayingOnFiring and IsValid(self.Enemy) then
 		self:Speak("OnAttack")
 		self.SayingOnFiring = true
 		timer.Simple( math.random(8,16), function()
