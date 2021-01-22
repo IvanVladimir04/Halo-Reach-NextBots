@@ -134,7 +134,10 @@ ENT.UsableWeps = {
 
 ENT.PossibleVoices = {
 	[1] = "Trooper1",
-	[2] = "Trooper3"
+	[2] = "Trooper2",
+	[3] = "Trooper3",
+	[4] = "Trooper4",
+	[5] = "Trooper5"
 }
 
 function ENT:Give(class)
