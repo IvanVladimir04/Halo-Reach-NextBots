@@ -1202,8 +1202,8 @@ function ENT:CustomBehaviour(ent,range)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
 	if !IsValid(self.Enemy) then return else ent = self.Enemy end
-	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
-	if IsValid(obstr) then	
+	local mins, maxs = ent:GetCollisionBounds()
+	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter()+ent:GetUp()*(maxs*0.25),{self,ent,self:GetOwner()})	if IsValid(obstr) then	
 		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
 			self.SeenVehicles[obstr] = true
 			self.CountedVehicles = self.CountedVehicles+1
@@ -1714,7 +1714,7 @@ function ENT:OnOtherKilled( victim, info )
 				local func = function()
 					if self.IsInVehicle then return end
 					coroutine.wait(1)
-					self:MoveToPosition(self.SpecificGoal+((self:WorldSpaceCenter()-(self.SpecificGoal)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
+					self:WanderToPosition(spot+((self:WorldSpaceCenter()-(spot)):GetNormalized()*80),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 					self:Speak("OnShootCorpse")
 					local lim = math.random(4,6)
 					local old = self.Weapon.Fire_AngleOffset
@@ -1798,7 +1798,8 @@ function ENT:ChaseEnt(ent,los)
 	while ( path:IsValid() and IsValid(ent) ) do
 		if self.NextUpdateT < CurTime() then
 			self.NextUpdateT = CurTime()+self.UpdateDelay
-			local cansee, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
+			local mins, maxs = ent:GetCollisionBounds()
+			local cansee, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter()+ent:GetUp()*(maxs*0.25),{self,ent,self:GetOwner()})
 			if IsValid(obstr) and ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
 				self:SetEnemy(obstr)
 				return "New Target"

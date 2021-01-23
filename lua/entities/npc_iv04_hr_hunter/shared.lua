@@ -159,7 +159,7 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 	if ent == game.GetWorld() then return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
 		local d = ent:GetPos()-self:GetPos()
-		ent:SetVelocity(d*5)
+		ent:SetVelocity(d*1)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )
@@ -206,6 +206,7 @@ function ENT:OnInjured(dmg)
 		if self.BackHealth <= 0 then
 			self.BrokenBack = true
 			self:SetBodygroup(1,1)
+			ParticleEffect( "iv04_halo_reach_plasma_explosion_small", self:WorldSpaceCenter()+self:GetUp()*60+self:GetForward()*-40, Angle(0,0,0), self )
 			for i = 1, #self.Gibs do
 				local mdl = self.Gibs[i]
 				local gib = ents.Create("prop_physics")
@@ -294,8 +295,6 @@ function ENT:OnTraceAttack( info, dir, trace )
 				else
 					act = tbl["Front"]
 				end
-			else
-				act = self:SelectWeightedSequence(self.FlinchHitgroups[trace.HitGroup])
 			end
 			self.DoingFlinch = true
 			local id, dur = self:LookupSequence(act)

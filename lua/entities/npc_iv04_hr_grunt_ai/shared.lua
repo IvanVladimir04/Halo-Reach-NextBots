@@ -2,7 +2,7 @@ AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
 ENT.MoveSpeed = 30
-ENT.MoveSpeedMultiplier = 6
+ENT.MoveSpeedMultiplier = 4
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
@@ -142,7 +142,7 @@ function ENT:OnInitialize()
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 	local relo = self.Weapon.AI_Reload
 	self:SetNWEntity("wep",self.Weapon)
-	self:SetBodygroup(0,math.random(0,1))
+	--self:SetBodygroup(0,math.random(0,1))
 	self.Weapon.AI_Reload = function()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
@@ -343,8 +343,68 @@ function ENT:DoGestureSeq(seq)
 	self:SetLayerCycle(gest,0)
 end
 
+ENT.BackpackHealth = 50
+
 function ENT:OnTraceAttack( info, dir, trace )
-	if trace.HitGroup == 1 then
+	--print(trace.HitGroup)
+	if trace.HitGroup == 2 and math.random(1,2) == 1 then
+		self.BackpackHealth = self.BackpackHealth-math.abs(info:GetDamage())
+		if self.BackpackHealth < 0 then
+			self:SetBodygroup(2,1)
+			local prop = ents.Create( "prop_physics" )
+			prop:SetModel( self.BackpackModel )
+			prop:SetPos(self:GetAttachment(self:LookupAttachment("methane_fx")).Pos)
+			prop:Spawn()
+			hook.Call( "OnNPCKilled", GAMEMODE, self, info:GetAttacker(), info:GetInflictor() )
+			if IsValid(self.Grenade1) then
+				self.Grenade1:SetParent(nil)
+				self.Grenade1:SetMoveType( MOVETYPE_VPHYSICS )
+				self.Grenade1:Initialize()
+				self.Grenade1.PhysicsCollide = self.Grenade1.OPC
+				self.Grenade1.kt = CurTime()+2
+			end
+			if IsValid(self.Grenade2) then
+				self.Grenade2:SetParent(nil)
+				self.Grenade2:SetMoveType( MOVETYPE_VPHYSICS )
+				self.Grenade2:Initialize()
+				self.Grenade2.PhysicsCollide = self.Grenade2.OPC
+				self.Grenade2.kt = CurTime()+2
+			end
+			local wep = ents.Create(self.Weapon:GetClass())
+			wep:SetPos(self.Weapon:GetPos())
+			wep:SetAngles(self.Weapon:GetAngles())
+			wep:Spawn()
+			self.Weapon:Remove()
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(wep) then
+						wep:Remove()
+					end
+				end)
+			end
+			self.KilledDmgInfo = info
+			self.BehaveThread = nil
+			local ragdoll = self:CreateRagdoll(info)
+			ragdoll:EmitSound("halo_reach/characters/grunt/grunt_backpack_steam/grunt_backpack_steam"..math.random(1,3)..".ogg",100)
+			ParticleEffectAttach("iv04_halo_reach_grunt_methane_leak_violent",PATTACH_POINT_FOLLOW,ragdoll,ragdoll:LookupAttachment("methane_fx"))
+			for i = 1, 25 do
+				timer.Simple( 0.1*i, function()
+					if IsValid(ragdoll) then
+						local top = ragdoll:GetPhysicsObjectNum( 0 ) -- We can flyyyyyy
+						local ang = ragdoll:GetAttachment(ragdoll:LookupAttachment("methane_fx")).Ang
+						top:ApplyForceCenter( Vector( 0, 0, 100000 )+(((ang):Forward())*100000)+(ang:Right()*math.random(100000,-100000)) )
+					end
+				end )
+			end
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(prop) then
+						prop:Remove()
+					end
+				end)
+			end
+		end
+	elseif trace.HitGroup == 1 then
 		info:ScaleDamage(3)
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
@@ -480,7 +540,7 @@ function ENT:Flee(ent)
 	if table.Count(tbl) > 0 or #tbl > 0 then
 		self.Hiding = true
 		local area = table.Random(tbl)
-		self:MoveToPosition( area:GetRandomPoint(), ACT_RUN_AGITATED, self.MoveSpeed*(self.MoveSpeedMultiplier) )
+		self:MoveToPosition( area:GetRandomPoint(), ACT_RUN_AGITATED, self.MoveSpeed*(6) )
 		timer.Simple( 5, function()
 			if IsValid(self) then
 				self.Hiding = false
@@ -489,7 +549,7 @@ function ENT:Flee(ent)
 	end
 	if !self.Hiding then
 		local nav = table.Random(navs)
-		self:MoveToPosition( nav:GetRandomPoint(), ACT_RUN_AGITATED,self.MoveSpeed*(self.MoveSpeedMultiplier) )
+		self:MoveToPosition( nav:GetRandomPoint(), ACT_RUN_AGITATED,self.MoveSpeed*(6) )
 	end
 end
 
@@ -715,7 +775,7 @@ function ENT:CustomBehaviour(ent)
 			return self:GoCrazyAalALalALa(ent) -- Funny reference
 		else
 			self:Speak("OnCharge")
-			return self:StartChasing(ent,ACT_RUN_AGITATED,self.MoveSpeed*self.MoveSpeedMultiplier,true,true)
+			return self:StartChasing(ent,ACT_RUN_AGITATED,self.MoveSpeed*7.5,true,true)
 		end
 	end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
@@ -1165,6 +1225,13 @@ function ENT:DoKilledAnim()
 				wep:Spawn()
 				self.Weapon:Remove()
 				self:CreateRagdoll(DamageInfo())
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(wep) then
+							wep:Remove()
+						end
+					end)
+				end
 				return
 			end
 			local seq, len = self:LookupSequence(anim)

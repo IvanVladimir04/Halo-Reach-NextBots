@@ -24,13 +24,14 @@ function ENT:OnInitialize()
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 	local relo = self.Weapon.AI_Reload
 	self:SetNWEntity("wep",self.Weapon)
-	self:SetBodygroup(0,math.random(0,1))
 	self.Weapon.AI_Reload = function()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
 	end
 	self:SetupHoldtypes()
 end
+
+ENT.BackpackModel = "models/halo_reach/characters/covenant/grunt_backpack_ultra_prop.mdl"
 
 list.Set( "NPC", "npc_iv04_hr_grunt_ultra", {
 	Name = "Grunt Ultra",
