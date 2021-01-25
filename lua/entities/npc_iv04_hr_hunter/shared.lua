@@ -276,15 +276,37 @@ function ENT:OnTraceAttack( info, dir, trace )
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	--print(trace.HitGroup)
 	if !normalgroups[trace.HitGroup] then
-		if info:GetDamageType() == DMG_BLAST then
+		if info:IsExplosionDamage() then
 			info:ScaleDamage( 0.25 )
 		else
+			if info:IsBulletDamage() then
+				local prop = ents.Create("prop_dynamic")
+				local start = info:GetDamagePosition()
+				prop:SetPos(start)
+				prop:SetModel(self:GetModel())
+				prop:SetAngles(self:GetAngles())
+				prop:SetNoDraw(true)
+				prop:Spawn()
+				local bullet = {}
+				bullet.IgnoreEntity = self
+				bullet.Attacker = self
+				bullet.Damage = info:GetDamage()
+				bullet.Src = info:GetDamagePosition()
+				bullet.TracerName = "AR2Tracer"
+				bullet.Spread = Vector(0,0,0)
+				local ndir = (trace.HitNormal:Angle()).y+math.AngleDifference((trace.HitNormal:Angle()).y,self:GetAngles().y)
+				local pdir = (trace.HitNormal:Angle()).p-math.AngleDifference((trace.HitNormal:Angle()).p,self:GetAngles().p)
+				local rdir = (trace.HitNormal:Angle()).r-math.AngleDifference((trace.HitNormal:Angle()).r,self:GetAngles().r)
+				bullet.Dir = Angle(pdir,ndir,rdir):Forward()
+				prop:FireBullets(bullet)
+				prop:Remove()
+			end
 			info:ScaleDamage( 0 )
 		end
 	end
 	if !self.DoingFlinch and info:GetDamage() > 15 and math.random(1,2) == 1 then
 		if self.FlinchHitgroups[trace.HitGroup] then
-			local act
+			local act = tbl["Back"]
 			if self.Variations[self.FlinchHitgroups[trace.HitGroup]] then
 				--act = self.FlinchHitgroups[trace.HitBox]
 				local ang = dir:Angle().y-self:GetAngles().y

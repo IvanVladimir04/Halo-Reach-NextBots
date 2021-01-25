@@ -230,7 +230,7 @@ function ENT:Use( activator )
 			for i = 1, 200 do
 				timer.Simple( 0.01*i, function()
 					if stop then return end
-					if IsValid(self) then
+					if IsValid(self) and IsValid(self.Weapon) then
 						if IsValid(ply) then
 							if ( !ply:KeyDown(IN_USE) and self.Weapon:GetClass() != ply:GetActiveWeapon():GetClass() ) or !self.TotalHolds[ply:GetActiveWeapon().HoldType_Aim] then
 								self.CanUse = true
@@ -2301,7 +2301,11 @@ function ENT:DoKilledAnim()
 		while (!self.HasLanded) do
 			coroutine.wait(0.01)
 		end
-		self:PlaySequenceAndWait("Dead_Land")
+		if self.IsBrute then
+			self:PlaySequenceAndWait("Dead_Land_"..math.random(1,2).."")
+		else
+			self:PlaySequenceAndWait("Dead_Land")
+		end
 		local wep = ents.Create(self.Weapon:GetClass())
 		wep:SetPos(self.Weapon:GetPos())
 		wep:SetAngles(self.Weapon:GetAngles())
