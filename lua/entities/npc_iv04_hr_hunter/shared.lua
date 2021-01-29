@@ -306,11 +306,11 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if !self.DoingFlinch and info:GetDamage() > 15 and math.random(1,2) == 1 then
 		if self.FlinchHitgroups[trace.HitGroup] then
+			local tbl = self.Variations[self.FlinchHitgroups[trace.HitGroup]]
 			local act = tbl["Back"]
 			if self.Variations[self.FlinchHitgroups[trace.HitGroup]] then
 				--act = self.FlinchHitgroups[trace.HitBox]
 				local ang = dir:Angle().y-self:GetAngles().y
-				local tbl = self.Variations[self.FlinchHitgroups[trace.HitGroup]]
 				if ang < 1 then ang = ang + 360 end
 				if ( ang < 90 or ang > 270 ) then
 					act = tbl["Back"]

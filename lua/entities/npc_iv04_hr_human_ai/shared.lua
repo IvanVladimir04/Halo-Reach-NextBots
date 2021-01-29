@@ -49,6 +49,8 @@ ENT.CollisionMask = MASK_NPCSOLID
 
 ENT.SearchJustAsSpawned = false
 
+ENT.CanJump = true
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -301,6 +303,7 @@ function ENT:SetupHoldtypes()
 	self.WarthogGunnerEnter = "Warthog_Gunner_Enter"
 	self.WarthogGunnerExit = "Warthog_Gunner_Exit"
 	self.WarthogGunnerIdle = "Warthog_Gunner_Idle"
+	self.DeadAirAnim = "Dead_Airborne"
 	if self.PistolHolds[hold] then
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
@@ -510,7 +513,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 end
 
-function ENT:OnLeaveGround(ent)
+--[[function ENT:OnLeaveGround(ent)
 	if self:Health() <= 0 then 
 		self:StartActivity(self:GetSequenceActivity(self:LookupSequence("Dead_Airborne")))
 	else
@@ -522,7 +525,7 @@ function ENT:OnLeaveGround(ent)
 			end
 		end )
 	end
-end
+end]]
 
 function ENT:OnLandOnGround(ent)
 	if self.FlyingDead then
