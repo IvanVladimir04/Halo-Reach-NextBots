@@ -185,6 +185,66 @@ function ENT:GetCurrentWeaponProficiency()
 	return self.WeaponAccuracy or 1
 end
 
+function ENT:OnSeenFriendly(ent)
+	--print("friend",ent)
+	if !IsValid(self.Enemy) and !self.BeingStaredAt and ent:IsPlayer() then
+		local st1 = false
+		local st2 = false
+		local st3 = false
+		local ang1 = ent:GetAimVector():Angle()
+		local ang2 = ( self:GetPos() - ent:GetPos() ):GetNormalized():Angle()
+		local dif = math.abs(math.AngleDifference( ang1.y, ang2.y ))
+		self.BeingStaredAt = true
+		if dif < 60 then
+			timer.Simple( 5*0.33, function()
+				if IsValid(self) and !IsValid(self.Enemy) and ( IsValid(ent) and ent:Health() > 0 ) then
+					local ang1 = ent:GetAimVector():Angle()
+					local ang2 = ( self:GetPos() - ent:GetPos() ):Angle()
+					local dif = math.abs(math.AngleDifference( ang1.y, ang2.y ))
+					if dif < 60 then
+						st1 = true
+					else
+						self.BeingStaredAt = false
+					end
+				end
+			end )
+			timer.Simple( 5*0.66, function()
+				if IsValid(self) and !IsValid(self.Enemy) and ( IsValid(ent) and ent:Health() > 0 ) then
+					local ang1 = ent:GetAimVector():Angle()
+					local ang2 = ( self:GetPos() - ent:GetPos() ):Angle()
+					local dif = math.abs(math.AngleDifference( ang1.y, ang2.y ))
+					if dif < 60 then
+						st2 = true
+					else
+						self.BeingStaredAt = false
+					end
+				end
+			end )
+			timer.Simple( 5, function()
+				if IsValid(self) and !IsValid(self.Enemy) and ( IsValid(ent) and ent:Health() > 0 ) then
+					local ang1 = ent:GetAimVector():Angle()
+					local ang2 = ( self:GetPos() - ent:GetPos() ):Angle()
+					local dif = math.abs(math.AngleDifference( ang1.y, ang2.y ))
+					self.BeingStaredAt = false
+					if dif < 60 then
+						st3 = true
+						self:Speak("OnStare")
+						self.CommentedStare = true
+						timer.Simple( 20, function()
+							if IsValid(self) then
+								self.CommentedStare = false
+							end
+						end )
+						--[[timer.Simple(4, function() -- CATCH
+						if ent.SetEnemy then ent:SetEnemy(self) end
+						end )]]
+					end
+				end
+			end )
+		end
+	end
+end
+
 function ENT:Use( activator )
 	if !self.CanUse then return end
 	if self:CheckRelationships(activator) == "friend" and activator:IsPlayer() then
@@ -426,7 +486,7 @@ function ENT:DoCustomIdle()
 			self:WanderToPosition( (self.StartPosition + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300), self.RunCalmAnim[math.random(1,#self.RunCalmAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		end
 	end
-	if math.random(1,4) == 1 then
+	if !self.BeingStaredAt and math.random(1,4) == 1 then
 		if math.random(1,2) == 1 then
 			self:TurnTo(math.random(45,140),true)
 		else
