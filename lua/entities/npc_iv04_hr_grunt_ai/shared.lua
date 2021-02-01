@@ -355,7 +355,9 @@ function ENT:OnTraceAttack( info, dir, trace )
 			prop:SetModel( self.BackpackModel )
 			prop:SetPos(self:GetAttachment(self:LookupAttachment("methane_fx")).Pos)
 			prop:Spawn()
-			hook.Call( "OnNPCKilled", GAMEMODE, self, info:GetAttacker(), info:GetInflictor() )
+			if self:Health() > 0 then
+				hook.Call( "OnNPCKilled", GAMEMODE, self, info:GetAttacker(), info:GetInflictor() )
+			end
 			if IsValid(self.Grenade1) then
 				self.Grenade1:SetParent(nil)
 				self.Grenade1:SetMoveType( MOVETYPE_VPHYSICS )
@@ -396,6 +398,11 @@ function ENT:OnTraceAttack( info, dir, trace )
 					end
 				end )
 			end
+			timer.Simple( 5, function()
+				if IsValid(ragdoll) then
+					ragdoll:StopParticles()
+				end
+			end )
 			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
 				timer.Simple( 60, function()
 					if IsValid(prop) then
@@ -611,6 +618,7 @@ function ENT:OnOtherKilled( victim, info )
 					end
 				end
 				table.insert(self.StuffToRunInCoroutine,func)
+				self:ResetAI()
 			end
 		else
 			if info:GetAttacker():IsPlayer() then
@@ -811,7 +819,7 @@ function ENT:CustomBehaviour(ent)
 end
 
 function ENT:GetNear(ent)
-	local t = math.random(3,6)
+	local t = math.random(2,3)
 	local stop = false
 	local shoot = false
 	timer.Simple( t, function()
@@ -900,13 +908,18 @@ function ENT:StartShooting(ent)
 		if math.random(1,2) == 1 then
 			self:MoveToPosition(self:GetPos()+Vector(math.random(256,-256),math.random(256,-256),0),self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 		end
+		local should, dif = self:ShouldFace(ent)
+		if should then
+			self:TurnTo(dif)
+			coroutine.wait(0.2)
+		end
 		self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
 		timer.Simple( 2, function()
 			if IsValid(self) then
 				self:ShootBullet(ent)
 			end
 		end )
-		coroutine.wait(3)
+		coroutine.wait(2)
 	else
 		self:GetNear(ent)
 	end
@@ -1164,6 +1177,7 @@ function ENT:AlertAllies(ent) -- We find allies in sphere and we alert them
 end
 
 function ENT:OnKilled( dmginfo ) -- When killed
+	if self.BackpackHealth < 0 then return end
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	if IsValid(self.Grenade1) then
 		self.Grenade1:SetParent(nil)

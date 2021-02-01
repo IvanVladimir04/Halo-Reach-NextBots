@@ -12,6 +12,13 @@ ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
 ENT.Models = {"models/halo_reach/characters/covenant/hunter.mdl"}
 ENT.SightType = 2
+ENT.OnMeleeImpactSoundTbl = { "halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage1.ogg", "halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage2.ogg", "halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage3.ogg", "halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage4.ogg",
+								"halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage5.ogg", "halo_reach/characters/hunter/hunter_hit_damage/hunter_hit_damage6.ogg", "halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit1.ogg", "halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit2.ogg",
+								"halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit3.ogg", "halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit4.ogg", "halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit5.ogg", "halo_reach/characters/hunter/hunter_melee_hits/hunter_melee_hit6.ogg" }
+ENT.OnMeleeSoundTbl = { "halo_reach/characters/hunter/melee_var1/melee_var1_1.ogg", "halo_reach/characters/hunter/melee_var1/melee_var1_2.ogg", "halo_reach/characters/hunter/melee_var1/melee_var1_3.ogg", "halo_reach/characters/hunter/melee_var2/melee_var2_1.ogg"  }
+ENT.OnMeleeBackSoundTbl = { "halo_reach/characters/hunter/melee_back/melee_back_1.ogg", "halo_reach/characters/hunter/melee_back/melee_back_2.ogg", "halo_reach/characters/hunter/melee_back/melee_back_3.ogg" }
+ENT.OnMeleeLeftSoundTbl = { "halo_reach/characters/hunter/smash_left/smash_left_1.ogg", "halo_reach/characters/hunter/smash_left/smash_right_2.ogg", "halo_reach/characters/hunter/smash_left/smash_right_3.ogg" }
+ENT.OnMeleeRightSoundTbl = { "halo_reach/characters/hunter/smash_right/smash_right_1.ogg", "halo_reach/characters/hunter/smash_right/smash_right_2.ogg", "halo_reach/characters/hunter/smash_right/smash_right_3.ogg" }
 
 ENT.HasArmor = false
 
@@ -292,7 +299,9 @@ function ENT:OnTraceAttack( info, dir, trace )
 				bullet.Attacker = self
 				bullet.Damage = info:GetDamage()
 				bullet.Src = info:GetDamagePosition()
-				bullet.TracerName = "AR2Tracer"
+				if IsValid(info:GetAttacker()) and info:GetAttacker().GetActiveWeapon and IsValid(info:GetAttacker():GetActiveWeapon()) and info:GetAttacker():GetActiveWeapon().Tracer then
+					bullet.TracerName = info:GetAttacker():GetActiveWeapon().Tracer
+				end
 				bullet.Spread = Vector(0,0,0)
 				local ndir = (trace.HitNormal:Angle()).y+math.AngleDifference((trace.HitNormal:Angle()).y,self:GetAngles().y)
 				local pdir = (trace.HitNormal:Angle()).p-math.AngleDifference((trace.HitNormal:Angle()).p,self:GetAngles().p)
@@ -604,7 +613,7 @@ function ENT:DoMeleeDamage()
 			d:SetDamageType( DMG_SLASH )
 			d:SetDamagePosition( v:NearestPoint( self:WorldSpaceCenter() ) )
 			v:TakeDamageInfo(d)
-			--v:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
+			v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(1,#self.OnMeleeImpactSoundTbl)] )
 			if v:IsPlayer() then
 				v:ViewPunch( self.ViewPunchPlayers )
 			end
@@ -630,10 +639,12 @@ function ENT:Melee()
 		--print(ydif)
 		if ydif >= 315 or ydif < 45 then
 			self:SetAngles(Angle(self:GetAngles().p,ang.y,self:GetAngles().r))
+			self:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
 			move = true
 			angl = false
 		elseif ydif >= 225 and ydif < 315 then -- Left
 			name = "Melee_Left"
+			self:EmitSound( self.OnMeleeLeftSoundTbl[math.random(1,#self.OnMeleeLeftSoundTbl)] )
 			yd = 45
 			dir = 0
 			dir2 = -1
@@ -641,12 +652,14 @@ function ENT:Melee()
 		elseif ydif < 225 and ydif >= 135 then -- Back
 			dir = -1
 			name = "Melee_Back"
+			self:EmitSound( self.OnMeleeBackSoundTbl[math.random(1,#self.OnMeleeBackSoundTbl)] )
 			yd = -180
 			move = true
 		elseif ydif >= 45 and ydif < 135 then -- Right
 			dir = 0
 			dir2 = 1
 			name = "Melee_Right"
+			self:EmitSound( self.OnMeleeRightSoundTbl[math.random(1,#self.OnMeleeRightSoundTbl)] )
 			yd = -45
 			move = true
 		end

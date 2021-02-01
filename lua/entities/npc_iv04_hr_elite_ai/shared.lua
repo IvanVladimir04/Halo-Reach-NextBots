@@ -10,10 +10,11 @@ ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
 ENT.Models = {}
 ENT.SightType = 2
+ENT.OnMeleeImpactSoundTbl = { "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit1.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit2.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit3.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit4.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit5.ogg" }
+ENT.OnMeleeSwordImpactSoundTbl = { "halo/halo_reach/weapons/sword_hit_char1.ogg", "halo/halo_reach/weapons/sword_hit_char2.ogg", "halo/halo_reach/weapons/sword_hit_char3.ogg", "halo/halo_reach/weapons/sword_hit_char4.ogg", "halo/halo_reach/weapons/sword_hit_char5.ogg" }
+ENT.Brute_OnMeleeImpactSoundTbl = { "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit1.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit2.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit3.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit4.ogg", "halo_reach/materials/organic_flesh/melee_impact/new_flesh_hit5.ogg" }
 
 ENT.HasArmor = true
-
-ENT.MeleeDamage = 35
 
 ENT.MeleeRange = 100
 
@@ -1514,6 +1515,17 @@ function ENT:DoMeleeDamage()
 					v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
 				end
 				if ( v:IsNPC() or v:IsNextBot() or v:IsPlayer() ) and h > 0 then
+					if self.IsBrute then
+						v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(#self.OnMeleeImpactSoundTbl)] )
+					else
+						if (self.Weapon:GetClass() == "astw2_haloreach_energysword") then
+							v:EmitSound( self.OnMeleeSwordImpactSoundTbl[math.random(#self.OnMeleeSwordImpactSoundTbl)] )
+							ParticleEffect( "astw2_halo_3_muzzle_plasma_turret", v:WorldSpaceCenter(), Angle(0,0,0), self )
+						end
+						if (self.Weapon:GetClass() != "astw2_haloreach_energysword") then
+							v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(#self.OnMeleeImpactSoundTbl)] )
+						end		
+					end						
 					break
 				end
 			end
@@ -1924,6 +1936,7 @@ function ENT:DoMelee()
 	end	
 	self.DoneMelee = true
 	self.DoingMelee = true
+	self:Speak("OnMelee")
 	local t = math.random(5,10)
 	if self.IsAChasingEnemy then t = 2 end
 	timer.Simple( t, function()
