@@ -1268,7 +1268,7 @@ function ENT:OnOtherKilled( victim, info )
 	local rel = self:CheckRelationships(victim)
 	if rel == "friend" then
 		if !victim.BeenNoticed then
-			victim.BeenNoticed = true
+			--victim.BeenNoticed = true
 			if self.SawAllyDie and !self.SawAlliesDie then self.SawAlliesDie = true end
 			if !self.SawAllyDie then self.SawAllyDie = true end
 			local attacker = info:GetAttacker()
@@ -2066,7 +2066,16 @@ function ENT:ChaseEnt(ent,los,far)
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )
 	if !IsValid(ent) then return end
-	path:Compute( self, ent:GetPos() )
+	if los and far then
+		local goal = ent:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+		local navs = navmesh.Find(goal,512,100,20)
+		local nav = navs[math.random(#navs)]
+		local pos = goal
+		if nav then pos = nav:GetRandomPoint() end
+		path:Compute( self, pos )
+	else
+		path:Compute( self, ent:GetPos() )
+	end
 	if ( !path:IsValid() ) then return "Failed" end
 	local saw = false
 	while ( path:IsValid() and IsValid(ent) ) do
@@ -2121,7 +2130,7 @@ function ENT:ChaseEnt(ent,los,far)
 				self.LastSeenEnemyPos = ent:GetPos()
 			end
 		end
-		if path:GetAge() > self.RebuildPathTime then
+		if path:GetAge() > self.RebuildPathTime and (!los or !far) then
 			if self.OnRebuildPath == true then
 				self:OnRebuiltPath()
 			end	

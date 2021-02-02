@@ -17,6 +17,8 @@ ENT.CovRank = 4
 
 ENT.IsLeader = true
 
+ENT.HasHelmet = true
+
 function ENT:OnInitialize()
 	self:DoInit()
 	self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
@@ -30,6 +32,8 @@ function ENT:OnInitialize()
 	end
 	self:SetupHoldtypes()
 end
+
+ENT.HelmetModel = "models/halo_reach/characters/covenant/grunt_head_helmet_prop.mdl"
 
 ENT.BackpackModel = "models/halo_reach/characters/covenant/grunt_backpack_ultra_prop.mdl"
 

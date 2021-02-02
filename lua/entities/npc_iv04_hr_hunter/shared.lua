@@ -260,24 +260,16 @@ ENT.Variations = {
 	[ACT_FLINCH_STOMACH] = {["Back"] = "Flinch_Back_Gut", ["Front"] = "Flinch_Front_Gut"}
 }
 
-function ENT:DoGestureSeq(seq)
-	local an = seq
-	if isstring(seq) then
-		local a,le = self:LookupSequence(seq)
-		an = a
-	end
-	local gest = self:AddGestureSequence(an)
-	self:SetLayerPriority(gest,1)
-	self:SetLayerPlaybackRate(gest,1)
-	self:SetLayerCycle(gest,0)
-end
-
 local normalgroups = {
 	[1] = true,
 	[3] = true
 }
 
 ENT.BackHealth = 100
+
+ENT.CurBulDmg = 0
+
+ENT.BulDmgLimit = 50
 
 function ENT:OnTraceAttack( info, dir, trace )
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
@@ -287,28 +279,48 @@ function ENT:OnTraceAttack( info, dir, trace )
 			info:ScaleDamage( 0.25 )
 		else
 			if info:IsBulletDamage() then
-				local prop = ents.Create("prop_dynamic")
-				local start = info:GetDamagePosition()
-				prop:SetPos(start)
-				prop:SetModel(self:GetModel())
-				prop:SetAngles(self:GetAngles())
-				prop:SetNoDraw(true)
-				prop:Spawn()
-				local bullet = {}
-				bullet.IgnoreEntity = self
-				bullet.Attacker = self
-				bullet.Damage = info:GetDamage()
-				bullet.Src = info:GetDamagePosition()
-				if IsValid(info:GetAttacker()) and info:GetAttacker().GetActiveWeapon and IsValid(info:GetAttacker():GetActiveWeapon()) and info:GetAttacker():GetActiveWeapon().Tracer then
-					bullet.TracerName = info:GetAttacker():GetActiveWeapon().Tracer
+				if info:GetAttacker():GetClass() != self:GetClass() then
+					local prop = ents.Create("prop_dynamic")
+					local start = info:GetDamagePosition()
+					prop:SetPos(start)
+					prop:SetModel(self:GetModel())
+					prop:SetAngles(self:GetAngles())
+					prop:SetNoDraw(true)
+					prop:Spawn()
+					local bullet = {}
+					bullet.IgnoreEntity = self
+					bullet.Attacker = self
+					bullet.Damage = info:GetDamage()
+					bullet.Src = info:GetDamagePosition()
+					if IsValid(info:GetAttacker()) and info:GetAttacker().GetActiveWeapon and IsValid(info:GetAttacker():GetActiveWeapon()) and info:GetAttacker():GetActiveWeapon().Tracer then
+						bullet.TracerName = info:GetAttacker():GetActiveWeapon().Tracer
+					end
+					bullet.Spread = Vector(0,0,0)
+					local ndir = (trace.HitNormal:Angle()).y+math.AngleDifference((trace.HitNormal:Angle()).y,self:GetAngles().y)
+					local pdir = (trace.HitNormal:Angle()).p-math.AngleDifference((trace.HitNormal:Angle()).p,self:GetAngles().p)
+					local rdir = (trace.HitNormal:Angle()).r-math.AngleDifference((trace.HitNormal:Angle()).r,self:GetAngles().r)
+					bullet.Dir = Angle(pdir,ndir,rdir):Forward()
+					prop:FireBullets(bullet)
+					prop:Remove()
 				end
-				bullet.Spread = Vector(0,0,0)
-				local ndir = (trace.HitNormal:Angle()).y+math.AngleDifference((trace.HitNormal:Angle()).y,self:GetAngles().y)
-				local pdir = (trace.HitNormal:Angle()).p-math.AngleDifference((trace.HitNormal:Angle()).p,self:GetAngles().p)
-				local rdir = (trace.HitNormal:Angle()).r-math.AngleDifference((trace.HitNormal:Angle()).r,self:GetAngles().r)
-				bullet.Dir = Angle(pdir,ndir,rdir):Forward()
-				prop:FireBullets(bullet)
-				prop:Remove()
+				if !self.Covering then
+					self.CurBulDmg = self.CurBulDmg+math.abs(info:GetDamage())
+					--print(self.CurBulDmg)
+					if self.CurBulDmg > self.BulDmgLimit then
+						self.Covering = true
+						self.ChaseRange = self.ChaseRange*1.25
+						self:DoGestureSeq("Defense_Up",false,0)
+						--print("anger")
+						timer.Simple( 10, function()
+							if IsValid(self) then
+								self:RemoveAllGestures()
+								self.Covering = false
+								self.ChaseRange = self.ChaseRange*0.8
+								self.CurBulDmg = 0
+							end
+						end )
+					end
+				end
 			end
 			info:ScaleDamage( 0 )
 		end
@@ -316,8 +328,9 @@ function ENT:OnTraceAttack( info, dir, trace )
 	if !self.DoingFlinch and info:GetDamage() > 15 and math.random(1,2) == 1 then
 		if self.FlinchHitgroups[trace.HitGroup] then
 			local tbl = self.Variations[self.FlinchHitgroups[trace.HitGroup]]
-			local act = tbl["Back"]
+			local act
 			if self.Variations[self.FlinchHitgroups[trace.HitGroup]] then
+				act = tbl["Back"]
 				--act = self.FlinchHitgroups[trace.HitBox]
 				local ang = dir:Angle().y-self:GetAngles().y
 				if ang < 1 then ang = ang + 360 end
@@ -327,19 +340,21 @@ function ENT:OnTraceAttack( info, dir, trace )
 					act = tbl["Front"]
 				end
 			end
-			self.DoingFlinch = true
-			local id, dur = self:LookupSequence(act)
-			timer.Simple(dur, function()
-				if IsValid(self) then
-					self.DoingFlinch = false
+			if act then
+				self.DoingFlinch = true
+				local id, dur = self:LookupSequence(act)
+				timer.Simple(dur, function()
+					if IsValid(self) then
+						self.DoingFlinch = false
+					end
+				end )
+				local func = function()
+					self:PlaySequenceAndWait(id)
+					--self:StartActivity(self.IdleAnim[1])
 				end
-			end )
-			local func = function()
-				self:PlaySequenceAndWait(id)
-				--self:StartActivity(self.IdleAnim[1])
+				table.insert(self.StuffToRunInCoroutine,func)
+				self:ResetAI()
 			end
-			table.insert(self.StuffToRunInCoroutine,func)
-			self:ResetAI()
 		end
 	end
 end
@@ -404,10 +419,6 @@ function ENT:OnOtherKilled( victim, info )
 	if victim == self then return end
 	local rel = self:CheckRelationships(victim)
 	if rel == "foe" and victim == self.Enemy then
-		if !victim.BeenNoticed then
-			victim.BeenNoticed = true
-			self:Speak("OnVictory")
-		end
 		local found = false
 		if !istable(self.temptbl) then self.temptbl = {} end
 		for i=1, #self.temptbl do
@@ -429,7 +440,7 @@ function ENT:OnOtherKilled( victim, info )
 			end
 		end
 		if !found then
-
+			self:Speak("OnVictory")
 		end
 	elseif rel == "friend" and victim:GetClass() == self:GetClass() then
 		self.Berserk = true
@@ -569,7 +580,7 @@ function ENT:FireWep()
 	self:Speak("SFXOnBeamFire")
 	local phys = ent:GetPhysicsObject()
 	if IsValid(phys) then
-		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(math.Rand(0.3,0)))))*1000)
+		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(math.Rand(0.3,0)))))*2000)
 	end
 end
 
@@ -613,9 +624,11 @@ function ENT:DoMeleeDamage()
 			d:SetDamageType( DMG_SLASH )
 			d:SetDamagePosition( v:NearestPoint( self:WorldSpaceCenter() ) )
 			v:TakeDamageInfo(d)
-			v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(1,#self.OnMeleeImpactSoundTbl)] )
 			if v:IsPlayer() then
 				v:ViewPunch( self.ViewPunchPlayers )
+			end
+			if v:IsPlayer() or v:IsNextBot() or v:IsNPC() then
+				v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(1,#self.OnMeleeImpactSoundTbl)] )
 			end
 			if IsValid(v:GetPhysicsObject()) then
 				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
@@ -625,6 +638,7 @@ function ENT:DoMeleeDamage()
 end
 
 function ENT:Melee()
+	self:RemoveAllGestures()
 	self:Speak("OnMelee")
 	local ang = self:GetAimVector():Angle()
 	local name = "Melee_"..math.random(1,3)..""

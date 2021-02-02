@@ -187,6 +187,7 @@ end
 
 function ENT:OnSeenFriendly(ent)
 	--print("friend",ent)
+	if self:Health() < 1 then return end
 	if !IsValid(self.Enemy) and !self.BeingStaredAt and ent:IsPlayer() then
 		local st1 = false
 		local st2 = false
@@ -221,7 +222,7 @@ function ENT:OnSeenFriendly(ent)
 				end
 			end )
 			timer.Simple( 5, function()
-				if IsValid(self) and !IsValid(self.Enemy) and ( IsValid(ent) and ent:Health() > 0 ) then
+				if IsValid(self) and self:Health() > 0 and !IsValid(self.Enemy) and ( IsValid(ent) and ent:Health() > 0 ) then
 					local ang1 = ent:GetAimVector():Angle()
 					local ang2 = ( self:GetPos() - ent:GetPos() ):Angle()
 					local dif = math.abs(math.AngleDifference( ang1.y, ang2.y ))
@@ -731,7 +732,8 @@ function ENT:DoMelee()
 end
 
 function ENT:DoMeleeDamage()
-	local damage = self.MeleeDamage
+	-- lol
+	--[[local damage = self.MeleeDamage
 	for	k,v in pairs(ents.FindInCone(self:WorldSpaceCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
 		if v != self and self:CheckRelationships(v) != "friend" then
 			local d = DamageInfo()
@@ -749,7 +751,7 @@ function ENT:DoMeleeDamage()
 				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
 			end
 		end
-	end
+	end]]
 end
 
 function ENT:ThrowGrenade(dist)
@@ -1630,37 +1632,36 @@ function ENT:OnOtherKilled( victim, info )
 			if !self.SawAllyDie then self.SawAllyDie = true end
 			local attacker = info:GetAttacker()
 			if !IsValid(self.Enemy) then
-				if self:CheckRelationships(attacker) == "foe" then
-					local ang = (attacker:GetPos()-self:GetPos()):Angle()
-					local dif = math.AngleDifference(ang.y,self:GetAngles().y)
+				--if self:CheckRelationships(attacker) == "foe" then
+					local ang = (victim:GetPos()-self:GetPos()):Angle()
+					local dif = math.AngleDifference(self:GetAngles().y,ang.y)
 					local func = function()
 						self:TurnTo(dif,false)
 					end
 					table.insert(self.StuffToRunInCoroutine,func)
 					self:ResetAI()
-				end
-			end
-			if attacker:IsPlayer() and self.FriendlyToPlayers then
-				self.NoticedKills = self.NoticedKills+1
-				if self.NoticedKills > 1 then
-					self:Speak("OnBetrayal")
-					self.FriendlyToPlayers = false
-					self.LastAllyKill = CurTime()
-					local last = self.LastAllyKill
-					timer.Simple( 30, function()
-						if IsValid(self) then
-							if self.LastAllyKill == last then
-								self.FriendlyToPlayers = true
-								self.NoticedKills = 0
-								self:SetEnemy(nil)
-								self:Speak("OnForgive")
+				--end
+				if attacker:IsPlayer() and self.FriendlyToPlayers then
+					self.NoticedKills = self.NoticedKills+1
+					if self.NoticedKills > 1 then
+						self:Speak("OnBetrayal")
+						self.FriendlyToPlayers = false
+						self.LastAllyKill = CurTime()
+						local last = self.LastAllyKill
+						timer.Simple( 30, function()
+							if IsValid(self) then
+								if self.LastAllyKill == last then
+									self.FriendlyToPlayers = true
+									self.NoticedKills = 0
+									self:SetEnemy(nil)
+									self:Speak("OnForgive")
+								end
 							end
-						end
-					end )
-				else
-					self:Speak("OnKillAlly")
+						end )
+					else
+						self:Speak("OnKillAlly")
+					end
 				end
-				
 			elseif attacker:IsPlayer() and !self.FriendlyToPlayers then
 				--self:Speak("FriendKilledByEnemyPlayer")
 				self.LastAllyKill = CurTime()
@@ -1675,54 +1676,44 @@ function ENT:OnOtherKilled( victim, info )
 						end
 					end
 				end )
-			elseif attacker.Faction == "FACTION_COVENANT" then
-				--self:Speak("FriendKilledByCovenant")
-			elseif ( attacker:IsNPC() and attacker.IsVJBaseSNPC and string.StartWith(attacker:GetClass(), "npc_vj_flood") ) or victim.HasBeenLatchedOn then
-				-- Killed by flood
-				--self:Speak("FriendKilledByFlood")
-				
-			elseif self:CheckRelationships(attacker) == "friend" then
-				--self:Speak("FriendKilledByFriend")
-				
-			elseif victim:IsPlayer() then
-				if info:GetAttacker() == self then
-					--self:Speak("KilledFriendPlayer")
-					--self:NearbyReply("KilledFriendPlayerAlly")
-				else
-					--self:Speak("FriendPlayerDie")
-				end
-				
 			else
-				if info:GetAttacker() == self then
-					--self:Speak("KilledFriend")
-					--self:NearbyReply("KilledFriendAlly")
-				else
-					if self.SawAlliesDie then
-						--self:Speak("OnPanic")
-						local AI = self.AIType
-						self.AIType = "Defensive"
-						local func = function()
-							if self.IsSergeant and !self.IsInVehicle then
-								self:PlaySequenceAndMove(self:LookupSequence("Signal_Fallback"),1,self:GetForward()*-1,50,0.7)
+				if self.SawAlliesDie then
+					local AI = self.AIType
+					self.AIType = "Defensive"
+					local func = function()
+						if self.IsSergeant and !self.IsInVehicle then
+							HRHS:Signal("Retreat",self)
+							self:PlaySequenceAndMove(self:LookupSequence("Signal_Fallback"),1,self:GetForward()*-1,50,0.7)
+						else
+							--print(HRHS:WasSignalGiven("Retreat",3))
+							if !self.FollowingRetreatOrder and HRHS:WasSignalGiven("Retreat",3) and IsValid(HRHS:GetCaller("Retreat")) and (!IsValid(HRHS:GetCaller("Retreat").S1) or !IsValid(HRHS:GetCaller("Retreat").S2) ) then
+								local leader = HRHS:GetCaller("Retreat")
+								local goal = leader:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+								local navs = navmesh.Find(goal,256,100,20)
+								local nav = navs[math.random(#navs)]
+								local pos = goal
+								if nav then pos = nav:GetRandomPoint() end
+								self.FollowingRetreatOrder = true
+								if IsValid(leader.S1) then leader.S2 = self else leader.S1 = self end
+								timer.Simple( math.random(4,10), function() if IsValid(self) then self.FollowingRetreatOrder = false end end )
+								self:MoveToPosition( pos, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+								if leader.S1 == self then leader.S1 = nil elseif leader.S2 == self then leader.S2 = nil end
 							end
 						end
-						timer.Simple( math.random(15,20), function()
-							if IsValid(self) then
-								self.AIType = AI
-							end
-						end )
-						table.insert(self.StuffToRunInCoroutine,func)
-						self:ResetAI()
-						--self:Speak("NearMassacre")
-					else
-						--self:Speak("FriendKilledByEnemy")
 					end
+					timer.Simple( math.random(20,30), function()
+						if IsValid(self) then
+							self.AIType = AI
+						end
+					end )
+					table.insert(self.StuffToRunInCoroutine,func)
+					self:ResetAI()
+				--self:Speak("NearMassacre")
 				end
-				
 			end
 		end
 	elseif rel == "foe" and !victim.BeenNoticed then
-		victim.BeenNoticed = true
+		--victim.BeenNoticed = true
 		local spoke = false
 		self.CountedEnemies = self.CountedEnemies+1
 		if self.CountedEnemies > 4 and !self.MentionedSpree then
@@ -1742,6 +1733,7 @@ function ENT:OnOtherKilled( victim, info )
 			local func = function()
 				if self.IsInVehicle then return end
 				if self.IsSergeant then
+					HRHS:Signal("Advance",self)
 					self:PlaySequenceAndPWait("Signal_Advance",1,self:GetPos())
 				else
 					if math.random(1,2) == 1 then
@@ -1750,6 +1742,15 @@ function ENT:OnOtherKilled( victim, info )
 						self:PlaySequenceAndWait("Taunt_Shakefist")
 					end
 				end
+			end
+			if self.IsSergeant or HRHS:WasSignalGiven(sign,4) then
+				local AI = self.AIType
+				self.AIType = "Offensive"
+				timer.Simple( math.random(20,30), function()
+					if IsValid(self) then
+						self.AIType = AI
+					end
+				end )
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
 		end
@@ -1855,7 +1856,16 @@ function ENT:ChaseEnt(ent,los)
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )
 	if !IsValid(ent) then return end
-	path:Compute( self, ent:GetPos() )
+	if los then
+		local goal = ent:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+		local navs = navmesh.Find(goal,512,100,20)
+		local nav = navs[math.random(#navs)]
+		local pos = goal
+		if nav then pos = nav:GetRandomPoint() end
+		path:Compute( self, pos )
+	else
+		path:Compute( self, ent:GetPos() )
+	end
 	if ( !path:IsValid() ) then return "Failed" end
 	local t = CurTime()+15
 	while ( path:IsValid() and IsValid(ent) ) do
@@ -1885,7 +1895,7 @@ function ENT:ChaseEnt(ent,los)
 				return "Lost enemy"
 			end
 		end
-		if path:GetAge() > self.RebuildPathTime then
+		if path:GetAge() > self.RebuildPathTime and !los then
 			if self.OnRebuildPath == true then
 				self:OnRebuiltPath()
 			end	

@@ -711,7 +711,7 @@ function ENT:CustomBehaviour(ent)
 		end
 		self:StartShooting(ent)
 		if !self.Perched then
-			self:MoveToPos(Vector(self:GetPos().x+(math.random(512,-512)*math.Rand(0,1)),self:GetPos().y+(math.random(512,-512)*math.Rand(0,1)),self.FlyGoal.z))
+			self:MoveToPos(Vector(self:GetPos().x,self:GetPos().y,self.FlyGoal.z)+self:GetForward()*math.random(512,-256)+self:GetRight()*math.random(512,-512))
 			--self.FlyGoal = self:GetPos()
 		else
 			if !self.RPerch and !self.Perching then
@@ -875,72 +875,6 @@ function ENT:StartChasing( ent, anim, speed, los, kam )
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
 	self:ChaseEnt(ent,los,kam)
-end
-
-ENT.NextUpdateT = CurTime()
-
-ENT.UpdateDelay = 0.5
-
-function ENT:ChaseEnt(ent,los,kamikaze)
-	local path = Path( "Follow" )
-	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
-	path:SetGoalTolerance( self.PathGoalTolerance )
-	if !IsValid(ent) then return end
-	path:Compute( self, ent:GetPos() )
-	if ( !path:IsValid() ) then return "Failed" end
-	local saw = false
-	while ( path:IsValid() and IsValid(ent) ) do
-		if !self.DoingLose then
-			self.DoingLose = true
-			timer.Simple( 15, function()
-				if !IsValid(self) then return end
-				self.DoingLose = false
-				if !IsValid(ent) then return end
-				if !saw and !self:CanSee( ent:GetPos()+ent:OBBCenter(), ent ) then
-					self:OnLoseEnemy()
-					self:SetEnemy(nil)
-					--print(self.State)
-					return "LostLOS"
-				end
-			end)
-		end
-		if self.NextUpdateT < CurTime() then
-			self.NextUpdateT = CurTime()+0.5
-			local cansee = self:CanSee( ent:GetPos() + ent:OBBCenter(), ent )
-			saw = cansee
-			local dist = self:GetPos():DistToSqr(ent:GetPos())
-			if kamikaze and dist < self.MeleeDistance^2 then
-				return self:Melee()
-			elseif !kamikaze and cansee and !los then
-				return "GotLOS"
-			elseif dist > self.LoseEnemyDistance^2 then
-				self:OnLoseEnemy()
-				self:SetEnemy(nil)
-				return "Lost enemy"
-			elseif !kamikaze and dist < 400^2 and cansee and los then
-				return "Got range"
-			end
-			if cansee then
-				self.LastSeenEnemyPos = ent:GetPos()
-			end
-		end
-		if path:GetAge() > self.RebuildPathTime then
-			if self.OnRebuildPath == true then
-				self:OnRebuiltPath()
-			end	
-			if IsValid(ent) then
-				path:Compute( self, ent:GetPos() )
-			end
-		end
-		path:Update( self )
-		if self.loco:IsStuck() then
-			if self.CustomOnStuck == true then self:CustomStuck() return "CustomOnStuck" end
-			self:OnStuck()
-			return "Stuck"
-		end
-		coroutine.yield()
-	end
-	return "ok"
 end
 
 function ENT:OnHaveEnemy(ent)
