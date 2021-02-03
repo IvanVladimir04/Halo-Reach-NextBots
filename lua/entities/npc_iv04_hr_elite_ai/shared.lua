@@ -1012,7 +1012,7 @@ function ENT:OnInjured(dmg)
 			dmg:SubtractDamage(self.Shield)
 			self.Shield = self.Shield-math.abs(dm)
 		end
-		if self.Shield < 0 then 
+		if self.Shield <= 0 then 
 			self.Shield = 0 
 			if self.ShieldActual > 0 then
 				ParticleEffect( "iv04_halo_reach_elite_shield_pop", self:WorldSpaceCenter(), Angle(0,0,0), self )

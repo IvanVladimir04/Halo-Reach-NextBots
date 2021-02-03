@@ -517,15 +517,17 @@ function ENT:GetNear(ent)
 		dir = self:GetRight()*-1
 	end
 	while (!stop) do
-		if shoot then
-			shoot = false
-			self:ShootBullet(ent)
-		end
 		if IsValid(ent) then
+			if shoot then
+				shoot = false
+				self:ShootBullet(ent)
+			end
 			self.loco:FaceTowards(ent:GetPos())
+			self.loco:Approach(self:GetPos()+dir,1)
+			coroutine.wait(0.01)
+		else
+			stop = true
 		end
-		self.loco:Approach(self:GetPos()+dir,1)
-		coroutine.wait(0.01)
 	end
 end
 
