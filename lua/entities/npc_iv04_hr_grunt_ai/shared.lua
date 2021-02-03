@@ -153,6 +153,7 @@ end
 function ENT:DoInit()
 	--print(marinevariant)
 	--self:SetCollisionBounds(Vector(-30,-30,0),Vector(30,30,80))
+	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self:SetBloodColor(DONT_BLEED)
 	self.ShouldWander = false
 end
@@ -875,6 +876,7 @@ function ENT:GetNear(ent)
 			shoot = false
 			self:ShootBullet(ent)
 		end
+		self.loco:FaceTowards(ent:GetPos())
 		self.loco:Approach(self:GetPos()+dir,1)
 		coroutine.wait(0.01)
 	end

@@ -71,8 +71,6 @@ ENT.Faction = "FACTION_COVENANT"
 
 ENT.MeleeEvent = "event_halo_reach_hunter_melee"
 
---ENT.StepEvent = "D3HumanNextbot.Step"
-
 function ENT:FireAnimationEvent(pos,ang,event,name)
 	--[[print(pos)
 	print(ang)

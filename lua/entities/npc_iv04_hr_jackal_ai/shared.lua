@@ -1,7 +1,7 @@
 AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
-ENT.MoveSpeed = 30
+ENT.MoveSpeed = 50
 ENT.MoveSpeedMultiplier = 4
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
@@ -80,7 +80,9 @@ ENT.PistolHolds = {
 
 ENT.RifleHolds = {
 	["smg"] = true,
-	["ar2"] = true
+	["ar2"] = true,
+	["crossbow"] = true,
+	["shotgun"] = true
 }
 
 ENT.TotalHolds = {
@@ -138,6 +140,7 @@ end
 
 function ENT:OnInitialize()
 	self:DoInit()
+	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
@@ -196,6 +199,9 @@ function ENT:SetupHoldtypes()
 			[1] = "Evade_Left_Rifle",
 			[2] = "Evade_Right_Rifle"
 		}
+		if self.Weapon:GetClass() != "astw2_haloreach_focus_rifle" then
+			self.WeaponAccuracy = 9
+		end
 	end
 end
 
@@ -353,7 +359,7 @@ end
 function ENT:OnTraceAttack( info, dir, trace )
 	--print(trace.HitGroup)
 	if trace.HitGroup == 20 and self.ShieldUp then
-		if info:IsBulletDamage() then
+		if info:GetDamageType() == DMG_BULLET then
 			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage()/4)
 			if info:GetAttacker():GetClass() != self:GetClass() then
@@ -477,7 +483,10 @@ function ENT:Wander()
 			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			coroutine.wait(1)
 		else
-			if math.random(1,3) == 1 and !self.IsSniper then
+			--if self:GetActivity() != self.IdleCalmAnim[1] then
+			--	self:StartActivity(self.IdleCalmAnim[1])
+			--end
+			if !self.IsSniper and math.random(1,3) == 1 then
 				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			else
 				for i = 1, 3 do
@@ -708,13 +717,10 @@ function ENT:GetNear(ent)
 	else
 		self:StartMovingAnimations(self.WalkAnim[math.random(#self.WalkAnim)],self.MoveSpeed*2.5)
 	end
-	local r = math.random(1,3)
+	local r = math.random(2,3)
 	local dir
 	local dire
-	if r == 1 then
-		dir = self:GetForward()*1
-		dire = self:GetRight()*math.random(1,-1)
-	elseif r == 2 then
+	if r == 2 then
 		dir = self:GetRight()*1
 		dire = self:GetForward()*math.random(1,-1)
 	elseif r == 3 then
@@ -726,9 +732,11 @@ function ENT:GetNear(ent)
 			shoot = false
 			self:ShootBullet(ent)
 		end
+		self.loco:FaceTowards(ent:GetPos())
 		self.loco:Approach(self:GetPos()+dir,1)
 		coroutine.wait(0.01)
 	end
+	self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
 end
 
 function ENT:StartShooting(ent)
@@ -736,7 +744,7 @@ function ENT:StartShooting(ent)
 	if !IsValid(ent) then return end
 	local crouch = math.random(1,2)
 	if crouch == 1 then
-		if math.random(1,2) == 1 and !self.IsSniper then
+		if !self.IsSniper and math.random(1,2) == 1 then
 			self:MoveToPosition(self:GetPos()+self:GetAimVector():Angle():Right()*math.random(100,-100),self.WalkAnim[math.random(#self.WalkAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 		end
 		local should, dif = self:ShouldFace(ent)
@@ -796,20 +804,23 @@ function ENT:ViewPunch(sex)
 end
 
 function ENT:FireWep()
-	for i = 1, self:GetCurrentWeaponProficiency()+2 do
-		if self.IsSniper and self.Weapon:GetClass() == "astw2_haloreach_focus_rifle" then
-			self.StartS = true
-			timer.Simple( 1, function()
-				if IsValid(self) then
-					self.StartS = false
-				end
-			end )
-		end
-		timer.Simple( math.random(0.2,0.4)*i, function()
+	local n = self:GetCurrentWeaponProficiency()+2
+	local cursed = self.IsSniper and self.Weapon:GetClass() == "astw2_haloreach_focus_rifle"
+	if cursed then n = n+3 end
+	if cursed then
+		self.StartS = true
+		timer.Simple( 1, function()
+			if IsValid(self) then
+				self.StartS = false
+			end
+		end )
+	end
+	for i = 1, n do
+		timer.Simple( 0.1*i, function()
 			if IsValid(self) then
 				self:DoGestureSeq(self.FireAnim)
 				if IsValid(self.Weapon) then
-					if self.IsSniper and self.Weapon:GetClass() == "astw2_haloreach_focus_rifle" then
+					if cursed then
 						self.Weapon:PrimaryAttack()
 					else
 						self.Weapon:AI_PrimaryAttack()
@@ -839,11 +850,11 @@ function ENT:Dodge( name, speed )
 	self:SetCycle( 0 )
 	self:SetPlaybackRate( speed )
 
-	local dir = -1
+	local dir = 1
 	
-	if name == "evade_right" then dir = 1 end
+	if name == "evade_right" then dir = -1 end
 	
-	for i = 1, len*20 do
+	for i = 1, len*15 do
 		timer.Simple( i*0.05, function()
 			if IsValid(self) then
 				self.loco:Approach(self:GetPos()+self:GetRight()*dir,1)
@@ -855,12 +866,33 @@ function ENT:Dodge( name, speed )
 
 end
 
+function ENT:GetAimVector(pos)
+	if self.IsControlled then
+		return self.DPly:GetAimVector()
+	end
+	if IsValid(self.Enemy) then
+		local p = self.Enemy:WorldSpaceCenter()
+		if pos then p = pos end
+		if self.GetShootPos then
+			return (p-self:GetShootPos()):GetNormalized()
+		else
+			return (p-self:WorldSpaceCenter()):GetNormalized()
+		end
+	else
+		return self:GetForward()
+	end
+end
+
 function ENT:GetShootPos()
 	--[[if IsValid(self:GetActiveWeapon()) then
 		return self:GetActiveWeapon():GetAttachment(self:GetActiveWeapon():LookupAttachment("muzzle")).Pos
 	end]]
-	if self.Weapon:GetClass() == "astw2_haloreach_focus_rifle" then
-		return self:WorldSpaceCenter()+self:GetUp()*40
+	if self.IsSniper then
+		if self.Weapon:GetClass() == "astw2_haloreach_focus_rifle" then
+			return self:WorldSpaceCenter()+self:GetUp()*40
+		else
+			return self:WorldSpaceCenter()
+		end
 	else
 		return self:WorldSpaceCenter()
 	end
