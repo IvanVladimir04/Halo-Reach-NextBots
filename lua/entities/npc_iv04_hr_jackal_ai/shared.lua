@@ -279,7 +279,7 @@ local thingstoavoid = {
 }
 
 function ENT:OnContact( ent ) -- When we touch someBODY
-	if ent == game.GetWorld() then return "no" end
+	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
 		local d = ent:GetPos()-self:GetPos()
 		ent:SetVelocity(d*5)
@@ -393,6 +393,11 @@ function ENT:OnTraceAttack( info, dir, trace )
 			self.ShieldUp = false 
 			self.ShieldHealth = 0
 			self:SetBodygroup(3,1)
+			if self.CovRank == 2 then
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", info:GetDamagePosition(), Angle(0,0,0), self )
+			else
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", info:GetDamagePosition(), Angle(0,0,0), self )
+			end
 			timer.Simple( 12, function()
 				if IsValid(self) then
 					self.ShieldUp = true
@@ -747,7 +752,7 @@ function ENT:StartShooting(ent)
 	ent = ent or self.Enemy or self:GetEnemy()
 	if !IsValid(ent) then return end
 	local crouch = math.random(1,2)
-	if crouch == 1 then
+	if self.IsSniper or crouch == 1 then
 		if !self.IsSniper and math.random(1,2) == 1 then
 			self:MoveToPosition(self:GetPos()+self:GetAimVector():Angle():Right()*math.random(100,-100),self.WalkAnim[math.random(#self.WalkAnim)],self.MoveSpeed*self.MoveSpeedMultiplier)
 		end
@@ -1182,6 +1187,18 @@ function ENT:DoKilledAnim()
 		self.loco:SetVelocity(dir*force)
 		coroutine.wait(0.5)
 		while (!self.HasLanded) do
+			if self.AlternateLanded then
+				local rag
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(rag) then
+							rag:Remove()
+						end
+					end)
+				end
+				rag = self:CreateRagdoll(DamageInfo())
+				return
+			end
 			coroutine.wait(0.01)
 		end
 		self:PlaySequenceAndWait("Dead_Land")

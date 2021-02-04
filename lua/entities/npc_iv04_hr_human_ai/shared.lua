@@ -826,7 +826,7 @@ local thingstoavoid = {
 }
 
 function ENT:OnContact( ent ) -- When we touch someBODY
-	if ent == game.GetWorld() then return "no" end
+	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
 		local d = self:GetPos()-ent:GetPos()
 		self.loco:SetVelocity(d*1)
@@ -2250,6 +2250,18 @@ function ENT:DoKilledAnim()
 		self.loco:SetVelocity(dir*force)
 		coroutine.wait(0.5)
 		while (!self.HasLanded) do
+			if self.AlternateLanded then
+				local rag
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(rag) then
+							rag:Remove()
+						end
+					end)
+				end
+				rag = self:CreateRagdoll(DamageInfo())
+				return
+			end
 			coroutine.wait(0.01)
 		end
 		self:PlaySequenceAndWait("Dead_Land")

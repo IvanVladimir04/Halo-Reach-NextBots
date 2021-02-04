@@ -29,9 +29,9 @@ ENT.DodgeChance = 20
 ENT.StepChance = 20]]
 ENT.AttractAlliesRange = 600
 
-ENT.MeleeRange = 120
+ENT.MeleeRange = 100
 
-ENT.MeleeConeAngle = 120
+ENT.MeleeConeAngle = 80
 
 ENT.MeleeDistance = 180
 
@@ -161,10 +161,10 @@ local thingstoavoid = {
 }
 
 function ENT:OnContact( ent ) -- When we touch someBODY
-	if ent == game.GetWorld() then return "no" end
+	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
-		local d = ent:GetPos()-self:GetPos()
-		ent:SetVelocity(d*1)
+		local d = (ent:WorldSpaceCenter()-self:GetPos())
+		ent:SetVelocity(d*5)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )
@@ -615,7 +615,7 @@ end
 function ENT:DoMeleeDamage()
 	local damage = self.MeleeDamage
 	util.ScreenShake( self:WorldSpaceCenter(), 5, 5, 0.5, 500 )
-	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
+	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self.MeleeDir or self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
 		if v != self and self:CheckRelationships(v) != "friend" then
 			local d = DamageInfo()
 			d:SetDamage( damage )
@@ -630,6 +630,7 @@ function ENT:DoMeleeDamage()
 			if v:IsPlayer() or v:IsNextBot() or v:IsNPC() then
 				v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(1,#self.OnMeleeImpactSoundTbl)] )
 			end
+			v:SetVelocity( ( ( self.MeleeDir or self:GetForward() ) * self.MeleeDamage ) + self:GetUp()*100 )
 			if IsValid(v:GetPhysicsObject()) then
 				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
 			end
@@ -647,6 +648,7 @@ function ENT:Melee()
 	local yd = 0
 	local dir = 1
 	local dir2 = 0
+	self.DoingMelee = true
 	if IsValid(self.Enemy) then
 		local ydif = math.AngleDifference(self:GetAngles().y,ang.y)
 		if ydif < 0 then ydif = ydif+360 end
@@ -656,33 +658,33 @@ function ENT:Melee()
 			self:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
 			move = true
 			angl = false
+			self.MeleeDir = self:GetForward()
 		elseif ydif >= 225 and ydif < 315 then -- Left
 			name = "Melee_Left"
 			self:EmitSound( self.OnMeleeLeftSoundTbl[math.random(1,#self.OnMeleeLeftSoundTbl)] )
-			yd = 45
+			yd = 0
 			dir = 0
 			dir2 = -1
 			move = true
+			self.MeleeDir = -self:GetRight()
 		elseif ydif < 225 and ydif >= 135 then -- Back
 			dir = -1
 			name = "Melee_Back"
 			self:EmitSound( self.OnMeleeBackSoundTbl[math.random(1,#self.OnMeleeBackSoundTbl)] )
 			yd = -180
 			move = true
+			self.MeleeDir = -self:GetForward()
 		elseif ydif >= 45 and ydif < 135 then -- Right
 			dir = 0
 			dir2 = 1
 			name = "Melee_Right"
 			self:EmitSound( self.OnMeleeRightSoundTbl[math.random(1,#self.OnMeleeRightSoundTbl)] )
-			yd = -45
+			yd = 0
 			move = true
+			self.MeleeDir = self:GetRight()
 		end
 	end	
 	local len = self:SetSequence( name )
-	if move then
-		local dist = self:GetSequenceMoveDist(self:LookupSequence(name))
-		self.loco:SetDesiredSpeed( (dist/(len)) )
-	end
 	--self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
 	speed = speed or 1
 
@@ -690,17 +692,29 @@ function ENT:Melee()
 	self:SetCycle( 0 )
 	self:SetPlaybackRate( speed )
 	
-	if move then
-		for i = 1, len*10 do
-			timer.Simple( (i*0.1), function()
-				if IsValid(self) then
-					self.loco:Approach(self:GetPos()+self:GetForward()*dir+self:GetRight()*dir2,1)
-				end
-			end )
+	timer.Simple( len, function()
+		if IsValid(self) then
+			self.DoingMelee = false
 		end
-	end
+	end )
+	
+	if move then
 
-	coroutine.wait( (len / speed) )
+		local t = (len/speed)+CurTime()
+		local p = self:GetPos()
+		local a = self:GetAngles()
+		while (t > CurTime()) do
+			local yes, mov, ang = self:GetSequenceMovement( self:LookupSequence(name), 0, self:GetCycle() )
+			mov:Rotate(Angle(0,ang.y+a.y,0))
+			if util.IsInWorld(p+mov) then
+				self:SetPos(p+mov)
+			end
+			self:SetAngles(a+ang)
+			coroutine.yield()
+		end
+	else
+		coroutine.wait( len/speed )
+	end 
 	self:SetAngles(self:GetAngles()+Angle(0,yd,0))
 end
 
@@ -839,7 +853,19 @@ function ENT:DoKilledAnim()
 					rag = self:CreateRagdoll(DamageInfo())
 				end
 			end )
-			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
+			self:ResetSequence(anim)
+			local t = (len/speed)+CurTime()
+			local p = self:GetPos()
+			local a = self:GetAngles()
+			while (t > CurTime()) do
+				local yes, mov, ang = self:GetSequenceMovement( self:LookupSequence(anim), 0, self:GetCycle() )
+				mov:Rotate(Angle(0,ang.y+a.y,0))
+				if util.IsInWorld(p+mov) then
+					self:SetPos(p+mov)
+				end
+				self:SetAngles(a+ang)
+				coroutine.yield()
+			end
 		else
 			self:Speak("OnDeathPainful")
 			local rag
@@ -863,6 +889,18 @@ function ENT:DoKilledAnim()
 		self.loco:SetVelocity(dir*force)
 		coroutine.wait(0.5)
 		while (!self.HasLanded) do
+			if self.AlternateLanded then
+				local rag
+				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+					timer.Simple( 60, function()
+						if IsValid(rag) then
+							rag:Remove()
+						end
+					end)
+				end
+				rag = self:CreateRagdoll(DamageInfo())
+				return
+			end
 			coroutine.wait(0.01)
 		end
 		self:PlaySequenceAndWait("Dead_Land")
@@ -904,6 +942,7 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+	self:RemoveAllGestures()
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
@@ -936,7 +975,7 @@ local moves = {
 
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
-	if moves[act] then
+	if moves[act] and !self.DoingMelee and self:Health() > 0 then
 		self:BodyMoveXY()
 	end
 	local goal = self:GetPos()+self.loco:GetVelocity()
