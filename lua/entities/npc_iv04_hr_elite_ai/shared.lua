@@ -2479,8 +2479,8 @@ function ENT:BodyUpdate()
 	self:FrameAdvance()
 end
 
-list.Set( "NPC", "npc_iv04_hce_elite_minor", {
+--[[list.Set( "NPC", "npc_iv04_hce_elite_minor", {
 	Name = "Elite Minor",
 	Class = "npc_iv04_hce_elite_minor",
 	Category = "Halo Combat Evolved"
-} )
+} )]] -- Oops I never commented this out
