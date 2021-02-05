@@ -27,6 +27,8 @@ ENT.ShieldHealth = 150
 
 ENT.ShieldUp = true
 
+ENT.ActionTime = 2.5
+
 -- Flinching
 
 ENT.FlinchChance = 30
@@ -409,7 +411,24 @@ function ENT:OnTraceAttack( info, dir, trace )
 		info:ScaleDamage(0)
 		return
 	elseif trace.HitGroup == 1 then
-		info:ScaleDamage(3)
+		if self.HasHelmet then
+			self:SetBodygroup(3,1)
+			local prop = ents.Create( "prop_physics" )
+			prop:SetModel( self.HelmetModel )
+			prop:SetPos(info:GetDamagePosition())
+			prop:SetAngles(Angle(0,self:GetAngles().y,0))
+			prop:Spawn()
+			self.HasHelmet = false
+			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+				timer.Simple( 60, function()
+					if IsValid(prop) then
+						prop:Remove()
+					end
+				end)
+			end
+		else
+			info:ScaleDamage(3)
+		end
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	local hg = trace.HitGroup
@@ -508,7 +527,7 @@ function ENT:Wander()
 			if !self.SpokeIdle then
 				self:Speak("OnIdle")
 				self.SpokeIdle = true
-				timer.Simple( math.random(7,10), function()
+				timer.Simple( math.random(45,60), function()
 					if IsValid(self) then
 						self.SpokeIdle = false
 					end
@@ -702,7 +721,7 @@ function ENT:CustomBehaviour(ent)
 end
 
 function ENT:GetNear(ent)
-	local t = math.random(2,3)
+	local t = math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.4))
 	local stop = false
 	local shoot = false
 	timer.Simple( t, function()
@@ -767,7 +786,7 @@ function ENT:StartShooting(ent)
 				self:ShootBullet(ent)
 			end
 		end )
-		coroutine.wait(2)
+		coroutine.wait(math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.4)))
 	else
 		self:GetNear(ent)
 	end
@@ -949,14 +968,6 @@ function ENT:DoMeleeDamage()
 	end
 end
 
-function ENT:Melee()
-	--self:Speak("Melee")
-	self.Grenade1.kt = CurTime()+0.25
-	self.Grenade2.kt = CurTime()+0.25
-	coroutine.wait( 0.5 )
-	self:TakeDamage( self:Health(), self, self )
-end
-
 function ENT:StartChasing( ent, anim, speed, los, kam )
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
@@ -1072,20 +1083,6 @@ end
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	self:SetBodygroup(3,1)
-	if IsValid(self.Grenade1) then
-		self.Grenade1:SetParent(nil)
-		self.Grenade1:SetMoveType( MOVETYPE_VPHYSICS )
-		self.Grenade1:Initialize()
-		self.Grenade1.PhysicsCollide = self.Grenade1.OPC
-		self.Grenade1.kt = CurTime()+2
-	end
-	if IsValid(self.Grenade2) then
-		self.Grenade2:SetParent(nil)
-		self.Grenade2:SetMoveType( MOVETYPE_VPHYSICS )
-        self.Grenade2:Initialize()
-		self.Grenade2.PhysicsCollide = self.Grenade2.OPC
-		self.Grenade2.kt = CurTime()+2
-	end
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
@@ -1177,7 +1174,7 @@ function ENT:DoKilledAnim()
 			rag = self:CreateRagdoll(DamageInfo())
 		end
 	else
-		self:Speak("OnDeathThrown")
+		self:Speak("OnFallDeath")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2
@@ -1250,12 +1247,13 @@ function ENT:DoAnimationEvent(a)
 		end )
 		if !CLIENT then
 			--local set = self.AnimSets[self.Weapon:GetClass()] or self.AnimSets["Rifle"]
-			local a,len = self:LookupSequence("pistol_reload")
-			local func = function()
-				self:PlaySequenceAndWait(a)
+			if !self.IsSniper then
+				local a,len = self:LookupSequence("pistol_reload")
+				local func = function()
+					self:DoGestureSeq(a)
+				end
+				table.insert(self.StuffToRunInCoroutine,func)
 			end
-			table.insert(self.StuffToRunInCoroutine,func)
-			self:ResetAI()
 		end
 	end
 end
@@ -1265,7 +1263,7 @@ function ENT:SetViewPunchAngles(no)
 end
 
 function ENT:GetCurrentWeaponProficiency()
-	return self.Difficulty or 1
+	return self.Difficulty*2 or 1
 end
 
 local moves = {

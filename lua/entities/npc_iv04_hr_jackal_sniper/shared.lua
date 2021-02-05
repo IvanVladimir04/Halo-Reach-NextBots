@@ -14,6 +14,10 @@ ENT.PossibleWeapons = {
 	[2] = "astw2_haloreach_needler_rifle"
 }
 
+ENT.HasHelmet = true
+
+ENT.HelmetModel = "models/halo_reach/characters/covenant/jackal_sniper_mask_prop.mdl"
+
 list.Set( "NPC", "npc_iv04_hr_jackal_sniper", {
 	Name = "Jackal Sniper",
 	Class = "npc_iv04_hr_jackal_sniper",

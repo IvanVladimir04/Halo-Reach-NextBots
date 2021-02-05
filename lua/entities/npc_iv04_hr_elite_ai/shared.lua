@@ -1652,7 +1652,7 @@ function ENT:CustomBehaviour(ent,range)
 		else
 			self:SetEnemy(nil)
 		end
-		coroutine.wait(math.random(2,3))
+		coroutine.wait(math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.5)))
 		
 	elseif self.AIType == "Defensive" then
 	
@@ -2259,6 +2259,7 @@ end
 function ENT:DoKilledAnim()
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		if self.KilledDmgInfo:GetDamage() <= 150 or ( self.DeathHitGroup and self.DeathHitGroups[self.DeathHitGroup] == "Head" ) then
+			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
 			if anim == true then 
 				local wep = ents.Create(self.Weapon:GetClass())
@@ -2293,6 +2294,7 @@ function ENT:DoKilledAnim()
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
 		else
+			self:Speak("OnDeathPainful")
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())
 			wep:SetAngles(self.Weapon:GetAngles())
@@ -2312,6 +2314,7 @@ function ENT:DoKilledAnim()
 			rag = self:BecomeRagdoll(self.KilledDmgInfo)
 		end
 	else
+		self:Speak("OnDeathPainful")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2
@@ -2396,7 +2399,7 @@ function ENT:SetViewPunchAngles(no)
 end
 
 function ENT:GetCurrentWeaponProficiency()
-	return self.Difficulty or 1
+	return self.Difficulty*2 or 1
 end
 
 local moves = {

@@ -1974,29 +1974,6 @@ function ENT:OnFiring()
 	end
 end
 
-function ENT:PlaySequenceAndPWait( name, speed, p )
-    local len = self:SetSequence( name )
-	if isstring(name) then name = self:LookupSequence(name) end
-    speed = speed or 1
-	local stop = false
-	timer.Simple( len, function()
-		stop = true
-	end )
-
-    self:ResetSequenceInfo()
-    self:SetCycle( 0 )
-    self:SetPlaybackRate( speed )
-    while (!stop) do
-        local good,pos,ang = self:GetSequenceMovement(name,0,self:GetCycle())
-		--print(ang,good,p,pos)
-        local position = pos+p   
-        self:SetPos(position)
-		self:SetAngles(ang+self:GetAngles())
-        coroutine.wait(0.0005)
-    end
-
-end
-
 --[[ENT.NThink = 0
 
 function ENT:Think()

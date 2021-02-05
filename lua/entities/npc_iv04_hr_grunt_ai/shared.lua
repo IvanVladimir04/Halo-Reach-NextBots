@@ -27,6 +27,8 @@ ENT.MeleeDistance = 180
 
 ENT.ShieldHealth = 100
 
+ENT.ActionTime = 2.5
+
 -- Flinching
 
 ENT.FlinchChance = 30
@@ -526,7 +528,7 @@ function ENT:Wander()
 			if !self.SpokeIdle then
 				self:Speak("OnIdle")
 				self.SpokeIdle = true
-				timer.Simple( math.random(7,10), function()
+				timer.Simple( math.random(45,60), function()
 					if IsValid(self) then
 						self.SpokeIdle = false
 					end
@@ -835,16 +837,16 @@ function ENT:CustomBehaviour(ent)
 				self:SetEnemy(obstr)
 			end
 		else
-			self.LastTarget = ent
-			self:SetEnemy(nil)
-			self.Alerted = true
-			--self:StartChasing( ent, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			--self.LastTarget = ent
+			--self:SetEnemy(nil)
+			--self.Alerted = true
+			self:StartChasing( ent, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		end
 	end
 end
 
 function ENT:GetNear(ent)
-	local t = math.random(2,3)
+	local t = math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.6))
 	local stop = false
 	local shoot = false
 	timer.Simple( t, function()
@@ -1411,7 +1413,7 @@ function ENT:SetViewPunchAngles(no)
 end
 
 function ENT:GetCurrentWeaponProficiency()
-	return self.Difficulty or 1
+	return self.Difficulty*2 or 1
 end
 
 local moves = {

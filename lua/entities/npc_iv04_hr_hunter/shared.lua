@@ -83,7 +83,8 @@ function ENT:FireAnimationEvent(pos,ang,event,name)
 end
 
 function ENT:OnInitialize()
-	self.MeleeDamage = (self.MeleeDamage*(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt())*0.5)
+	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
+	self.MeleeDamage = (self.MeleeDamage*(self.Difficulty)*0.5)
 	self:DoInit()
 end
 
@@ -580,7 +581,8 @@ function ENT:FireWep()
 	self:Speak("SFXOnBeamFire")
 	local phys = ent:GetPhysicsObject()
 	if IsValid(phys) then
-		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(math.Rand(0.3,0)))))*2000)
+		local off = math.Rand((1/self.Difficulty)*0.5,0)
+		phys:ApplyForceCenter(((self:GetAimVector()*2)+((self:GetUp()*(off))))*2000)
 	end
 end
 
