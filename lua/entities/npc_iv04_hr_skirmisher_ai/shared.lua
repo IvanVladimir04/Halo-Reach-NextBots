@@ -2,7 +2,7 @@ AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
 ENT.MoveSpeed = 50
-ENT.MoveSpeedMultiplier = 4
+ENT.MoveSpeedMultiplier = 7
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
@@ -1168,7 +1168,7 @@ function ENT:DoKilledAnim()
 			rag = self:CreateRagdoll(DamageInfo())
 		end
 	else
-		self:Speak("OnFallDeath")
+		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2

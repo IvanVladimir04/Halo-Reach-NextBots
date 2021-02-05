@@ -511,7 +511,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	end
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.HasArmor and self.Shield > 0 then
-		ParticleEffect( "halo_reach_shield_impact_effect", self:WorldSpaceCenter(), Angle(0,0,0), self )
+		ParticleEffect( "halo_reach_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
 	end
 	--[[if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true
