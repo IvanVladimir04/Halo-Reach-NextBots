@@ -1518,11 +1518,12 @@ function ENT:DoMeleeDamage()
 					if self.IsBrute then
 						v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(#self.OnMeleeImpactSoundTbl)] )
 					else
-						if (self.Weapon:GetClass() == "astw2_haloreach_energysword") then
+						local we = IsValid(self.Weapon)
+						if we and (self.Weapon:GetClass() == "astw2_haloreach_energysword") then
 							v:EmitSound( self.OnMeleeSwordImpactSoundTbl[math.random(#self.OnMeleeSwordImpactSoundTbl)] )
 							ParticleEffect( "astw2_halo_3_muzzle_plasma_turret", v:WorldSpaceCenter(), Angle(0,0,0), self )
 						end
-						if (self.Weapon:GetClass() != "astw2_haloreach_energysword") then
+						if !we or (self.Weapon:GetClass() != "astw2_haloreach_energysword") then
 							v:EmitSound( self.OnMeleeImpactSoundTbl[math.random(#self.OnMeleeImpactSoundTbl)] )
 						end		
 					end						
