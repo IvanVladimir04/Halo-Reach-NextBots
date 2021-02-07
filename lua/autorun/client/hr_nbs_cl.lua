@@ -51,6 +51,7 @@ local tbl = {
 	}
 }
 
+HRShieldMaterial = Material("models/halo_reach/characters/covenant/elite/minor/energy_shield")
 
 IV04AddMenuOption( tbl1 )
 IV04AddMenuOption( tbl )

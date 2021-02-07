@@ -364,6 +364,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	if trace.HitGroup == 20 and self.ShieldUp then
 		if info:GetDamageType() == DMG_BULLET then
 			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
+			sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage()/4)
 			if info:GetAttacker():GetClass() != self:GetClass() then
 				local prop = ents.Create("prop_dynamic")
@@ -394,8 +395,11 @@ function ENT:OnTraceAttack( info, dir, trace )
 		end
 		if self.ShieldHealth < 0 then 
 			self.ShieldUp = false 
+			local bracers = self:FindBodygroupByName( "Bracer" )
 			self.ShieldHealth = 0
-			self:SetBodygroup(3,1)
+			self:SetBodygroup(4,1)
+			self:SetBodygroup(5,1)
+			sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 75, math.random(105,115) )
 			if self.CovRank == 2 then
 				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", info:GetDamagePosition(), Angle(0,0,0), self )
 			else
@@ -405,7 +409,11 @@ function ENT:OnTraceAttack( info, dir, trace )
 				if IsValid(self) then
 					self.ShieldUp = true
 					self.ShieldHealth = 150
-					self:SetBodygroup(3,0)
+					self:SetBodygroup(4,0)
+					self:SetBodygroup(5,0)
+					sound.Play( "halo_reach/equipment/jackal_shield_redeploy/jackal_shield_redeploy.ogg",  self:GetPos(), 65, math.random(105,115) )
+					ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(1).Pos, Angle(0,0,0), self )
+					ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(2).Pos, Angle(0,0,0), self )
 				end
 			end )
 		end
@@ -723,9 +731,15 @@ function ENT:GetNear(ent)
 	local t = math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.8))
 	local stop = false
 	local shoot = false
+	local move = true
 	timer.Simple( t, function()
 		if IsValid(self) then
 			stop = true
+		end
+	end )
+	timer.Simple( t-math.Rand(0,1), function()
+		if IsValid(self) then
+			move = false
 		end
 	end )
 	timer.Simple( t/2, function()
@@ -757,7 +771,11 @@ function ENT:GetNear(ent)
 				self:ShootBullet(ent)
 			end
 			self.loco:FaceTowards(ent:GetPos())
-			self.loco:Approach(self:GetPos()+dir,1)
+			if move then
+				self.loco:Approach(self:GetPos()+dir,1)
+			else
+				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+			end
 			coroutine.wait(0.01)
 		else
 			stop = true
@@ -1165,7 +1183,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:CreateRagdoll(DamageInfo())
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnDeathThrown")

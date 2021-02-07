@@ -75,6 +75,25 @@ ENT.Faction = "FACTION_COVENANT"
 
 ENT.CurMag = 100
 
+-- if CLIENT then
+-- matproxy.Add({
+
+    -- name = "iv04_Jackal_Shield_Strength",
+    -- init = function( self, mat, values )
+    -- end,
+    -- bind = function( self, mat, ent )
+        -- if !IsValid( ent ) || !IsValid( ent:GetOwner() ) then return end
+        -- local strength = ent:ShieldHealth() 
+        
+        -- mat:SetVector( "$emissiveBlendTint", Vector( 0.5 + strength*1.5, 0.25 - strength*0.2, 2 - strength*4 ) )
+        -- mat:SetFloat( "$emissiveBlendStrength", math.Clamp( strength^2, 0.25, 1 ) )
+        
+    -- end
+    
+-- })
+-- end
+
+
 ENT.PistolHolds = {
 	["pistol"] = true,
 	["revolver"] = true
@@ -364,6 +383,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 		if info:GetDamageType() == DMG_BULLET then
 			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage()/4)
+			sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
 			if info:GetAttacker():GetClass() != self:GetClass() then
 				local prop = ents.Create("prop_dynamic")
 				local start = info:GetDamagePosition()
@@ -394,6 +414,8 @@ function ENT:OnTraceAttack( info, dir, trace )
 		if self.ShieldHealth < 0 then 
 			self.ShieldUp = false 
 			self.ShieldHealth = 0
+			
+				sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 100, 100 )
 			self:SetBodygroup(3,1)
 			if self.CovRank == 2 then
 				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", info:GetDamagePosition(), Angle(0,0,0), self )
@@ -405,6 +427,12 @@ function ENT:OnTraceAttack( info, dir, trace )
 					self.ShieldUp = true
 					self.ShieldHealth = 150
 					self:SetBodygroup(3,0)
+					sound.Play( "halo_reach/equipment/jackal_shield_redeploy/jackal_shield_redeploy.ogg",  self:GetPos(), 60, 100 )
+					if self.CovRank == 2 then
+						ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+					else
+					ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+					end
 				end
 			end )
 		end
@@ -724,9 +752,15 @@ function ENT:GetNear(ent)
 	local t = math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.4))
 	local stop = false
 	local shoot = false
+	local move = true
 	timer.Simple( t, function()
 		if IsValid(self) then
 			stop = true
+		end
+	end )
+	timer.Simple( t-math.Rand(0,1), function()
+		if IsValid(self) then
+			move = false
 		end
 	end )
 	timer.Simple( t/2, function()
@@ -758,7 +792,11 @@ function ENT:GetNear(ent)
 				self:ShootBullet(ent)
 			end
 			self.loco:FaceTowards(ent:GetPos())
-			self.loco:Approach(self:GetPos()+dir,1)
+			if move then
+				self.loco:Approach(self:GetPos()+dir,1)
+			else
+				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+			end
 			coroutine.wait(0.01)
 		else
 			stop = true
@@ -1171,7 +1209,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:CreateRagdoll(DamageInfo())
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnFallDeath")

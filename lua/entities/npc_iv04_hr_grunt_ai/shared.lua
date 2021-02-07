@@ -849,9 +849,15 @@ function ENT:GetNear(ent)
 	local t = math.Rand(0,1)+(self.ActionTime-(self.Difficulty*0.6))
 	local stop = false
 	local shoot = false
+	local move = true
 	timer.Simple( t, function()
 		if IsValid(self) then
 			stop = true
+		end
+	end )
+	timer.Simple( t-math.Rand(0,1), function()
+		if IsValid(self) then
+			move = false
 		end
 	end )
 	timer.Simple( t/2, function()
@@ -881,7 +887,11 @@ function ENT:GetNear(ent)
 				self:ShootBullet(ent)
 			end
 			self.loco:FaceTowards(ent:GetPos())
-			self.loco:Approach(self:GetPos()+dir,1)
+			if move then
+				self.loco:Approach(self:GetPos()+dir,1)
+			else
+				self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+			end
 			coroutine.wait(0.01)
 		else
 			stop = true
@@ -1322,7 +1332,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:CreateRagdoll(DamageInfo())
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnDeathThrown")
