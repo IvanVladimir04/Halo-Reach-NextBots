@@ -6,6 +6,7 @@ ENT.MoveSpeedMultiplier = 2
 ENT.BehaviourType = 3
 ENT.IdleSoundDelay = math.random(45,60)
 ENT.SightType = 2
+ENT.PrintName = "Engineer"
 
 ENT.StartHealth = 100
 
@@ -286,6 +287,7 @@ if SERVER then
 						if v.OnTraceAttack then
 							v.OldOnTraceAttack = v.OnTraceAttack
 							v.OnTraceAttack = function(v,dmg,dir,trace)
+							ParticleEffect( "halo_reach_shield_impact_effect", dmg:GetDamagePosition(), Angle(0,0,0), self )
 								--print(v,dmg)
 								--dmg.PassedSHChecks = true
 								--print(v,CurTime(),2)
@@ -352,6 +354,7 @@ elseif CLIENT then
 							v:DrawModel()
 							render.SetColorModulation( 205, 45, 255 )
 							render.MaterialOverride(HRShieldMaterial)
+							
 							v:DrawModel()
 							render.MaterialOverride(nil)
 						end
@@ -361,6 +364,7 @@ elseif CLIENT then
 									if i == 5 or !v:GetNWBool("ShieldingEnabled",false) then
 										v.BeenShielded = false
 										v.Draw = v.OldDraw
+										ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", v:GetPos(), Angle(0,0,0), self )
 									end
 								end
 							end )
@@ -455,7 +459,7 @@ function ENT:OnInjured(dmg)
 		end )
 	else
 		if dmg:GetDamage() > 0 then
-			ParticleEffect( "halo_reach_blood_impact_drone", dmg:GetDamagePosition(), Angle(0,0,0), self )
+			ParticleEffect( "halo_reach_blood_impact_grunt", dmg:GetDamagePosition(), Angle(0,0,0), self )
 		end
 	end
 	local total = dmg:GetDamage()
@@ -463,10 +467,12 @@ function ENT:OnInjured(dmg)
 		--print(self.Shield, "before")
 		self.ShieldActual = self.Shield
 		self.ShieldH = CurTime()
+		
 		local shield = self.ShieldH
 		local dm = dmg:GetDamage()
 		total = dm-self.Shield
 		if total < 0 then total = 0 end
+		
 		if dmg:IsBulletDamage() then
 			dmg:SubtractDamage(self.Shield*2)
 			self.Shield = self.Shield-math.abs(dm/2)
