@@ -28,7 +28,10 @@ ENT.StartWeapons = {
 	[1] = "astw2_haloreach_spiker",
 	[2] = "astw2_haloreach_plasma_repeater",
 	[3] = "astw2_haloreach_concussion_rifle",
-	[4] = "astw2_haloreach_gravityhammer"
+	[4] = "astw2_haloreach_gravityhammer",
+	[5] = "astw2_halo2a_carbine",
+	[6] = "astw2_halo2a_plasmarifle_brute",
+	[7] = "astw2_halo2a_bruteshot"
 }
 
 ENT.RifleHolds = {
@@ -93,6 +96,7 @@ function ENT:OnInitialize()
 	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)
 	self:SetupHoldtypes()
 	self:DoInit()
+	self.VoiceType = "Brute"
 end
 
 function ENT:DetermineDeathAnim( info )
@@ -130,14 +134,32 @@ list.Set( "NPC", "npc_iv04_hr_brute_captain", {
 	Category = "Halo Reach"
 } )
 
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,75)
+	end
+end
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
-	if !self.loco:GetVelocity():IsZero() then
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+		if !self.LMove then
+			self.LMove = CurTime()+0.37
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.37
+			end
+		end
 		local goal = self:GetPos()+self.loco:GetVelocity()
 		local y = (goal-self:GetPos()):Angle().y
 		local di = math.AngleDifference(self:GetAngles().y,y)
 		self:SetPoseParameter("move_yaw",di)
 		self:SetPoseParameter("walk_yaw",di)
+	else
+		self.LMove = nil
 	end
 	local look = false
 	local goal

@@ -55,16 +55,18 @@ end
 
 function ENT:PhysicsCollide(data, physobj)
 if SERVER then
-        
+		if data.Speed > 25 then
+            -- self:EmitSound(Sound("halo/halo_reach/weapons/frag_armed" .. math.random(1,3) .. ".ogg"))
 		end
-    if self.at <= CurTime() then
-        self:Detonate()
-    elseif self.at > CurTime() then
-        local effectdata = EffectData()
-            effectdata:SetOrigin( self:GetPos() )
-        util.Effect( "StunstickImpact", effectdata)
-       
-    end
+		end
+	if self.at <= CurTime() and self.ImpactFuse then
+            self:Detonate()
+
+
+        end
+		-- local effectdata = EffectData()
+            -- effectdata:SetOrigin( self:GetPos() )
+        -- util.Effect( "StunstickImpact", effectdata)
 end
 
 function ENT:ClientThink()
@@ -86,14 +88,14 @@ function ENT:ServerThink()
     end
 
         if self.Armed then
-            local phys = self:GetPhysicsObject()
-            phys:ApplyForceCenter( self:GetAngles():Up()  )
+            -- local phys = self:GetPhysicsObject()
+            -- phys:ApplyForceCenter( self:GetAngles():Up()  )
         end
 
         if CurTime() >= self.kt then
             self:Detonate()
         end
-local phys = self:GetPhysicsObject()
+-- local phys = self:GetPhysicsObject()
 
         if CurTime() >= self.at then
             local targets = ents.FindInSphere(self:GetPos(), 16)
@@ -141,7 +143,7 @@ function ENT:Detonate()
             attacker = self.Owner
         end
 
-        util.BlastDamage(self, attacker, self:GetPos(), 512, 128)
+        util.BlastDamage(self, attacker, self:GetPos(), 128, 55)
 	self.motorsound:Stop()
         self:Remove()
     end

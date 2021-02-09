@@ -29,7 +29,7 @@ ENT.DodgeChance = 20
 ENT.StepChance = 20]]
 ENT.AttractAlliesRange = 600
 
-ENT.MeleeRange = 100
+ENT.MeleeRange = 200
 
 ENT.MeleeConeAngle = 80
 
@@ -84,6 +84,7 @@ function ENT:OnInitialize()
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self.MeleeDamage = (self.MeleeDamage*(self.Difficulty)*0.5)
 	self:DoInit()
+	self.VoiceType = "Gúta"
 	self:SetCollisionBounds(Vector(-100,-100,20),Vector(100,100,200))
 end
 
@@ -164,7 +165,7 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
 		local d = (ent:WorldSpaceCenter()-self:GetPos())
-		ent:SetVelocity(d*5)
+		ent:SetVelocity(d*1)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )
@@ -174,7 +175,7 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 		if IsValid(p) then
 			p:Wake()
 			local d = ent:GetPos()-self:GetPos()
-			p:SetVelocity(d*5)
+			p:SetVelocity(d*1)
 		end
 	end
 	local tbl = {
@@ -207,7 +208,7 @@ function ENT:OnInjured(dmg)
 	if rel == "friend" and self.BeenInjured then dmg:ScaleDamage(0) return end
 	if (ht) - math.abs(dmg:GetDamage()) < 1 then return end
 	if dmg:GetDamage() > 0 then
-		ParticleEffect( "iv04_halo_reach_blood_splat_guta", dmg:GetDamagePosition(), Angle(0,0,0), self )
+		ParticleEffect( "halo_reach_blood_impact_human", dmg:GetDamagePosition(), Angle(0,0,0), self )
 	end
 	if !IsValid(self.Enemy) then
 		if self:CheckRelationships(dmg:GetAttacker()) == "foe" then
@@ -810,10 +811,46 @@ local moves = {
 	--[ACT_RUN] = true
 }
 
+function ENT:FoleySound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnMoveFoley"] and istable(character["OnMoveFoley"]) then
+		local sound = table.Random(character["OnMoveFoley"])
+		self:EmitSound(sound,75)
+	end
+end
+
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,100)
+	end
+end
+
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
 	if moves[act] and !self.DoingMelee and self:Health() > 0 then
 		self:BodyMoveXY()
+	end
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+		if !self.LMove then
+			self.LMove = CurTime()+0.75
+		else
+			if self.LMove < CurTime() then
+				self:FoleySound()
+				self:FootstepSound()
+				self.LMove = CurTime()+0.75
+				util.ScreenShake(self:GetPos(),512,100,0.6,2048)
+			end
+		end
+		local goal = self:GetPos()+self.loco:GetVelocity()
+		local y = (goal-self:GetPos()):Angle().y
+		local di = math.AngleDifference(self:GetAngles().y,y)
+		self:SetPoseParameter("move_yaw",di)
+		self:SetPoseParameter("walk_yaw",di)
+	else
+		self.LMove = nil
 	end
 	local goal = self:GetPos()+self.loco:GetVelocity()
 	local y = (goal-self:GetPos()):Angle().y

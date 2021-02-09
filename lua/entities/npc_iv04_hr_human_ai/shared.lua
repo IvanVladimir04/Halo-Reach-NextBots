@@ -1682,6 +1682,7 @@ function ENT:OnOtherKilled( victim, info )
 					self.AIType = "Defensive"
 					local func = function()
 						if self.IsSergeant and !self.IsInVehicle then
+							self:Speak("OnOrderRetreat")
 							HRHS:Signal("Retreat",self)
 							self:PlaySequenceAndMove(self:LookupSequence("Signal_Fallback"),1,self:GetForward()*-1,50,0.7)
 						else
@@ -1733,6 +1734,11 @@ function ENT:OnOtherKilled( victim, info )
 			local func = function()
 				if self.IsInVehicle then return end
 				if self.IsSergeant then
+					if math.random(1,2) == 1 then
+						self:Speak("OnOrderCharge")
+					else
+						self:Speak("OnOrderAdvance")
+					end
 					HRHS:Signal("Advance",self)
 					self:PlaySequenceAndPWait("Signal_Advance",1,self:GetPos())
 				else
@@ -2001,7 +2007,7 @@ function ENT:FootstepSound()
 	local character = self.Voices[self.VoiceType]
 	if character["OnStep"] and istable(character["OnStep"]) then
 		local sound = table.Random(character["OnStep"])
-		self:EmitSound(sound,100)
+		self:EmitSound(sound,60)
 	end
 end
 

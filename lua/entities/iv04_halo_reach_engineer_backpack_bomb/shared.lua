@@ -152,7 +152,7 @@ function ENT:Detonate()
             attacker = self.Owner
         end
 
-        util.BlastDamage(self, attacker, self:GetPos(), 128, 256)
+        util.BlastDamage(self, attacker, self:GetPos(), 324, 75)
 	self.motorsound:Stop()
         self:Remove()
     end

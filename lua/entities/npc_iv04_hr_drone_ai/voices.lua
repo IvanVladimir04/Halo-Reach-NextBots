@@ -64,6 +64,15 @@ ENT.Voices = {
 			"halo_reach/characters/bugger/long_move/long_move4.ogg", "halo_reach/characters/bugger/long_move/long_move6.ogg",
 			"halo_reach/characters/bugger/long_move/long_move7.ogg", "halo_reach/characters/bugger/long_move/long_move8.ogg",
 			"halo_reach/characters/bugger/long_move/long_move9.ogg" },
+["OnGib"] = { "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium1.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium10.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium11.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium12.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium13.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium14.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium15.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium2.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium4.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium5.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium6.ogg", "halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium7.ogg",
+			"halo_reach/characters/flood/combatform_limb_destroyed/floodfleshdestroyed_medium9.ogg" },
+["OnPerch"] = { "halo_reach/characters/bugger/bugger_stick/stick1.ogg", "halo_reach/characters/bugger/bugger_stick/stick2.ogg",
+			"halo_reach/characters/bugger/bugger_stick/stick3.ogg", "halo_reach/characters/bugger/bugger_stick/stick5.ogg" },
 ["OnFly"] = { "halo_reach/characters/bugger/flying/flying1.ogg", "halo_reach/characters/bugger/flying/flying2.ogg",
 			"halo_reach/characters/bugger/flying/flying3.ogg", "halo_reach/characters/bugger/flying/flying5.ogg",
 			"halo_reach/characters/bugger/flying/flying6.ogg", "halo_reach/characters/bugger/flying/flying7.ogg",
@@ -71,6 +80,6 @@ ENT.Voices = {
 			"halo_reach/characters/bugger/flying/flying10.ogg", "halo_reach/characters/bugger/flying/flying11.ogg",
 			"halo_reach/characters/bugger/flying/flying12.ogg", "halo_reach/characters/bugger/flying/flying13.ogg",
 			"halo_reach/characters/bugger/flying/flying14.ogg", "halo_reach/characters/bugger/flying/flying15.ogg",
-			"halo_reach/characters/bugger/flying/flying16.ogg", "halo_reach/characters/bugger/flying/flying17.ogg" }
+			"halo_reach/characters/bugger/flying/flying16.ogg", "halo_reach/characters/bugger/flying/flying17.ogg" },
 	}
-}
+} 

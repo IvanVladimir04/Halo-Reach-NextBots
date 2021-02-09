@@ -161,6 +161,7 @@ end
 
 function ENT:OnInitialize()
 	self:DoInit()
+	self.VoiceType = "Jackal"
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
@@ -171,6 +172,9 @@ function ENT:OnInitialize()
 	self.Weapon.AI_Reload = function()
 		relo(self.Weapon)
 		self:DoAnimationEvent(1689)
+	end
+	if self.IsSniper then
+	ParticleEffectAttach( "iv04_halo_reach_jackal_sniper_glow", PATTACH_POINT_FOLLOW, self, 4 )
 	end
 	self:SetupHoldtypes()
 end
@@ -381,9 +385,9 @@ function ENT:OnTraceAttack( info, dir, trace )
 	--print(trace.HitGroup)
 	if trace.HitGroup == 20 and self.ShieldUp then
 		if info:GetDamageType() == DMG_BULLET then
-			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
+			-- ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage()/4)
-			sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
+			
 			if info:GetAttacker():GetClass() != self:GetClass() then
 				local prop = ents.Create("prop_dynamic")
 				local start = info:GetDamagePosition()
@@ -410,12 +414,14 @@ function ENT:OnTraceAttack( info, dir, trace )
 			end
 		else
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage())
+			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
+			sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
 		end
 		if self.ShieldHealth < 0 then 
 			self.ShieldUp = false 
 			self.ShieldHealth = 0
 			
-				sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 100, 100 )
+			sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 100, 100 )
 			self:SetBodygroup(3,1)
 			if self.CovRank == 2 then
 				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", info:GetDamagePosition(), Angle(0,0,0), self )
@@ -447,6 +453,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 			prop:SetAngles(Angle(0,self:GetAngles().y,0))
 			prop:Spawn()
 			self.HasHelmet = false
+			self:StopParticles()
 			if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
 				timer.Simple( 60, function()
 					if IsValid(prop) then
@@ -1120,7 +1127,17 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+	if self.IsSniper then self:StopParticles() end
+	if (self.IsSniper == false and self.ShieldHealth >= 1) then
+	-- if (self.ShieldUp == true and self.ShieldHealth > 0) then
+	sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 100, 100 )
 	self:SetBodygroup(3,1)
+		if self.CovRank == 2 then
+			ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+		else
+			ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+		end
+	end
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
@@ -1167,6 +1184,7 @@ function ENT:DoKilledAnim()
 				wep:Spawn()
 				self.Weapon:Remove()
 				self:CreateRagdoll(DamageInfo())
+				
 				if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
 					timer.Simple( 60, function()
 						if IsValid(wep) then
@@ -1212,7 +1230,8 @@ function ENT:DoKilledAnim()
 			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
-		self:Speak("OnFallDeath")
+		-- self:Speak("OnFallDeath")
+		self:Speak("OnDeathThrown")
 		self.FlyingDead = true
 		local dir = ((self:GetPos()-self.KilledDmgInfo:GetDamagePosition())):GetNormalized()
 		dir = dir+self:GetUp()*2
@@ -1312,10 +1331,28 @@ local moves = {
 	[ACT_RUN_RIFLE] = true
 }
 
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,55)
+	end
+end
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
 	if moves[act] and self:Health() > 0 then
 		self:BodyMoveXY()
+	end
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+	if !self.LMove then
+			self.LMove = CurTime()+0.35
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.35
+			end
+		end
 	end
 	local look = false
 	local goal

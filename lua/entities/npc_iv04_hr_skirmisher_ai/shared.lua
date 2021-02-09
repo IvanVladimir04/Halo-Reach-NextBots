@@ -142,6 +142,7 @@ end
 
 function ENT:OnInitialize()
 	self:DoInit()
+	self.VoiceType = "Skirmisher"
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
@@ -392,10 +393,12 @@ function ENT:OnTraceAttack( info, dir, trace )
 			end
 		else
 			self.ShieldHealth = self.ShieldHealth-math.abs(info:GetDamage())
+			ParticleEffect( "halo_reach_jackal_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
+			sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
 		end
 		if self.ShieldHealth < 0 then 
 			self.ShieldUp = false 
-			local bracers = self:FindBodygroupByName( "Bracer" )
+			-- local bracers = self:FindBodygroupByName( "Bracer" )
 			self.ShieldHealth = 0
 			self:SetBodygroup(4,1)
 			self:SetBodygroup(5,1)
@@ -409,10 +412,10 @@ function ENT:OnTraceAttack( info, dir, trace )
 				if IsValid(self) then
 					self.ShieldUp = true
 					self.ShieldHealth = 150
-					self:SetBodygroup(4,0)
-					self:SetBodygroup(5,0)
 					sound.Play( "halo_reach/equipment/jackal_shield_redeploy/jackal_shield_redeploy.ogg",  self:GetPos(), 65, math.random(105,115) )
+					self:SetBodygroup(4,0)
 					ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(1).Pos, Angle(0,0,0), self )
+					self:SetBodygroup(5,0)
 					ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(2).Pos, Angle(0,0,0), self )
 				end
 			end )
@@ -1285,11 +1288,29 @@ local moves = {
 	[ACT_RUN_PISTOL] = true,
 	[ACT_RUN_RIFLE] = true
 }
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,55)
+	end
+end
+
 
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
 	if moves[act] and self:Health() > 0 then
 		self:BodyMoveXY()
+	end
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+	if !self.LMove then
+			self.LMove = CurTime()+0.27
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.27
+			end
+		end
 	end
 	local look = false
 	local goal

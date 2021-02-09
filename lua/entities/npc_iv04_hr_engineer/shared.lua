@@ -123,6 +123,9 @@ end
 function ENT:OnInitialize()
 	self.OldGravity = self.loco:GetGravity()
 	self.loco:SetGravity(0)
+	if !self.LostProtection then
+	ParticleEffectAttach( "iv04_halo_reach_jackal_sniper_glow", PATTACH_POINT_FOLLOW, self, 1 )
+	end
 	--self.PerchOffChances = self.PerchChances[GetConVar("halo_reach_nextbots_ai_type"):GetString()]
 	self.Del = 1.25-(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()*0.25)
 	--self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)
@@ -364,7 +367,7 @@ elseif CLIENT then
 									if i == 5 or !v:GetNWBool("ShieldingEnabled",false) then
 										v.BeenShielded = false
 										v.Draw = v.OldDraw
-										ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", v:GetPos(), Angle(0,0,0), self )
+										ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", v:WorldSpaceCenter(), Angle(0,0,0), self )
 									end
 								end
 							end )
@@ -548,6 +551,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	elseif !self.LostProtection then
 		self.LostProtection = true
 		self:SetBodygroup(2,1)
+		self:StopParticles()
 		local prop = ents.Create( "prop_physics" )
 		prop:SetModel( "models/halo_reach/characters/covenant/engineer_helmet.mdl" )
 		prop:SetPos(info:GetDamagePosition())
@@ -929,6 +933,7 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self:Speak("OnDeathExplosion")
+	self:StopParticles()
 	ParticleEffect( "iv04_halo_reach_explosion_engineer", self:WorldSpaceCenter(), self:GetAngles() )
 	if !self.LostProtection then
 		local prop = ents.Create( "prop_physics" )

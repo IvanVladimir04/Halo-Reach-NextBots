@@ -12,7 +12,9 @@ ENT.MaxShield = 90
 
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_plasma_rifle",
-	[2] = "astw2_haloreach_needler"
+	[2] = "astw2_haloreach_needler",
+	[3] = "astw2_halo2a_carbine",
+	[4] = "astw2_halo2a_plasmarifle_brute"
 }
 
 list.Set( "NPC", "npc_iv04_hr_elite_major", {

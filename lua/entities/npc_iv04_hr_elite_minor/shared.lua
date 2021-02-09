@@ -9,7 +9,8 @@ ENT.CovRank = 1
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_plasma_rifle",
 	[2] = "astw2_haloreach_plasma_repeater",
-	[3] = "astw2_haloreach_needler"
+	[3] = "astw2_haloreach_needler",
+	[4] = "astw2_halo2a_carbine"
 }
 
 list.Set( "NPC", "npc_iv04_hr_elite_minor", {

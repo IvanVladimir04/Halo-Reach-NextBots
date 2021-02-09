@@ -5,7 +5,7 @@ ENT.StartHealth = 40
 ENT.Models = {"models/halo_reach/characters/covenant/jackal_minor.mdl"}
 
 ENT.CovRank = 1
-
+ENT.IsSniper = false
 ENT.PossibleWeapons = {
 	[1] = "astw2_haloreach_plasma_pistol"
 }

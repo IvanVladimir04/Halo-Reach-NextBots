@@ -7,7 +7,7 @@ ENT.Models = {"models/halo_reach/characters/covenant/grunt_ultra.mdl"}
 ENT.PossibleWeapons = {
 	[1] = "astw2_haloreach_plasma_pistol",
 	[2] = "astw2_haloreach_needler",
-	[3] = "astw2_haloreach_needler",
+	[3] = "astw2_haloreach_plasma_rifle",
 	[4] = "astw2_haloreach_plasma_pistol",
 }
 

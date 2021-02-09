@@ -11,7 +11,9 @@ ENT.IsSniper = true
 
 ENT.PossibleWeapons = {
 	[1] = "astw2_haloreach_focus_rifle",
-	[2] = "astw2_haloreach_needler_rifle"
+	[2] = "astw2_haloreach_needler_rifle",
+	[3] = "astw2_halo2a_carbine",
+	[4] = "astw2_halo2a_beamrifle"
 }
 
 ENT.HasHelmet = true

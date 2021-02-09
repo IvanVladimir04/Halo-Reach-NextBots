@@ -228,6 +228,17 @@ function ENT:Speak(voice)
 	end
 end
 
+function ENT:FlySound(voice)
+	local character = self.Voices["Drone"]
+	if self.CurrentSound then self.CurrentSound:Stop() end
+	if character[voice] and istable(character[voice]) then
+		local sound = table.Random(character[voice])
+		self.CurrentSound = CreateSound(self,sound)
+		self.CurrentSound:SetSoundLevel(75)
+		self.CurrentSound:Play()
+	end
+end
+
 function ENT:BeforeThink()
 end
 
@@ -287,6 +298,9 @@ if SERVER then
 			if ( !self.Perched and !self.Perching and self.ACheck < CurTime() and ( self:GetSequence() != self:LookupSequence("Flight_Idle") or self:GetCycle() > 0.9 ) ) and !self.loco:IsOnGround() then
 				self.ACheck = CurTime()+self.ACheckDel
 				self:ResetSequence("Flight_Idle")
+			timer.Simple( 0.4, function()
+				if self.InFlight and ( self:Health() > 0 ) then self:FlySound("OnFly") end
+			end )
 			elseif self.Perched and self:GetCycle() > 0.9 then
 				self:ResetSequence(self.IdlePerchAnim)
 			end
@@ -340,6 +354,7 @@ local thingstoavoid = {
 function ENT:OnTouchWorld( world )
 	if self.InFlight and !self.Perched and !self.Perching then
 		self.Perching = true
+		self:Speak("OnPerch")
 		timer.Simple( 4, function()
 			if IsValid(self) then self.Perching = false end
 		end )
@@ -512,6 +527,7 @@ function ENT:OnTraceAttack( info, dir, trace )
 	if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 	if self.HasArmor and self.Shield > 0 then
 		ParticleEffect( "halo_reach_shield_impact_effect", info:GetDamagePosition(), Angle(0,0,0), self )
+		sound.Play( "halo_reach/materials/energy_shield/sheildhit" .. math.random(1,3) .. ".ogg",  info:GetDamagePosition(), 100, 100 )
 	end
 	--[[if !self.IsInVehicle and self.FlinchAnims[hg] and !self.DoneFlinch and math.random(100) < self.FlinchChance and info:GetDamage() > self.FlinchDamage then
 		self.DoneFlinch = true
@@ -931,6 +947,7 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+	self:SetBodygroup(4,0)
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
@@ -973,7 +990,9 @@ function ENT:DoKilledAnim()
 	end
 	if self.KilledDmgInfo:GetDamageType() != DMG_BLAST then
 		if self.DeathHitGroup == 1 then
-			self:Speak("OnDeath")
+			self:Speak("OnGib")
+			
+			ParticleEffect( "halo_reach_blood_impact_drone", self:WorldSpaceCenter(), Angle(0,0,0), self )
 			ParticleEffect( "halo_reach_blood_impact_drone_gib", self:WorldSpaceCenter(), Angle(0,0,0), self )
 			local wep = ents.Create(self.Weapon:GetClass())
 			wep:SetPos(self.Weapon:GetPos())

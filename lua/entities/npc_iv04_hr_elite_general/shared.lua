@@ -16,7 +16,8 @@ ENT.StartWeapons = {
 	[3] = "astw2_haloreach_plasma_repeater",
 	[4] = "astw2_haloreach_fuel_rod",
 	[5] = "astw2_haloreach_plasma_turret",
-	[6] = "astw2_haloreach_plasma_launcher"
+	[6] = "astw2_haloreach_plasma_launcher",
+	[7] = "astw2_halo2a_plasmacannon"
 }
 
 list.Set( "NPC", "npc_iv04_hr_elite_general", {

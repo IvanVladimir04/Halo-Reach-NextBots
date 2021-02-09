@@ -86,6 +86,7 @@ function ENT:OnInitialize()
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self.MeleeDamage = (self.MeleeDamage*(self.Difficulty)*0.5)
 	self:DoInit()
+	self.VoiceType = "Hunter"
 end
 
 function ENT:DoInit()
@@ -985,10 +986,35 @@ local moves = {
 	[ACT_RUN] = true
 }
 
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,75)
+	end
+end
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
 	if moves[act] and !self.DoingMelee and self:Health() > 0 then
 		self:BodyMoveXY()
+	end
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+		if !self.LMove then
+			self.LMove = CurTime()+0.43
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.43
+			end
+		end
+		local goal = self:GetPos()+self.loco:GetVelocity()
+		local y = (goal-self:GetPos()):Angle().y
+		local di = math.AngleDifference(self:GetAngles().y,y)
+		self:SetPoseParameter("move_yaw",di)
+		self:SetPoseParameter("walk_yaw",di)
+	else
+		self.LMove = nil
 	end
 	local goal = self:GetPos()+self.loco:GetVelocity()
 	local y = (goal-self:GetPos()):Angle().y

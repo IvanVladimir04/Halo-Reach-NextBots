@@ -51,6 +51,9 @@ PrecacheParticleSystem( "halo_reach_jackal_shield_deplete_effect_red" )
 PrecacheParticleSystem( "halo_reach_jackal_shield_deplete_effect_blue" )
 PrecacheParticleSystem( "halo_reach_jackal_shield_impact_effect" )
 PrecacheParticleSystem( "iv04_halo_reach_explosion_engineer" )
+PrecacheParticleSystem( "iv04_halo_reach_phantom_explosion" )
+PrecacheParticleSystem( "iv04_halo_reach_engineer_beam" )
+PrecacheParticleSystem( "iv04_halo_reach_jackal_sniper_glow" )
 
 HRNBsTbl = {
 

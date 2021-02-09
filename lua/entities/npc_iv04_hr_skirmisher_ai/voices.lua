@@ -78,6 +78,11 @@ ENT.Voices = {
 			"halo_reach/dialog/combat/jackal_skirmisher/pain/pain_07.ogg", "halo_reach/dialog/combat/jackal_skirmisher/pain/pain_08.ogg",
 			"halo_reach/dialog/combat/jackal_skirmisher/pain/pain_09.ogg", "halo_reach/dialog/combat/jackal_skirmisher/pain/pain_10.ogg",
 			"halo_reach/dialog/combat/jackal_skirmisher/pain/pain_11.ogg", "halo_reach/dialog/combat/jackal_skirmisher/pain/pain_13.ogg" },
+["OnStep"] = { "halo_reach/characters/jackal/shortmove/shortmove1.ogg", "halo_reach/characters/jackal/shortmove/shortmove2.ogg",
+			"halo_reach/characters/jackal/shortmove/shortmove3.ogg", "halo_reach/characters/jackal/shortmove/shortmove4.ogg",
+			"halo_reach/characters/jackal/shortmove/shortmove5.ogg", "halo_reach/characters/jackal/shortmove/shortmove6.ogg",
+			"halo_reach/characters/jackal/shortmove/shortmove7.ogg", "halo_reach/characters/jackal/shortmove/shortmove8.ogg",
+			"halo_reach/characters/jackal/shortmove/shortmove9.ogg" },
 ["OnHurtLarge"] = { "halo_reach/dialog/combat/jackal_skirmisher/pain_mjr/pain_mjr_02.ogg", "halo_reach/dialog/combat/jackal_skirmisher/pain_mjr/pain_mjr_04.ogg",
 			"halo_reach/dialog/combat/jackal_skirmisher/pain_mjr/pain_mjr_16.ogg", "halo_reach/dialog/combat/jackal_skirmisher/pain_mjr/pain_mjr_26.ogg" }
 	}

@@ -140,6 +140,7 @@ end
 function ENT:OnInitialize()
 	self:DoInit()
 	self:Give("astw2_haloreach_plasma_pistol")
+	self.VoiceType = "Grunt"
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 	local relo = self.Weapon.AI_Reload
@@ -1434,10 +1435,36 @@ local moves = {
 	[ACT_RUN_RIFLE] = true
 }
 
+
+function ENT:FootstepSound()
+	local character = self.Voices[self.VoiceType]
+	if character["OnStep"] and istable(character["OnStep"]) then
+		local sound = table.Random(character["OnStep"])
+		self:EmitSound(sound,65)
+	end
+end
+
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
 	if moves[act] and self:Health() > 0 then
 		self:BodyMoveXY()
+	end
+	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
+		if !self.LMove then
+			self.LMove = CurTime()+0.25
+		else
+			if self.LMove < CurTime() then
+				self:FootstepSound()
+				self.LMove = CurTime()+0.25
+			end
+		end
+		local goal = self:GetPos()+self.loco:GetVelocity()
+		local y = (goal-self:GetPos()):Angle().y
+		local di = math.AngleDifference(self:GetAngles().y,y)
+		self:SetPoseParameter("move_yaw",di)
+		self:SetPoseParameter("walk_yaw",di)
+	else
+		self.LMove = nil
 	end
 	local look = false
 	local goal
