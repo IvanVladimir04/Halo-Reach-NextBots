@@ -16,6 +16,7 @@ function ENT:OnInitialize()
 	self:DoInit()
 	self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
 	self:SetCollisionBounds(Vector(20,20,50),Vector(-20,-20,0))
+	self.VoiceType = "Grunt"
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 	local relo = self.Weapon.AI_Reload
 	self:SetNWEntity("wep",self.Weapon)
