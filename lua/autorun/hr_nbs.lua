@@ -1,6 +1,10 @@
-if util.IsValidModel( "models/halo/halo_reach/weapons/needler_rifle.mdl" ) then
+if util.IsValidModel( "models/halo/halo_reach/weapons/needler_rifle.mdl" ) and file.Exists( "lua/autorun/astw2_halo_3_autorun.lua", "WORKSHOP" ) then
 	CreateConVar( "halo_reach_nextbots_ai_type", "Offensive", FCVAR_ARCHIVE, "Type of AI the Halo Reach NextBots will spawn with (if you change this after spawning one its AI type won't change), possible values are Defensive, Offensive and Static. Note not all kind of nextbots can be affected by this!" )
 	CreateConVar( "halo_reach_nextbots_ai_difficulty", 2, FCVAR_ARCHIVE, "Difficulty, (1 = easy, 2 = normal, 3 = heroic, 4 = legendary" )
+	CreateConVar( "halo_reach_nextbots_ai_heroes", 1, FCVAR_ARCHIVE, "Are hero characters invincible?" )
+	CreateConVar( "halo_reach_nextbots_ai_flood_infection_climb", 1, FCVAR_ARCHIVE, "Allow infection forms to climb?" )
+else
+	print("You are either stupid for not getting the required addon or an asshole for not getting it knowing it was required")
 end -- Dopey deserves the suscription, YOU KNOW IT
 
 game.AddDecal( "iv04_halo_reach_blood_splat_hunter", "effects/halo_reach/decals/blood_hunter" ) 
@@ -21,6 +25,10 @@ game.AddParticles( "particles/iv04_halo_reach_pelican_thruster_fx.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_phantom_muzzle_effects.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_shield_impact_effects.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_shield_pop_effects.pcf" )
+game.AddParticles( "particles/iv04_halo_reach_flood_gibbing.pcf" )
+PrecacheParticleSystem( "iv04_halo_reach_flood_infection_form_gib" )
+PrecacheParticleSystem( "iv04_halo_reach_flood_carrier_form_gib" )
+PrecacheParticleSystem( "iv04_halo_reach_flood_combat_form_gib" )
 PrecacheParticleSystem( "halo_reach_blood_impact_brute" )
 PrecacheParticleSystem( "halo_reach_blood_impact_drone" )
 PrecacheParticleSystem( "halo_reach_blood_impact_elite" )

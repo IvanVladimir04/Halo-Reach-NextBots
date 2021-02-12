@@ -53,5 +53,27 @@ local tbl = {
 
 HRShieldMaterial = Material("models/halo_reach/characters/covenant/elite/minor/energy_shield")
 
-IV04AddMenuOption( tbl1 )
+local tbl2 = {
+    c = "Options",
+    name = "Ivan04",
+    sc = "Halo Reach NextBots",
+    id = "Halo_Reach_NextBots",
+    dv = 1,
+    d = "Should the hero characters be invincible?",
+    cv = "halo_reach_nextbots_ai_heroes"
+}
+
+local tbl3 = {
+    c = "Options",
+    name = "Ivan04",
+    sc = "Halo Reach NextBots",
+    id = "Halo_Reach_NextBots",
+    dv = 1,
+    d = "Should the infection forms be able to climb?",
+    cv = "halo_reach_nextbots_ai_flood_infection_climb"
+}
+
 IV04AddMenuOption( tbl )
+IV04AddMenuOption( tbl1 )
+IV04AddMenuOption( tbl2 )
+IV04AddMenuOption( tbl3 )

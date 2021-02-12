@@ -58,7 +58,7 @@ function ENT:DoInit()
 	self:SetBodygroup(4,math.random(-4,3))
 	self:SetBodygroup(5,math.random(0,1))
 	local attch
-	if helm == 3 then self.IsSergeant = true self.VoiceType = "Sergeant1" attch = 0 end
+	if helm == 3 then self.IsSergeant = true attch = 0 end
 	attch = attch or math.random(-2,2)
 	self:SetBodygroup(6,attch)
 	self:SetBodygroup(7,math.random(0,2))
