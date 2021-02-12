@@ -161,7 +161,9 @@ end
 
 function ENT:OnInitialize()
 	self.StartPosition = self:GetPos()
-	self.VoiceType = self.PossibleVoices[math.random(#self.PossibleVoices)]
+	if !self.VoiceType then
+		self.VoiceType = self.PossibleVoices[math.random(#self.PossibleVoices)]
+	end
 	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	self:DoInit()
 	self:SetupHoldtypes()
@@ -667,28 +669,32 @@ function ENT:OnInjured(dmg)
 			end
 		end
 	end
-	local total = dmg:GetDamage()
-	--print(self.Shield, "before")
-	self.HealthActual = self:Health()
-	self.HealthH = CurTime()
-	local htt = CurTime()
-	local htl = self:Health()
-	local dm = dmg:GetDamage()
-	local ht = self:Health()-math.abs(dm)
-	--print(self.Shield, "now")
-	timer.Simple( 2, function()
-		if IsValid(self) and htt == self.HealthH then
-			--print("Starting regeneration")
-			for i = 1, 10 do
-				timer.Simple( 0.4*i, function()
-					if IsValid(self) and htl == self.HealthActual then
-						--print("Regenerating", (self.HealthActual-ht)/10)
-						self:SetHealth(self:Health()+((self.HealthActual-ht)/10))
-					end
-				end )
+	if self.Unkillable then
+		dmg:SetDamage(0)
+	else
+		local total = dmg:GetDamage()
+		--print(self.Shield, "before")
+		self.HealthActual = self:Health()
+		self.HealthH = CurTime()
+		local htt = CurTime()
+		local htl = self:Health()
+		local dm = dmg:GetDamage()
+		local ht = self:Health()-math.abs(dm)
+		--print(self.Shield, "now")
+		timer.Simple( 2, function()
+			if IsValid(self) and htt == self.HealthH then
+				--print("Starting regeneration")
+				for i = 1, 10 do
+					timer.Simple( 0.4*i, function()
+						if IsValid(self) and htl == self.HealthActual then
+							--print("Regenerating", (self.HealthActual-ht)/10)
+							self:SetHealth(self:Health()+((self.HealthActual-ht)/10))
+						end
+					end )
+				end
 			end
-		end
-	end )
+		end )
+	end
 end
 
 function ENT:GetShootPos()
@@ -2152,11 +2158,11 @@ function ENT:DetermineDeathAnim( info )
 			if y <= 135 and y > 45 then -- Right
 				anim = "Death_Front_Right_Gut"
 			elseif y < 225 and y > 135 then -- Front
-				anim = "Death_Back_Gut_2"
+				anim = "Death_Front_Gut_"..math.random(1,2)..""
 			elseif y >= 225 and y < 315 then -- Left
 				anim = "Death_Front_Left_Gut"
 			elseif y <= 45 or y >= 315 then -- Back
-				anim = "Death_Back_Gut_1"
+				anim = "Death_Back_Gut_"..math.random(1,2)..""
 			end
 		end
 	else

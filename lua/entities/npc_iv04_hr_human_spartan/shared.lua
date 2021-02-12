@@ -40,17 +40,21 @@ ENT.MeleeDamage = 100
 
 ENT.FlinchChance = 0
 
+ENT.VoiceType = "Spartan"
+
 ENT.PossibleWeapons = {
 	"astw2_haloreach_assault_rifle",
 	"astw2_haloreach_assault_rifle",
 	"astw2_haloreach_assault_rifle",
 	"astw2_haloreach_dmr",
-	"astw2_haloreach_dmr"
-	--"astw2_haloreach_shotgun",
-	--"astw2_haloreach_magnum"
-	--[["astw2_haloreach_rocket_launcher",
+	"astw2_haloreach_dmr",
+	"astw2_haloreach_shotgun",
 	"astw2_haloreach_sniper_rifle",
-	"astw2_haloreach_spartan_laser"]]
+	"astw2_haloreach_magnum",
+	"astw2_haloreach_magnum",
+	"astw2_haloreach_rocket_launcher",
+	"astw2_haloreach_sniper_rifle",
+	"astw2_haloreach_spartan_laser"
 }
 
 ENT.Skins = {
@@ -97,6 +101,13 @@ function ENT:DoInit()
 	end
 end
 
+function ENT:StartChasing( ent, anim, speed, los )
+	if !los then anim = self.SprintAnim speed = speed*2 end
+	self:StartActivity( anim )			-- Move animation
+	self.loco:SetDesiredSpeed( speed )		-- Move speed
+	self:ChaseEnt(ent,los)
+end
+
 function ENT:SetupHoldtypes()
 	local hold = self.Weapon.HoldType_Aim
 	if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
@@ -117,29 +128,31 @@ function ENT:SetupHoldtypes()
 	self.WarthogGunnerIdle = "Warthog_Gunner_Idle"
 	self.DeadAirAnim = "Dead_Airborne"
 	if self.PistolHolds[hold] then
-		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
-		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
-		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
-		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Pistol"))}
-		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Holstered"))}
-		self.MeleeAnim = {"Melee_Pistol_1","Melee_Pistol_2"}
-		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Pistol"))
+		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_Melee_03"))}
+		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_Single_05"))}
+		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_All_Single_05"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Single_05"))}
+		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Melee_06"))}
+		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_PISTOL"))
+		self.SprintAnim = self:GetSequenceActivity(self:LookupSequence("Run_All_01"))
+		self.Weapon.BurstLength = 2
 		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Pistol"))
-		self.CalmTurnLeftAnim = "Pistol_Holstered_Turn_Left_Idle"
-		self.CalmTurnRightAnim = "Pistol_Holstered_Turn_Right_Idle"
-		self.TurnLeftAnim = "Pistol_Turn_Left_Idle"
-		self.TurnRightAnim = "Pistol_Turn_Right_Idle"
-		self.AirAnim = "Jump_Pistol"
-		self.LandAnim = "Land_Pistol_Soft"
-		self.LandHardAnim = "Land_Pistol_Hard"
-		self.SurpriseAnim = "Surprised_1handed"
-		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Crouch"))}
-		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
-		self.GrenadeAnim = "Throw_Grenade"
-		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Pistol"
-		if self.Weapon:GetClass() == "astw2_haloreach_magnum" then
-			self.Weapon.BurstLength = 4
+		if self.Weapon:GetClass() == "astw2_haloreach_plasma_pistol" then
+			--self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Sniper"))
+			self.MeleeAnim = "Bash_1hand_1"
+		else
+			--self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Grenade_Launcher"))
+			self.MeleeAnim = "Bash_1hand_2"
+			--self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Crossbow"))
 		end
+		self.AirAnim = "Jump_PISTOL"
+		self.LandAnim = "Land_Soft"
+		self.LandHardAnim = "Land_Hard"
+		self.SurpriseAnim = "Surprised_2handed"
+		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_PISTOL"))}
+		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Cwalk_All_Single_05"))}
+		self.GrenadeAnim = "Attack_GRENADE"
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Rifle"
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
@@ -150,12 +163,15 @@ function ENT:SetupHoldtypes()
 		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Single_02"))}
 		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_02"))}
 		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Ar2"))
+		self.SprintAnim = self:GetSequenceActivity(self:LookupSequence("Run_All_02"))
 		if self.Weapon:GetClass() == "astw2_haloreach_sniper_rifle" then
 			--self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Sniper"))
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Ar2"))
 			self.MeleeAnim = "Bash_2hands_5"
 			self.Weapon.BurstLength = 1
 		elseif self.Weapon:GetClass() == "astw2_haloreach_grenade_launcher" then
 			--self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Grenade_Launcher"))
+			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Ar2"))
 			self.MeleeAnim = "Bash_2hands_4"
 			self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Crossbow"))
 		elseif hold == "ar2" then
@@ -172,10 +188,6 @@ function ENT:SetupHoldtypes()
 			self.MeleeAnim = "Bash_2hands_2"
 			self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Ar2"))
 		end
-		self.CalmTurnLeftAnim = "Passive_Turn_Left_Idle"
-		self.CalmTurnRightAnim = "Passive_Turn_Right_Idle"
-		self.TurnLeftAnim = "Rifle_Turn_Left_Idle"
-		self.TurnRightAnim = "Rifle_Turn_Right_Idle"
 		self.AirAnim = "Jump_AR2"
 		self.LandAnim = "Land_Soft"
 		self.LandHardAnim = "Land_Hard"
@@ -188,27 +200,27 @@ function ENT:SetupHoldtypes()
 		self.CanShootCrouch = true
 		self.CanMelee = true
 	elseif hold == "rpg" then
-		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
-		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
-		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile"))}
-		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_Missile"))}
-		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile"))}
-		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Missile"))
-		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Missile"))
-		self.AirAnim = "Jump_Missile"
+		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_Automatic_02"))}
+		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_Automatic_02"))}
+		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_All_Single_07"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Automatic_02"))}
+		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Single_07"))}
+		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Rpg"))
+		self.SprintAnim = self:GetSequenceActivity(self:LookupSequence("Run_All_02"))
+		self.Weapon.BurstLength = 2
+		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_RPG"))
+		self.MeleeAnim = "Bash_2hands_3"
+		self.AirAnim = "Jump_RPG"
 		self.LandAnim = "Land_Soft"
 		self.LandHardAnim = "Land_Hard"
-		self.CalmTurnLeftAnim = "Missile_Turn_Left_Idle"
-		self.CalmTurnRightAnim = "Missile_Turn_Right_Idle"
-		self.TurnLeftAnim = "Missile_Turn_Left_Idle"
-		self.TurnRightAnim = "Missile_Turn_Right_Idle"
 		self.SurpriseAnim = "Surprised_2handed"
-		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle_Crouch"))}
-		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile_Crouch"))}
-		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Missile"
-		self.AllowGrenade = false
+		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_RPG"))}
+		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Cwalk_All_Single_07"))}
+		self.GrenadeAnim = "Attack_GRENADE"
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Rifle"
+		self.AllowGrenade = true
 		self.CanShootCrouch = true
-		self.CanMelee = false
+		self.CanMelee = true
 	end
 end
 
@@ -353,6 +365,323 @@ function ENT:DoCustomIdle()
 	self:SearchEnemy()
 end
 
+function ENT:CustomBehaviour(ent,range)
+	ent = ent or self.Enemy
+	if !IsValid(ent) then self:GetATarget() end
+	if !IsValid(self.Enemy) then return else ent = self.Enemy end
+	local mins, maxs = ent:GetCollisionBounds()
+	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter()+ent:GetUp()*(maxs*0.25),{self,ent,self:GetOwner()})	if IsValid(obstr) then	
+		if ( self.DriveThese[obstr:GetModel()] and !self.SeenVehicles[obstr] ) then
+			self.SeenVehicles[obstr] = true
+			self.CountedVehicles = self.CountedVehicles+1
+		elseif ( ( obstr:IsNPC() or obstr:IsPlayer() or obstr:IsNextBot() ) and obstr:Health() > 0 ) and self:CheckRelationships(obstr) == "foe" then
+			ent = obstr
+			self:SetEnemy(ent)
+		end
+	end
+	if self.IsInVehicle then return self:VehicleBehavior(ent,range) end
+	local can, veh = self:CanEnterAVehicle()
+	if can then
+		self:EnterVehicle(veh)
+		return self:VehicleBehavior(ent,range)
+	end
+	if los and !self.DoneMelee and range < self.MeleeRange^2 then
+		self:DoMelee()
+	end
+	if range > self.ShootDist^2 then
+		self.StopShoot = true
+	else
+		self.StopShoot = false
+	end
+	if self.AllowGrenade and range < self.GrenadeRange^2 and range > (self.MeleeRange*2)^2 then
+		self.CanThrowGrenade = true
+	else
+		self.CanThrowGrenade = false
+	end
+	if !IsValid(ent) then return end
+	local reloaded = false
+	if self.AIType == "Static" then
+	
+		if self:HasToReload() then
+			self.Weapon:AI_PrimaryAttack()
+			reloaded = true
+			return
+		end
+		if !IsValid(ent) then return end
+		if los then
+			if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+				return self:ThrowGrenade(range)
+			else
+				if self.CanShootCrouch and math.random(1,2) == 1 then
+					self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+				else
+					self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+				end
+				self:Shoot()
+			end
+		else
+			self:SetEnemy(nil)
+		end
+		coroutine.wait(math.random(2,3))
+		
+	elseif self.AIType == "Defensive" then
+	
+		if self:HasToReload() then
+			reloaded = true
+			local r = math.random(3,4)
+			local tbl,dire = self:FindCoverSpots(ent,r)
+			if table.Count(tbl) > 0 or #tbl > 0 then
+				local area = table.Random(tbl)
+				self:MoveToPosition( area, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				self.Weapon:AI_PrimaryAttack()
+			else
+				local dir = dire+self:GetRight()*1
+				timer.Simple( r*0.25, function()
+					if IsValid(self) then
+						dir = dire
+					end
+				end )
+				for i = 1, r*100 do
+					
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+							self.loco:Approach(self:GetPos()+dir,1)
+							self.loco:FaceTowards(self:GetPos()+dir)
+						end
+					end )
+					
+				end
+				self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				coroutine.wait(r)
+				self.Weapon:AI_PrimaryAttack()
+			end
+			return
+		elseif self.NeedsToCover then
+			self.NeedsToCover = false
+			local tbl = self:FindCoverSpots(ent)
+			if table.Count(tbl) > 0 or #tbl > 0 then
+				local area = table.Random(tbl)
+				self:MoveToPosition( area, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				if math.random(1,2) == 1 then
+					self:Speak("OnCover")
+				end
+				return
+			end
+		end
+		if !IsValid(ent) then return end
+		local wait = math.Rand(1,1.5)
+		if los then
+			if math.random(1,3) == 1 then
+				local anim
+				local speed
+				local mul
+				local r2 = math.random(1,2)
+				if r2 == 2 then r2 = -1 end
+				local dir
+				local dire
+				if math.random(1,2) == 1 then
+					dir = (self:GetRight()*r2)
+					dire = self:GetForward()*1
+				else
+					dir = (self:GetForward()*1)
+					dire = (self:GetRight()*r2)
+				end
+				timer.Simple( wait*0.7, function()
+					if IsValid(self) then
+						dir = dire
+					end
+				end )
+				local ra = math.random(1,3)
+				if ra == 1 then
+					anim = self.CrouchMoveAnim
+					speed = self.MoveSpeed
+					mul = 1
+				elseif ra == 2 then
+					anim = self.WalkAnim
+					speed = self.MoveSpeed
+					mul = 1
+				else
+					anim = self.RunAnim
+					speed = self.MoveSpeed
+					mul = self.MoveSpeedMultiplier
+				end
+				self:StartMovingAnimations( anim[math.random(#anim)], speed*mul )
+				for i = 1, wait*100 do
+				
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+							if IsValid(self.Enemy) then
+								self.loco:Approach(self:GetPos()+dir,1)
+							else
+								self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+							end
+						end
+					end )
+				
+				end
+			else
+				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+					return self:ThrowGrenade(range)
+				else
+					if self.CanShootCrouch and math.random(1,2) == 1 then
+						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+					else
+						self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+					end
+				end
+			end
+			self:Shoot()
+		else
+			if math.random(1,2) == 1 then
+				self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				local r = math.random(1,2)
+				if r == 2 then r = -1 end
+				for i = 1, 100 do
+				
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+							self.loco:Approach(self:GetPos()+self:GetRight()*r,1)
+						end
+					end )
+				
+				end
+			else
+				self:SetEnemy(nil)
+			end
+		end
+		coroutine.wait(wait)
+		
+	elseif self.AIType == "Offensive" then
+	
+		if self:HasToReload() then
+			reloaded = true
+			self.Weapon:AI_PrimaryAttack()
+			return
+		elseif self.NeedsToCover then
+			local r = math.random(3,4)
+			if math.random(1,2) == 1 then
+				self:Speak("OnCover")
+			end
+			self.NeedsToCover = false
+			local dir = self:GetForward()*-1
+			timer.Simple( r*0.25, function()
+				if IsValid(self) then
+					dir = dir+self:GetRight()*math.random(1,-1)
+				end
+			end )
+			for i = 1, r*100 do
+					
+				timer.Simple( 0.01*i, function()
+					if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+						self.loco:Approach(self:GetPos()+dir,1)
+						if IsValid(self.Enemy) then
+							self.loco:FaceTowards(self.Enemy:GetPos())
+						else
+							self.loco:FaceTowards(self:GetPos()+dir)
+						end
+					end
+				end )
+				
+			end
+			self:StartMovingAnimations( self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			self.Weapon:AI_PrimaryAttack()
+			coroutine.wait(r)
+		end
+		
+		if los then
+		
+			if self.StopShoot then
+				self:Speak("OnCharge")
+				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+			end
+			if !IsValid(ent) then return end
+	
+			local wait = math.Rand(1,1.5)
+			if math.random(1,2) == 1 then
+				local anim
+				local speed
+				local mul
+				local r2 = math.random(1,2)
+				if r2 == 2 then r2 = -1 end
+				local dir
+				local dire
+				local ra = math.random(1,3)
+				if ra == 1 then
+					dir = (self:GetRight()*r2)
+					dire = self:GetForward()*1
+				elseif ra == 2 then
+					dir = (self:GetForward()*1)
+					dire = (self:GetRight()*r2)
+				else
+					dir = (self:GetForward()*-1)
+					dire = dir
+				end
+				local switch = math.Rand(0.3,0.7)
+				timer.Simple( wait*switch, function()
+					if IsValid(self) then
+						dir = dire
+					end
+				end )
+				local re = math.random(1,3)
+				if re == 1 then
+					anim = self.CrouchMoveAnim
+					speed = self.MoveSpeed
+					mul = 1
+					dire = dir
+				elseif re == 2 then
+					anim = self.WalkAnim
+					speed = self.MoveSpeed
+					mul = 1
+				else
+					anim = self.RunAnim
+					speed = self.MoveSpeed
+					mul = self.MoveSpeedMultiplier
+				end
+				self:StartMovingAnimations( anim[math.random(#anim)], speed*mul )
+				local idled = false
+				for i = 1, wait*100 do
+				
+					timer.Simple( 0.01*i, function()
+						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
+							if IsValid(self.Enemy) then
+								self.loco:Approach(self:GetPos()+dir,1)
+							else
+								if !idled then
+									idled = true
+									self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
+								end
+							end
+						end
+					end )
+				
+				end
+			else
+				if self.CanThrowGrenade and !self.ThrowedGrenade and math.random(1,100) <= self.GrenadeChances then
+					return self:ThrowGrenade(range)
+				else
+					if self.CanShootCrouch and math.random(1,2) == 1 then
+						self:StartActivity(self.CrouchIdleAnim[math.random(#self.CrouchIdleAnim)])
+					else
+						self:StartActivity(self.IdleAnim[math.random(#self.IdleAnim)])
+					end
+				end
+			end
+			
+			self:Shoot()
+			
+			coroutine.wait(wait)
+		
+		else
+		
+			self:Speak("OnInvestigate")
+		
+			self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,false)
+		
+		end
+		
+	end
+end
+
 function ENT:OnOtherKilled( victim, info )
 	if victim == self then return end
 	if self:Health() < 1 then return end
@@ -364,15 +693,6 @@ function ENT:OnOtherKilled( victim, info )
 			if !self.SawAllyDie then self.SawAllyDie = true end
 			local attacker = info:GetAttacker()
 			if !IsValid(self.Enemy) then
-				--if self:CheckRelationships(attacker) == "foe" then
-					local ang = (victim:GetPos()-self:GetPos()):Angle()
-					local dif = math.AngleDifference(self:GetAngles().y,ang.y)
-					local func = function()
-						self:TurnTo(dif,false)
-					end
-					table.insert(self.StuffToRunInCoroutine,func)
-					self:ResetAI()
-				--end
 				if attacker:IsPlayer() and self.FriendlyToPlayers then
 					self.NoticedKills = self.NoticedKills+1
 					if self.NoticedKills > 1 then
@@ -413,10 +733,6 @@ function ENT:OnOtherKilled( victim, info )
 					local AI = self.AIType
 					self.AIType = "Defensive"
 					local func = function()
-						if self.IsSergeant and !self.IsInVehicle then
-							HRHS:Signal("Retreat",self)
-							self:PlaySequenceAndMove(self:LookupSequence("Signal_Fallback"),1,self:GetForward()*-1,50,0.7)
-						else
 							--print(HRHS:WasSignalGiven("Retreat",3))
 							if !self.FollowingRetreatOrder and HRHS:WasSignalGiven("Retreat",3) and IsValid(HRHS:GetCaller("Retreat")) and (!IsValid(HRHS:GetCaller("Retreat").S1) or !IsValid(HRHS:GetCaller("Retreat").S2) ) then
 								local leader = HRHS:GetCaller("Retreat")
@@ -431,7 +747,6 @@ function ENT:OnOtherKilled( victim, info )
 								self:MoveToPosition( pos, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 								if leader.S1 == self then leader.S1 = nil elseif leader.S2 == self then leader.S2 = nil end
 							end
-						end
 					end
 					timer.Simple( math.random(20,30), function()
 						if IsValid(self) then
