@@ -1,6 +1,0 @@
-AddCSLuaFile()
-
-ENT.Voices = {
-	["Elite"] = {
-	}
-}
