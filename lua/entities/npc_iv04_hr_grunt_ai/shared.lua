@@ -816,7 +816,7 @@ function ENT:CustomBehaviour(ent)
 	end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
-	if !self.IsSniper and ent.GetEnemy and ent:GetEnemy() == self and los then
+	if !self.IsSniper and ( ( ent.GetEnemy and ent:GetEnemy() == self ) or BeingStaredAt(self,ent,60) ) and los then
 		if math.random(1,100) <= self.DodgeChance and !self.Dodged then
 			local anim = seqs[math.random(1,2)]
 			self:Speak("OnDodge")

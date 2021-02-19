@@ -46,7 +46,7 @@ function ENT:DoInit()
 		if s == 6 then s = 7 end
 		hed = math.random(6,1)
 		if s == 3 and hed == 2 then hed = hed+math.random(1,2) end
-		if s == 3 then self.IsSergeant = true self.VoiceType = "Sergeant1" end
+		if s == 3 then self.IsSergeant = true end
 	else
 		hed = 6
 		s = 6

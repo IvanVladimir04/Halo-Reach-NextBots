@@ -1626,6 +1626,13 @@ function ENT:CustomBehaviour(ent,range)
 	end
 	if !IsValid(ent) then return end
 	local reloaded = false
+	--[[if !self.IsSniper and ( ( ent.GetEnemy and ent:GetEnemy() == self ) or BeingStaredAt(self,ent,60) ) and los then
+		if math.random(1,100) <= self.DodgeChance and !self.Dodged then
+			local anim = seqs[math.random(1,2)]
+			self:Speak("OnDodge")
+			return self:Dodge(anim)
+		end
+	end]]
 	if self.AIType == "Static" then
 	
 		if self:HasToReload() then

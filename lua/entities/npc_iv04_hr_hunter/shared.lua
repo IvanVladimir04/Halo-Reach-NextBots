@@ -783,7 +783,7 @@ function ENT:ChaseEnt(ent,los)
 				self:SetEnemy(nil)
 				return "Lost enemy"
 			elseif dist > 400^2 and cansee and los then
-				return "Got range"
+				return "Lost range"
 			end
 			if cansee then
 				self.LastSeenEnemyPos = ent:GetPos()

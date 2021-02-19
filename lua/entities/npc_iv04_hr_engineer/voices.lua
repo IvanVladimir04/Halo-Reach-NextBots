@@ -51,5 +51,10 @@ ENT.Voices = {
 			"halo_reach/characters/engineer/engineer_loop/engineer_loop/loop/engineer_loop5.ogg", "halo_reach/characters/engineer/engineer_loop/engineer_loop/loop/engineer_loop5.ogg",
 			"halo_reach/characters/engineer/engineer_loop/engineer_loop/loop/engineer_loop7.ogg", "halo_reach/characters/engineer/engineer_loop/engineer_loop/loop/engineer_loop8.ogg",
 			"halo_reach/characters/engineer/engineer_loop/engineer_loop/loop/engineer_loop9.ogg"}
-		}
+		},
+["ShieldingAllyLoop"] = { "halo_reach/materials/blue_plasma_looping/blue_plasma/loop/blue_plasma1.wav", "halo_reach/materials/blue_plasma_looping/blue_plasma/loop/blue_plasma2.wav",
+			"halo_reach/materials/blue_plasma_looping/blue_plasma/loop/blue_plasma3.wav", "halo_reach/materials/blue_plasma_looping/blue_plasma/loop/blue_plasma4.wav",
+			"halo_reach/materials/blue_plasma_looping/blue_plasma/loop/blue_plasma5.wav" },
+			
+["OnShieldImpact"] = { "halo_reach/materials/energy_shield/sheildhit1.ogg","halo_reach/materials/energy_shield/sheildhit2.ogg","halo_reach/materials/energy_shield/sheildhit3.ogg" }
 }
