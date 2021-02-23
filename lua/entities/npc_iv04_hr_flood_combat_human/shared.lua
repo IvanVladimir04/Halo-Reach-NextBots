@@ -5,7 +5,8 @@ ENT.StartHealth = 90
 ENT.Models = {"models/halo_reach/characters/other/flood_human_combat_form.mdl"}
 
 ENT.PossibleWeapons = {
-	"astw2_halo_cea_assault_rifle"
+	"astw2_halo_cea_assault_rifle",
+	"astw2_halo_cea_pistol"
 }
 
 ENT.VoiceType = "Flood_Human"

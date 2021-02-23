@@ -31,6 +31,8 @@ ENT.ShieldUp = true
 
 ENT.ActionTime = 2.5
 
+ENT.CollisionMask = MASK_NPCSOLID
+
 -- Flinching
 
 ENT.FlinchChance = 30
@@ -145,21 +147,23 @@ function ENT:Give(class)
 	wep:PhysicsInit(SOLID_NONE)	
 	wep:SetSolid(SOLID_NONE)
 	wep:SetMoveParent(self)
-	--wep:SetParent(self)
-	--wep:Fire("setparentattachment", "anim_attachment_RH")
-	--wep:AddEffects(EF_BONEMERGE)
+	wep:SetParent(self,1)
+	wep:Fire("setparentattachment", "anim_attachment_RH")
+	wep:AddEffects(EF_BONEMERGE)
 	self.Weapon = wep
 	wep:SetClip1(wep:GetMaxClip1())
 end
 
 
 function ENT:OnInitialize()
+	self:SetBloodColor(DONT_BLEED)
 	self:DoInit()
 	self.VoiceType = self.VoiceType or "Flood_Human"
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
-	--self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
+	if math.random(1,4) == 1 then
+		self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
+	end
 	self:SetCollisionBounds(Vector(20,20,80),Vector(-20,-20,0))
-	self:SetSolidMask(MASK_NPCSOLID)
 	if IsValid(self.Weapon) then
 		if !self.Weapon.NextPrimaryFire then self.Weapon.NextPrimaryFire = CurTime() end
 		local relo = self.Weapon.AI_Reload
@@ -192,6 +196,8 @@ function ENT:SetupHoldtypes()
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle1")),self:GetSequenceActivity(self:LookupSequence("Idle2")),self:GetSequenceActivity(self:LookupSequence("Idle3"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle1")),self:GetSequenceActivity(self:LookupSequence("Idle2")),self:GetSequenceActivity(self:LookupSequence("Idle3"))}
 	end
+	self.GetupAnim1 = "Reinfect"
+	self.GetupAnim2 = "Resurrect"
 	self.Seqs = {
 		[1] = "Evade_Left",
 		[2] = "Evade_Right"
@@ -273,9 +279,10 @@ local thingstoavoid = {
 
 function ENT:OnContact( ent ) -- When we touch someBODY
 	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
+	--print("yes",CurTime())
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
-		local d = ent:GetPos()-self:GetPos()
-		ent:SetVelocity(d*5)
+		local d = (ent:GetPos()-self:GetPos())+ent:GetUp()
+		ent:SetVelocity(d*1)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )
@@ -359,7 +366,7 @@ function ENT:Wander()
 			local nav = navs[math.random(#navs)]
 			local pos = goal
 			if nav then pos = nav:GetRandomPoint() end
-			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			self:WanderToPosition( (pos), self.WalkAnim[math.random(1,#self.WalkAnim)], self.MoveSpeed )
 		else
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
@@ -389,14 +396,14 @@ function ENT:Wander()
 					end
 				end
 			end
-			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed )
 			coroutine.wait(1)
 		else
 			--if self:GetActivity() != self.IdleCalmAnim[1] then
 			--	self:StartActivity(self.IdleCalmAnim[1])
 			--end
 			if  math.random(1,3) == 1 then
-				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.WalkAnim[math.random(1,#self.WalkAnim)], self.MoveSpeed )
 			else
 				for i = 1, 3 do
 					timer.Simple( 0.5*i, function()
@@ -480,9 +487,6 @@ function ENT:OnOtherKilled( victim, info )
 	if rel == "foe" and victim == self.Enemy then
 		if !victim.BeenNoticed then
 			victim.BeenNoticed = true
-			if victim:IsPlayer() then
-				self:NearbyReply("OnKillPlayer")
-			end
 		end
 		local found = false
 		for ent, bool in pairs(self.RegisteredTargets) do
@@ -494,11 +498,6 @@ function ENT:OnOtherKilled( victim, info )
 		end
 		if !found then
 			if math.random(1,3) == 1 then
-				if math.random(1,2) == 1 then
-					self:Speak("OnTaunt")
-				else
-					self:Speak("OnVictory")
-				end
 				local func = function()
 					--self:PlaySequenceAndWait("Celebrate")
 					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
@@ -762,7 +761,7 @@ function ENT:FireWep()
 	for i = 1, n do
 		timer.Simple( 0.1*i, function()
 			if IsValid(self) then
-				self:DoGestureSeq(self.FireAnim)
+				--self:DoGestureSeq(self.FireAnim)
 				if IsValid(self.Weapon) then
 					self.Weapon:AI_PrimaryAttack()
 				end
@@ -996,10 +995,7 @@ function ENT:ChaseEnt(ent,los)
 end
 
 function ENT:OnHaveEnemy(ent)
-	local func = function()
-		self:Speak("OnAlert")
-	end
-	table.insert(self.StuffToRunInCoroutine,func)
+	self:Speak("OnAlert")
 	self.LastSeenEnemyPos = ent:GetPos()
 	self:AlertAllies(ent)
 end
@@ -1028,8 +1024,33 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	--self:SetBodygroup(3,1)
 	self.KilledDmgInfo = dmginfo
+	local killer = dmginfo:GetAttacker()
 	--self.BehaveThread = nil
-	self:CreateRagdoll( dmginfo )
+	local class = self:GetClass()
+	local rag = self:CreateRagdoll( dmginfo )
+	if !self.GotUp and math.random(1,10) <= 3 then
+		timer.Simple( math.random(5,10), function()
+			if IsValid(rag) then
+				local pos = rag:GetPos()
+				local ang = Angle(0,rag:GetAngles().y,0)
+				local sel = ents.Create( class )
+				sel.IsNTarget = true
+				sel:SetPos(rag:GetPos())
+				sel:SetAngles(ang)
+				sel:Spawn()
+				sel.GotUp = true
+				local func = function()
+					sel:PlaySequenceAndWait( sel.GetupAnim1 )
+					sel.IsNTarget = false
+					sel:PlaySequenceAndWait( sel.GetupAnim2 )
+				end
+				table.insert(sel.StuffToRunInCoroutine,func)
+				undo.ReplaceEntity(rag,sel)
+				--killer:TakeDamage(100,sel,sel) -- heart attack
+				rag:Remove()
+			end
+		end )
+	end
 end
 
 -- Basic ASTW 2 compatibility

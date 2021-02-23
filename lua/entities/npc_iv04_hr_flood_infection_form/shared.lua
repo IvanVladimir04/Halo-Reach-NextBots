@@ -5,7 +5,7 @@ ENT.StartHealth = 5
 ENT.Models  = {"models/halo_reach/characters/other/flood_infection_form.mdl"}
 ENT.Relationship = 4
 ENT.MeleeDamage = 5
---ENT.RunAnim = {ACT_WALK}
+ENT.WanderAnim = {ACT_RUN}
 ENT.SightType = 1
 ENT.BehaviourType = 1
 ENT.Faction = "FACTION_FLOOD"
@@ -14,7 +14,7 @@ ENT.MoveSpeed = 200
 ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times faster
 ENT.PrintName = "Flood Infection Form"
 
-ENT.MeleeRange = 100
+ENT.MeleeRange = 200
 
 ENT.IdleSoundDelay = 8
 
@@ -37,6 +37,80 @@ ENT.VoiceType = "Flood_Infection"
 function ENT:CustomRelationshipsSetUp()
 end
 
+function ENT:Wander()
+	if self.IsControlled then return end
+	if self.IsFollowingPlayer and IsValid(self.FollowingPlayer) then
+		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
+		if dist > 300^2 then
+			local goal = self.FollowingPlayer:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 300
+			local navs = navmesh.Find(goal,256,100,20)
+			local nav = navs[math.random(#navs)]
+			local pos = goal
+			if nav then pos = nav:GetRandomPoint() end
+			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+		else
+			for i = 1, 3 do
+				timer.Simple( 0.5*i, function()
+					if IsValid(self) and !IsValid(self.Enemy) then
+						self:SearchEnemy()
+					end
+				end )
+				if !IsValid(self.Enemy) then
+					coroutine.wait(0.5)
+				end
+			end
+		end
+	else
+		if self.Alerted then
+			timer.Simple( 15, function()
+				if IsValid(self) and !IsValid(self.Enemy) then
+					self.Alerted = false
+					self.SpokeSearch = false
+				end
+			end )
+			if !self.SpokeSearch then
+				self:Speak("OnInvestigate")
+				for id, v in ipairs(self:LocalAllies()) do
+					if !v.SpokeSearch then
+						v.SpokeSearch = true
+						v.NeedsToReport = true
+					end
+				end
+			end
+			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.WanderAnim[math.random(1,#self.WanderAnim)], self.MoveSpeed )
+			coroutine.wait(1)
+		else
+			--if self:GetActivity() != self.IdleCalmAnim[1] then
+			--	self:StartActivity(self.IdleCalmAnim[1])
+			--end
+			if  math.random(1,3) == 1 then
+				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.WanderAnim[math.random(1,#self.WanderAnim)], self.MoveSpeed )
+			else
+				for i = 1, 3 do
+					timer.Simple( 0.5*i, function()
+						if IsValid(self) and !IsValid(self.Enemy) then
+							self:SearchEnemy()
+						end
+					end )
+					if !IsValid(self.Enemy) then
+						coroutine.wait(0.5)
+					end
+				end
+			end
+			if !self.SpokeIdle then
+				self:Speak("OnIdle")
+				self.SpokeIdle = true
+				timer.Simple( math.random(45,60), function()
+					if IsValid(self) then
+						self.SpokeIdle = false
+					end
+				end )
+			end
+		end
+	end
+	--self:WanderToPosition( (self:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * self.WanderDistance), self.WanderAnim[math.random(1,#self.WanderAnim)], self.MoveSpeed )
+end
+
 function ENT:Speak(voice)
 	local character = self.Voices[self.VoiceType]
 	if self.CurrentSound then self.CurrentSound:Stop() end
@@ -50,14 +124,19 @@ end
 
 
 function ENT:OnInitialize()
-	self:SetSkin(math.random(0,1))
 	self:SetCollisionBounds(Vector(8,8,15),Vector(-8,-8,0))
-	self:SetSolidMask(MASK_NPCSOLID)
-	self.DoClimb = GetConVar("hwr_flood_infection_climb"):GetInt() == 1
+	if !self.FromCarrier then
+		self:SetSolidMask(MASK_NPCSOLID)
+	end
+	self.DoClimb = GetConVar("halo_reach_nextbots_ai_flood_infection_climb"):GetInt() == 1
+	self:SetBloodColor(DONT_BLEED)
 end
 
 function ENT:BeforeThink()
-
+	if self.NISound < CurTime() then
+		self.NISound = CurTime()+20
+		self:Speak("OnMove")
+	end
 end
 
 function ENT:OnHaveEnemy(ent)
@@ -77,34 +156,6 @@ function ENT:FireAnimationEvent(pos,ang,event,name)
 	print(ang)
 	print(event)
 	print(name)]]
-end
-
-function ENT:CanInfectTarget( victim )
-	local can = false
-	local class
-	if victim.IsCEMarine then
-		can = true
-		class = "npc_iv04_hw_flood_marine"
-	elseif (  victim.Voices and !victim.GetInfected and (victim.Voices["Grunt"] or victim.Voices["Elite"])) then
-		can = true
-		if victim.Voices["Elite"] then 
-			class = "npc_iv04_hw_flood_elite" 
-		elseif victim.Voices["Grunt"] then
-			class = "npc_iv04_hw_flood_grunt"
-		end
-	end
-	return can ,class
-end
-
-function ENT:Infect(victim,class)
-	local pos = victim:GetPos()
-	local ang = victim:GetAngles()
-	victim:Remove()
-	local ent = ents.Create(class)
-	ent:SetPos(pos)
-	ent:SetAngles(ang)
-	ent:Spawn()
-	self:Remove()
 end
 
 function ENT:OnOtherKilled( victim, info )
@@ -144,32 +195,32 @@ function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	print(type)
 	print(options)]]
 	--if options == self.MeleeEvent then
-		self:DoMeleeDamage()
+		--self:DoMeleeDamage()
 	--end
 end
 
 function ENT:DoMeleeDamage()
-	local damage = self.MeleeDamage
-	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
-		if v != self and self:CheckRelationships(v) != "friend" and (v:IsNPC() or v.Type == "nextbot" or v.NEXTBOT or v:IsPlayer()) then
-			if v:Health() - damage <= 0 and !v.IsInfected then
-				v.IsInfected = true
-				local can, class = self:CanInfectTarget( v )
-				if can then
-					return self:Infect( v, class )
-				end
+	local victim = self:GetOwner()
+	victim:TakeDamage( self.MeleeDamage, self, self )
+end
+
+ENT.NextBite = 0
+
+if SERVER then
+
+	function ENT:Think()
+		if self.Latched and IsValid(self:GetOwner()) then
+			if self.NextBite < CurTime() then
+				self:DoMeleeDamage()
+				self.NextBite = CurTime()+1
+				self:Speak("OnBite")
 			end
-			v:TakeDamage( damage, self, self )
-			--v:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
-			if v:IsPlayer() then
-				v:ViewPunch( self.ViewPunchPlayers )
-			end
-			if IsValid(v:GetPhysicsObject()) then
-				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
-			end
-			break
+			self.DirToEnemy = (self:GetOwner():NearestPoint(self:GetPos())-self:GetPos()):Angle()
+			self:SetAngles(Angle(90,self.DirToEnemy.y,0))
+			self:SetPos(self.LPos+self:GetOwner():GetPos())
 		end
 	end
+
 end
 
 function ENT:DoKilled( info )
@@ -183,15 +234,74 @@ function ENT:Melee(damage) -- This section is really cancerous and a mess, if yo
 		for i = 1, 30 do
 			self.loco:FaceTowards( self.Enemy:GetPos() )
 		end
+		self.loco:JumpAcrossGap( self.Enemy:GetPos()+self.Enemy:OBBCenter(), self:GetForward() )
 	end
-	local sequence = "Attack_0"..math.random(1,3)..""
-	local id,len = self:LookupSequence(sequence)
-	timer.Simple( len/2, function()
-		if IsValid(self) then
-			self:DoMeleeDamage()
+	self.loco:SetDesiredSpeed(0)
+	self:ResetSequence( "Leap" )
+end
+
+function ENT:OnLeaveGround( ent )
+	self.DoingMelee = true
+end
+
+function ENT:OnContact( ent )
+	if ent == game.GetWorld() then return end
+	local tbl = {
+		HitPos = self:NearestPoint(ent:GetPos()),
+		HitEntity = self,
+		OurOldVelocity = ent:GetVelocity(),
+		DeltaTime = 0,
+		TheirOldVelocity = self.loco:GetVelocity(),
+		HitNormal = self:NearestPoint(ent:GetPos()):GetNormalized(),
+		Speed = ent:GetVelocity().x,
+		HitObject = self:GetPhysicsObject(),
+		PhysObject = self:GetPhysicsObject()
+	}
+	if ent.DoDamageCode then
+		ent:DoDamageCode(tbl,self:GetPhysicsObject())
+	elseif ent.PhysicsCollide then 
+		ent:PhysicsCollide(tbl,self:GetPhysicsObject())
+	end
+	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
+		if self.DoingMelee and !self.Latched and !self.HasLatched and self:CheckRelationships(ent) == "foe" then
+			self.DoingMelee = false
+			self.Latched = true
+			self.HasLatched = true
+			self:SetOwner(ent)
+			self.LPos = ent:WorldToLocal(self:GetPos())
+			local stop = false
+			timer.Simple( 5, function()
+				if IsValid(self) then
+					stop = true
+					self:SetOwner(nil)
+					self.LPos = nil
+					self.Latched = false
+				end
+			end )
+			local func = function()
+				self:ResetSequence("Wrestle")
+				while (self.Latched and IsValid(self.Enemy)) and !stop do
+					if self:GetCycle() >= 0.9 then
+						self:ResetSequence("Wrestle")
+					end
+					coroutine.wait(0.01)
+				end
+				self.Latched = false
+				self:SetAngles(Angle(0,self:GetAngles().y,0))
+				timer.Simple( 2, function()
+					if IsValid(self) then
+						self.HasLatched = false
+					end
+				end )
+				self.loco:SetVelocity(self.DirToEnemy:Forward()*-200)
+				--self:MoveToPosition(self:GetPos()+self:GetForward()*-300,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed)
+			end
+			table.insert(self.StuffToRunInCoroutine,func)
+		else
+			local d = self:GetPos()-ent:GetPos()
+			self.loco:SetVelocity(d*1)
 		end
-	end )
-	self:PlaySequenceAndWait( id )
+	end
 end
 
 ENT.MeleeCheckDelay = 0.5
@@ -258,7 +368,7 @@ function ENT:CanClimb()
 	if tr.Hit then
 		self:SetPos(self:GetPos()+self:GetForward()*(tr.Fraction/40))
 	end
-	return tr.Hit
+	return tr.Hit and (!tr.Entity:IsNextBot() and !tr.Entity:IsPlayer() and !tr.Entity:IsNPC())
 end
 
 function ENT:Climb(path)
@@ -343,7 +453,7 @@ function ENT:ChaseEnt(ent) -- Modified MoveToPos to integrate some stuff
 				self.State = "Idle"
 				return "Lost Enemy"
 			end
-			if dist < self.MeleeRange^2 and self.HasMeleeAttack then
+			if dist < self.MeleeRange^2 and !self.HasLatched then
 				return self:Melee(self.MeleeDamage)
 			end
 		end
@@ -385,27 +495,8 @@ end
 
 function ENT:OnKilled(dmginfo)
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	local deadguy = ents.Create("prop_dynamic")
-	deadguy:SetPos(self:GetPos()+self:GetUp()*-10)
-	deadguy:SetModel(self:GetModel())
-	deadguy:SetAngles(self:GetAngles()+Angle(0,math.random(360),0))
-	deadguy:SetColor(self:GetColor())
-	deadguy:Spawn()
-	deadguy:ResetSequenceInfo()
-	local id, len = self:LookupSequence("Death_01")
-	self:Speak("Death")
-	deadguy:SetSequence(id)
-	if self:IsOnFire() then deadguy:Ignite(math.random(5,10), 0) end
-	self:Remove()
-	undo.ReplaceEntity(self, deadguy)
-	if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
-		timer.Simple( 15, function()
-			if IsValid(deadguy) then
-				deadguy:Remove()
-			end
-		end)
-	end
-	
+	ParticleEffect("iv04_halo_reach_flood_infection_form_gib", self:WorldSpaceCenter(), self:GetAngles(), nil )
+	self:Speak("OnDeath")
 	self:Remove()
 end
 
