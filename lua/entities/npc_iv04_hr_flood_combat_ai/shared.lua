@@ -160,7 +160,7 @@ function ENT:OnInitialize()
 	self:DoInit()
 	self.VoiceType = self.VoiceType or "Flood_Human"
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
-	if math.random(1,4) == 1 then
+	if math.random(1,4) == 1 and !self.GotUp then
 		self:Give(self.PossibleWeapons[math.random(#self.PossibleWeapons)])
 	end
 	self:SetCollisionBounds(Vector(20,20,80),Vector(-20,-20,0))
