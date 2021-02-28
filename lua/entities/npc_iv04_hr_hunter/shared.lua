@@ -786,7 +786,7 @@ function ENT:ChaseEnt(ent,los)
 				self:OnLoseEnemy()
 				self:SetEnemy(nil)
 				return "Lost enemy"
-			elseif dist > 400^2 and cansee and los then
+			elseif dist > self.ChaseRange^2 and cansee and los then
 				return "Lost range"
 			end
 			if cansee then
