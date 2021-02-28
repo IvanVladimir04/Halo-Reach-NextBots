@@ -2288,7 +2288,7 @@ function ENT:DoKilledAnim()
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
-				local rag = self:CreateRagdoll(DamageInfo())
+				local rag = self:BecomeRagdoll(DamageInfo())
 				return
 			end
 			local seq, len = self:LookupSequence(anim)
@@ -2310,7 +2310,7 @@ function ENT:DoKilledAnim()
 							end
 						end)
 					end
-					rag = self:CreateRagdoll(DamageInfo())
+					rag = self:BecomeRagdoll(DamageInfo())
 				end
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
@@ -2332,7 +2332,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:CreateRagdoll(self.KilledDmgInfo)
+			rag = self:BecomeRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnDeathPainful")
@@ -2368,7 +2368,7 @@ function ENT:DoKilledAnim()
 				end
 			end)
 		end
-		rag = self:CreateRagdoll(DamageInfo())
+		rag = self:BecomeRagdoll(DamageInfo())
 	end
 end
 
