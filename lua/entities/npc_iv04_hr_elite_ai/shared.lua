@@ -2270,7 +2270,9 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	self.KilledDmgInfo = dmginfo
 	self.BehaveThread = nil
 	self:SetSkin(1)
-	self:SetBodygroup(4,0)
+	if !self.IsBrute then
+		self:SetBodygroup(4,0)
+	end
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
 	coroutine.resume( self.DrownThread )
 end
@@ -2286,7 +2288,7 @@ function ENT:DoKilledAnim()
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
-				local rag = self:BecomeRagdoll(DamageInfo())
+				local rag = self:CreateRagdoll(DamageInfo())
 				return
 			end
 			local seq, len = self:LookupSequence(anim)
@@ -2308,7 +2310,7 @@ function ENT:DoKilledAnim()
 							end
 						end)
 					end
-					rag = self:BecomeRagdoll(DamageInfo())
+					rag = self:CreateRagdoll(DamageInfo())
 				end
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
@@ -2330,7 +2332,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:BecomeRagdoll(self.KilledDmgInfo)
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnDeathPainful")
@@ -2366,7 +2368,7 @@ function ENT:DoKilledAnim()
 				end
 			end)
 		end
-		rag = self:BecomeRagdoll(DamageInfo())
+		rag = self:CreateRagdoll(DamageInfo())
 	end
 end
 
