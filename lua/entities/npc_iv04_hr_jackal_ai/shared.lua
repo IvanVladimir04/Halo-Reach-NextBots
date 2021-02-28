@@ -35,16 +35,6 @@ ENT.FlinchChance = 30
 
 ENT.FlinchDamage = 5
 
-ENT.FlinchHitgroups = {
-	[1] = ACT_FLINCH_HEAD,
-	[2] = ACT_FLINCH_CHEST,
-	[4] = ACT_FLINCH_LEFTARM,
-	[5] = ACT_FLINCH_RIGHTARM,
-	[6] = ACT_FLINCH_LEFTLEG,
-	[7] = ACT_FLINCH_RIGHTLEG,
-	[3] = ACT_FLINCH_STOMACH
-}
-
 ENT.FlinchMove = {
 	[1] = 50,
 	[3] = 50,
@@ -117,12 +107,10 @@ ENT.FlinchHitgroups = {
 	[3] = ACT_FLINCH_CHEST,
 	[4] = ACT_FLINCH_LEFTARM,
 	[5] = ACT_FLINCH_RIGHTARM,
-	[6] = ACT_FLINCH_LEFTLEG,
-	[1] = ACT_FLINCH_HEAD
+	[6] = ACT_FLINCH_LEFTLEG
 }
 
 ENT.FlinchAnims = {
-	[1] = "Flinch_Head",
 	[3] = "Flinch_Front_Chest",
 	[4] = "Flinch_Front_Left_Arm",
 	[5] = "Flinch_Front_Right_Arm",

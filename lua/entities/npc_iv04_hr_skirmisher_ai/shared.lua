@@ -103,7 +103,6 @@ ENT.FlinchHitgroups = {
 }
 
 ENT.FlinchAnims = {
-	[1] = "Flinch_Head",
 	[3] = "Flinch_Front_Chest",
 	[4] = "Flinch_Front_Left_Arm",
 	[5] = "Flinch_Front_Right_Arm",
