@@ -44,7 +44,6 @@ ENT.WepOffsets = {
 function ENT:DoInit()
 	local wep = table.Random(self.PossibleWeapons)
 	self:Give(wep)
-	self:SetSkin(1)
 	local hed = math.random(1,4)
 	local s = 0
 	self:SetBodygroup(2,6)

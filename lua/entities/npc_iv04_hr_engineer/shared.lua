@@ -123,9 +123,7 @@ end
 function ENT:OnInitialize()
 	self.OldGravity = self.loco:GetGravity()
 	self.loco:SetGravity(0)
-	if !self.LostProtection then
 	ParticleEffectAttach( "iv04_halo_reach_jackal_sniper_glow", PATTACH_POINT_FOLLOW, self, 1 )
-	end
 	--self.PerchOffChances = self.PerchChances[GetConVar("halo_reach_nextbots_ai_type"):GetString()]
 	self.Del = 1.25-(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()*0.25)
 	--self.FlyGoal = self:WorldSpaceCenter()+self:GetUp()*math.random(160,240)

@@ -848,6 +848,903 @@ ENT.Voices = {
 			"halo_reach/dialog/combat/trooper_sgt1/11_involuntary/lift/lift_8.ogg", "halo_reach/dialog/combat/trooper_sgt1/11_involuntary/lift/lift_9.ogg" }
 },
 
+	["Johnson"] = {
+		["OnOrderAdvance"] = {
+			"marines/sergeant1/advance_1.wav",
+			"marines/sergeant1/advance_2.wav",
+			"marines/sergeant1/advance_4.wav",
+			"marines/sergeant1/advance_5.wav",
+			"marines/sergeant1/advance_9.wav",
+			"marines/sergeant1/advance_21.wav",
+			"marines/sergeant1/advance_22.wav",
+			"marines/sergeant1/advance_23.wav",
+			"marines/sergeant1/advance_24.wav",
+			"marines/sergeant1/advance_25.wav",
+			"marines/sergeant1/advance_26.wav",
+			"marines/sergeant1/advance_27.wav",
+			"marines/sergeant1/advance_28.wav"
+		},
+		["OnAlertFriend"] = {
+			"marines/sergeant1/alertfriend_5.wav",
+			"marines/sergeant1/alertfriend_6.wav",
+			"marines/sergeant1/alertfriend_7.wav",
+			"marines/sergeant1/alertfriend_8.wav"
+		},
+		["AlertAllyResponse"] = {
+			"marines/sergeant1/alertfriendre_4.wav",
+			"marines/sergeant1/alertfriendre_5.wav",
+			"marines/sergeant1/alertfriendre_6.wav"
+		},
+		["OnAlertLostContact"] = {
+			"marines/sergeant1/alertlostcontact_4.wav",
+			"marines/sergeant1/alertlostcontact_5.wav",
+			"marines/sergeant1/alertlostcontact_6.wav",
+			"marines/sergeant1/alertlostcontact_7.wav",
+		},
+		["AlertLostContactResponse"] = {
+			"marines/sergeant1/alertlostcontactre_11.wav",
+			"marines/sergeant1/alertlostcontactre_12.wav",
+			"marines/sergeant1/alertlostcontactre_13.wav",
+			"marines/sergeant1/alertlostcontactre_14.wav",
+			"marines/sergeant1/alertlostcontactre_15.wav",
+			"marines/sergeant1/alertlostcontactre_16.wav",
+			"marines/sergeant1/alertlostcontactre_17.wav",
+			"marines/sergeant1/alertlostcontactre_18.wav",
+			"marines/sergeant1/alertlostcontactre_19.wav"
+		},
+		["OnBetrayal"] = {
+			"marines/sergeant1/alliancebroken_9.wav",
+			"marines/sergeant1/alliancebroken_10.wav",
+			"marines/sergeant1/alliancebroken_11.wav",
+			"marines/sergeant1/alliancebroken_12.wav",
+			"marines/sergeant1/alliancebroken_13.wav"
+		},
+		["OnForgive"] = {
+			"marines/sergeant1/alliancereformed_1.wav",
+			"marines/sergeant1/alliancereformed_2.wav",
+			"marines/sergeant1/alliancereformed_3.wav",
+			"marines/sergeant1/alliancereformed_4.wav"
+		},
+		["Alone"] = {
+			"marines/sergeant1/alone_9.wav",
+			"marines/sergeant1/alone_10.wav",
+			"marines/sergeant1/alone_11.wav",
+			"marines/sergeant1/alone_12.wav"
+		},
+		["AllyKillGrenade"] = {
+			"marines/sergeant1/anyonekillgrenadecm_1.wav",
+			"marines/sergeant1/anyonekillgrenadecm_2.wav",
+			"marines/sergeant1/anyonekillgrenadecm_3.wav",
+			"marines/sergeant1/anyonekillgrenadecm_4.wav",
+			"marines/sergeant1/anyonekillgrenadecm_5.wav",
+			"marines/sergeant1/anyonekillgrenadecm_6.wav",
+			"marines/sergeant1/anyonekillgrenadecm_7.wav",
+			"marines/sergeant1/anyonekillgrenadecm_8.wav"
+		},
+		["OnCharge"] = {
+			"marines/sergeant1/berserk_5.wav",
+			"marines/sergeant1/berserk_6.wav",
+			"marines/sergeant1/berserk_8.wav",
+			"marines/sergeant1/berserk_9.wav",
+			"marines/sergeant1/berserk_10.wav",
+			"marines/sergeant1/berserk_11.wav",
+			"marines/sergeant1/berserk_12.wav"
+		},
+		["Blocked"] = {
+			"marines/sergeant1/blocked_1.wav",
+			"marines/sergeant1/blocked_3.wav",
+			"marines/sergeant1/blocked_4.wav",
+			"marines/sergeant1/blocked_5.wav",
+			"marines/sergeant1/blocked_6.wav",
+			"marines/sergeant1/blocked_7.wav"
+		},
+		["BlockedResponse"] = {
+			"marines/sergeant1/blockedre_1.wav",
+			"marines/sergeant1/blockedre_2.wav",
+			"marines/sergeant1/blockedre_3.wav",
+			"marines/sergeant1/blockedre_4.wav",
+			"marines/sergeant1/blockedre_7.wav"
+		},
+		["OnVictory"] = {
+			"marines/sergeant1/celebration_1.wav",
+			"marines/sergeant1/celebration_2.wav",
+			"marines/sergeant1/celebration_3.wav",
+			"marines/sergeant1/celebration_4.wav",
+			"marines/sergeant1/celebration_5.wav",
+			"marines/sergeant1/celebration_6.wav",
+			"marines/sergeant1/celebration_7.wav",
+			"marines/sergeant1/celebration_8.wav"
+		},
+		["OnShootCorpse"] = {
+			"marines/sergeant1/checkbodyenemy_10.wav",
+			"marines/sergeant1/checkbodyenemy_11.wav",
+			"marines/sergeant1/checkbodyenemy_12.wav",
+			"marines/sergeant1/checkbodyenemy_13.wav",
+			"marines/sergeant1/checkbodyenemy_14.wav",
+			"marines/sergeant1/checkbodyenemy_15.wav",
+			"marines/sergeant1/checkbodyenemy_16.wav",
+			"marines/sergeant1/checkbodyenemy_17.wav"
+		},
+		["CheckBodyAlly"] = {
+			"marines/sergeant1/checkbodyfriend_1.wav",
+			"marines/sergeant1/checkbodyfriend_2.wav",
+			"marines/sergeant1/checkbodyfriend_3.wav",
+			"marines/sergeant1/checkbodyfriend_4.wav",
+			"marines/sergeant1/checkbodyfriend_5.wav",
+			"marines/sergeant1/checkbodyfriend_6.wav",
+			"marines/sergeant1/checkbodyfriend_7.wav",
+			"marines/sergeant1/checkbodyfriend_8.wav",
+			"marines/sergeant1/checkbodyfriend_9.wav",
+			"marines/sergeant1/checkbodyfriend_10.wav",
+			"marines/sergeant1/checkbodyfriend_11.wav",
+			"marines/sergeant1/checkbodyfriend_12.wav",
+			"marines/sergeant1/checkbodyfriend_13.wav"
+		},
+		["OnCover"] = {
+			"marines/sergeant1/cover_1.wav",
+			"marines/sergeant1/cover_2.wav",
+			"marines/sergeant1/cover_3.wav",
+			"marines/sergeant1/cover_4.wav",
+			"marines/sergeant1/cover_6.wav"
+		},
+		["OnDamagedFoe"] = {
+			"marines/sergeant1/damagedenemy_5.wav",
+			"marines/sergeant1/damagedenemy_22.wav",
+			"marines/sergeant1/damagedenemy_24.wav",
+			"marines/sergeant1/damagedenemy_31.wav",
+			"marines/sergeant1/damagedenemy_32.wav",
+			"marines/sergeant1/damagedenemy_34.wav",
+			"marines/sergeant1/damagedenemy_35.wav",
+			"marines/sergeant1/damagedenemy_36.wav",
+			"marines/sergeant1/damagedenemy_37.wav",
+			"marines/sergeant1/damagedenemy_38.wav",
+			"marines/sergeant1/damagedenemy_39.wav",
+			"marines/sergeant1/damagedenemy_42.wav",
+			"marines/sergeant1/damagedenemy_43.wav",
+			"marines/sergeant1/damagedenemy_44.wav"
+		},
+		["DamagedEnemyAlly"] = {
+			"marines/sergeant1/damagedenemycm_4.wav",
+			"marines/sergeant1/damagedenemycm_6.wav",
+			"marines/sergeant1/damagedenemycm_7.wav",
+			"marines/sergeant1/damagedenemycm_8.wav",
+			"marines/sergeant1/damagedenemycm_10.wav",
+			"marines/sergeant1/damagedenemycm_15.wav",
+			"marines/sergeant1/damagedenemycm_16.wav",
+			"marines/sergeant1/damagedenemycm_18.wav"
+		},
+		["DamagedAlly"] = {
+			"marines/sergeant1/damagedfriend_6.wav",
+			"marines/sergeant1/damagedfriend_7.wav",
+			"marines/sergeant1/damagedfriend_9.wav",
+			"marines/sergeant1/damagedfriend_10.wav",
+			"marines/sergeant1/damagedfriend_13.wav",
+			"marines/sergeant1/damagedfriend_15.wav",
+			"marines/sergeant1/damagedfriend_16.wav",
+			"marines/sergeant1/damagedfriend_23.wav",
+		},
+		["DamagedAllyPlayer"] = {
+			"marines/sergeant1/damagedfriendplayer_5.wav",
+			"marines/sergeant1/damagedfriendplayer_6.wav",
+			"marines/sergeant1/damagedfriendplayer_9.wav",
+			"marines/sergeant1/damagedfriendplayer_10.wav",
+			"marines/sergeant1/damagedfriendplayer_11.wav",
+			"marines/sergeant1/damagedfriendplayer_12.wav",
+		},
+		["DeadFriendFound"] = {
+			"marines/sergeant1/deadfriendfound_1.wav",
+			"marines/sergeant1/deadfriendfound_2.wav",
+			"marines/sergeant1/deadfriendfound_3.wav"
+		},
+		["OnDeathFalling"] = {
+			"marines/sergeant1/deathfalling_1.wav",
+			"marines/sergeant1/deathfalling_2.wav"
+		},
+		["OnDeathThrown"] = {
+			"marines/sergeant1/deathflying_1.wav",
+			"marines/sergeant1/deathflying_2.wav"
+		},		
+		["DeathInstant"] = {
+			"marines/sergeant1/deathinstant_1.wav",
+			"marines/sergeant1/deathinstant_2.wav"
+		},
+		["OnDeath"] = {
+			"marines/sergeant1/deathquiet_1.wav",
+			"marines/sergeant1/deathquiet_2.wav"
+		},
+		["OnFlee"] = {
+			"marines/sergeant1/flee_1.wav",
+			"marines/sergeant1/flee_2.wav"
+		},
+		["FleeResponse"] = {
+			"marines/sergeant1/fleere_1.wav",
+			"marines/sergeant1/fleere_2.wav",
+			"marines/sergeant1/fleere_3.wav",
+			"marines/sergeant1/fleere_4.wav",
+			"marines/sergeant1/fleere_5.wav",
+			"marines/sergeant1/fleere_6.wav",
+			"marines/sergeant1/fleere_7.wav",
+			"marines/sergeant1/fleere_8.wav",
+			"marines/sergeant1/fleere_9.wav",
+			"marines/sergeant1/fleere_10.wav",
+			"marines/sergeant1/fleere_11.wav",
+			"marines/sergeant1/fleere_12.wav",
+			"marines/sergeant1/fleere_13.wav",
+			"marines/sergeant1/fleere_14.wav"
+		},
+		["OnKillAlly"] = {
+			"marines/sergeant1/friendbetrayed_1.wav",
+			"marines/sergeant1/friendbetrayed_2.wav",
+			"marines/sergeant1/friendbetrayed_3.wav",
+			"marines/sergeant1/friendbetrayed_4.wav",
+			"marines/sergeant1/friendbetrayed_5.wav",
+			"marines/sergeant1/friendbetrayed_6.wav",
+			"marines/sergeant1/friendbetrayed_7.wav",
+			"marines/sergeant1/friendbetrayed_8.wav"
+		},
+		["FriendDie"] = {
+			"marines/sergeant1/frienddied_1.wav",
+			"marines/sergeant1/frienddied_2.wav",
+			"marines/sergeant1/frienddied_3.wav",
+			"marines/sergeant1/frienddied_4.wav",
+			"marines/sergeant1/frienddied_5.wav",
+			"marines/sergeant1/frienddied_6.wav",
+			"marines/sergeant1/frienddied_7.wav",
+			"marines/sergeant1/frienddied_8.wav",
+			"marines/sergeant1/frienddied_9.wav",
+			"marines/sergeant1/frienddied_10.wav",
+			"marines/sergeant1/frienddied_11.wav"
+		},
+		["FriendKilledByCovenant"] = {
+			"marines/sergeant1/friendkilledbycovenant_1.wav",
+			"marines/sergeant1/friendkilledbycovenant_2.wav",
+			"marines/sergeant1/friendkilledbycovenant_4.wav",
+			"marines/sergeant1/friendkilledbycovenant_7.wav"
+		},
+		["FriendKilledByEnemy"] = {
+			"marines/sergeant1/friendkilledbyenemy_1.wav",
+			"marines/sergeant1/friendkilledbyenemy_2.wav",
+			"marines/sergeant1/friendkilledbyenemy_3.wav"
+		},
+		["FriendKilledByEnemyPlayer"] = {
+			"marines/sergeant1/friendkilledbyenemyplayer_1.wav",
+			"marines/sergeant1/friendkilledbyenemyplayer_2.wav",
+			"marines/sergeant1/friendkilledbyenemyplayer_3.wav",
+			"marines/sergeant1/friendkilledbyenemyplayer_4.wav",
+			"marines/sergeant1/friendkilledbyenemyplayer_5.wav"
+		},
+		["FriendKilledByFlood"] = {
+			"marines/sergeant1/friendkilledbyflood_4.wav",
+			"marines/sergeant1/friendkilledbyflood_5.wav",
+			"marines/sergeant1/friendkilledbyflood_7.wav",
+			"marines/sergeant1/friendkilledbyflood_8.wav",
+			"marines/sergeant1/friendkilledbyflood_9.wav",
+			"marines/sergeant1/friendkilledbyflood_10.wav"
+		},
+		["FriendKilledByFriend"] = {
+			"marines/sergeant1/friendkilledbyfriend_2.wav",
+			"marines/sergeant1/friendkilledbyfriend_3.wav",
+			"marines/sergeant1/friendkilledbyfriend_4.wav",
+			"marines/sergeant1/friendkilledbyfriend_5.wav",
+			"marines/sergeant1/friendkilledbyfriend_7.wav",
+			"marines/sergeant1/friendkilledbyfriend_9.wav",
+			"marines/sergeant1/friendkilledbyfriend_12.wav"
+		},
+		["FriendKilledByFriendlyPlayer"] = {
+			"marines/sergeant1/friendkilledbyfriendlyplayer_3.wav"
+		},
+		["FriendPlayerDie"] = {
+			"marines/sergeant1/friendplayerdied_1.wav",
+			"marines/sergeant1/friendplayerdied_5.wav",
+			"marines/sergeant1/friendplayerdied_6.wav",
+			"marines/sergeant1/friendplayerdied_7.wav",
+			"marines/sergeant1/friendplayerdied_8.wav",
+			"marines/sergeant1/friendplayerdied_9.wav",
+			"marines/sergeant1/friendplayerdied_10.wav",
+			"marines/sergeant1/friendplayerdied_12.wav",
+			"marines/sergeant1/friendplayerdied_13.wav",
+			"marines/sergeant1/friendplayerdied_14.wav"
+		},
+		["DangerEnemyGrenade"] = {
+			"marines/sergeant1/grenadedangerenemy_1.wav",
+			"marines/sergeant1/grenadedangerenemy_2.wav",
+			"marines/sergeant1/grenadedangerenemy_3.wav",
+			"marines/sergeant1/grenadedangerenemy_4.wav"
+		},
+		["DangerAlliedGrenade"] = {
+			"marines/sergeant1/grenadedangerfriend_9.wav",
+			"marines/sergeant1/grenadedangerfriend_10.wav",
+			"marines/sergeant1/grenadedangerfriend_11.wav",
+			"marines/sergeant1/grenadedangerfriend_12.wav",
+			"marines/sergeant1/grenadedangerfriend_13.wav",
+			"marines/sergeant1/grenadedangerfriend_14.wav",
+			"marines/sergeant1/grenadedangerfriend_15.wav",
+			"marines/sergeant1/grenadedangerfriend_16.wav"
+		},
+		["DangerSelfGrenade"] = {
+			"marines/sergeant1/grenadedangerself_2.wav",
+			"marines/sergeant1/grenadedangerself_3.wav",
+			"marines/sergeant1/grenadedangerself_4.wav",
+			"marines/sergeant1/grenadedangerself_5.wav"
+		},
+		["DangerGrenade"] = {
+			"marines/sergeant1/grenadesighted_3.wav",
+			"marines/sergeant1/grenadesighted_4.wav",
+			"marines/sergeant1/grenadesighted_5.wav"
+		},
+		["GrenadeStartle"] = {
+			"marines/sergeant1/grenadestartle_1.wav",
+			"marines/sergeant1/grenadestartle_2.wav"
+		},
+		["OnGrenadeThrow"] = {
+			"marines/sergeant1/grenadethrowing_2.wav",
+			"marines/sergeant1/grenadethrowing_3.wav",
+			"marines/sergeant1/grenadethrowing_4.wav"
+		},
+		["GroupCover"] = {
+			"marines/sergeant1/groupuncover_1.wav",
+			"marines/sergeant1/groupuncover_2.wav",
+			"marines/sergeant1/groupuncover_3.wav",
+			"marines/sergeant1/groupuncover_4.wav",
+			"marines/sergeant1/groupuncover_5.wav",
+			"marines/sergeant1/groupuncover_6.wav",
+			"marines/sergeant1/groupuncover_7.wav",
+			"marines/sergeant1/groupuncover_8.wav"
+		},
+		["GroupCoverResponse"] = {
+			"marines/sergeant1/groupuncoverre_1.wav",
+			"marines/sergeant1/groupuncoverre_2.wav",
+			"marines/sergeant1/groupuncoverre_3.wav",
+			"marines/sergeant1/groupuncoverre_4.wav",
+			"marines/sergeant1/groupuncoverre_5.wav",
+			"marines/sergeant1/groupuncoverre_6.wav",
+			"marines/sergeant1/groupuncoverre_7.wav",
+			"marines/sergeant1/groupuncoverre_8.wav",
+			"marines/sergeant1/groupuncoverre_9.wav",
+			"marines/sergeant1/groupuncoverre_10.wav"
+		},
+		["HurtEnemyGrenade"] = {
+			"marines/sergeant1/hurtenemygrenade_1.wav",
+			"marines/sergeant1/hurtenemygrenade_2.wav",
+			"marines/sergeant1/hurtenemygrenade_3.wav"
+		},
+		["HurtEnemyMounted"] = {
+			"marines/sergeant1/hurtenemymountedweapon_1.wav",
+			"marines/sergeant1/hurtenemymountedweapon_2.wav",
+			"marines/sergeant1/hurtenemymountedweapon_3.wav"
+		},
+		["HurtEnemyNeedler"] = {
+			"marines/sergeant1/hurtenemyneedler_1.wav",
+			"marines/sergeant1/hurtenemyneedler_2.wav",
+			"marines/sergeant1/hurtenemyneedler_3.wav"
+		},
+		["HurtEnemyPlasma"] = {
+			"marines/sergeant1/hurtenemyplasma_1.wav",
+			"marines/sergeant1/hurtenemyplasma_2.wav"
+		},
+		["HurtFriend"] = {
+			"marines/sergeant1/hurtfriend_1.wav",
+			"marines/sergeant1/hurtfriend_2.wav",
+			"marines/sergeant1/hurtfriend_3.wav",
+			"marines/sergeant1/hurtfriend_4.wav",
+			"marines/sergeant1/hurtfriend_5.wav",
+			"marines/sergeant1/hurtfriend_6.wav",
+			"marines/sergeant1/hurtfriend_7.wav",
+			"marines/sergeant1/hurtfriend_8.wav",
+			"marines/sergeant1/hurtfriend_10.wav",
+			"marines/sergeant1/hurtfriend_13.wav",
+			"marines/sergeant1/hurtfriend_14.wav",
+			"marines/sergeant1/hurtfriend_17.wav"
+		},
+		["HurtFriendPlayer"] = {
+			"marines/sergeant1/hurtfriendplayer_1.wav",
+			"marines/sergeant1/hurtfriendplayer_2.wav",
+			"marines/sergeant1/hurtfriendplayer_3.wav",
+			"marines/sergeant1/hurtfriendplayer_4.wav",
+			"marines/sergeant1/hurtfriendplayer_5.wav",
+			"marines/sergeant1/hurtfriendplayer_6.wav",
+			"marines/sergeant1/hurtfriendplayer_7.wav",
+			"marines/sergeant1/hurtfriendplayer_9.wav",
+			"marines/sergeant1/hurtfriendplayer_10.wav",
+			"marines/sergeant1/hurtfriendplayer_13.wav"
+		},
+		["HurtFriendResponse"] = {
+			"marines/sergeant1/hurtfriendre_1.wav",
+			"marines/sergeant1/hurtfriendre_2.wav",
+			"marines/sergeant1/hurtfriendre_3.wav",
+			"marines/sergeant1/hurtfriendre_4.wav",
+			"marines/sergeant1/hurtfriendre_5.wav",
+			"marines/sergeant1/hurtfriendre_11.wav",
+			"marines/sergeant1/hurtfriendre_12.wav",
+			"marines/sergeant1/hurtfriendre_13.wav",
+			"marines/sergeant1/hurtfriendre_14.wav",
+			"marines/sergeant1/hurtfriendre_15.wav"
+		},
+		["KilledEnemy"] = {
+			"marines/sergeant1/killedenemy_6.wav",
+			"marines/sergeant1/killedenemy_7.wav",
+			"marines/sergeant1/killedenemy_8.wav",
+			"marines/sergeant1/killedenemy_9.wav",
+			"marines/sergeant1/killedenemy_10.wav",
+			"marines/sergeant1/killedenemy_11.wav"
+		},
+		["KilledEnemyBullet"] = {
+			"marines/sergeant1/killedenemybullet_4.wav",
+			"marines/sergeant1/killedenemybullet_5.wav",
+			"marines/sergeant1/killedenemybullet_6.wav"
+		},
+		["KilledEnemyFriend"] = {
+			"marines/sergeant1/killedenemycm_1.wav",
+			"marines/sergeant1/killedenemycm_2.wav",
+			"marines/sergeant1/killedenemycm_4.wav",
+			"marines/sergeant1/killedenemycm_5.wav",
+			"marines/sergeant1/killedenemycm_6.wav",
+			"marines/sergeant1/killedenemycm_7.wav",
+			"marines/sergeant1/killedenemycm_9.wav",
+			"marines/sergeant1/killedenemycm_10.wav",
+			"marines/sergeant1/killedenemycm_16.wav"
+		},
+		["KilledEnemyCovenant"] = {
+			"marines/sergeant1/killedenemycovenant_9.wav",
+			"marines/sergeant1/killedenemycovenant_10.wav",
+			"marines/sergeant1/killedenemycovenant_11.wav",
+			"marines/sergeant1/killedenemycovenant_13.wav",
+			"marines/sergeant1/killedenemycovenant_15.wav",
+			"marines/sergeant1/killedenemycovenant_16.wav"
+		},
+		["KilledEnemyFloodCarrier"] = {
+			"marines/sergeant1/killedenemyfloodcarrier_14.wav",
+			"marines/sergeant1/killedenemyfloodcarrier_15.wav",
+			"marines/sergeant1/killedenemyfloodcarrier_16.wav",
+			"marines/sergeant1/killedenemyfloodcarrier_18.wav"
+		},
+		["KilledEnemyFloodCarrierAlly"] = {
+			"marines/sergeant1/killedenemyfloodcarriercm_1.wav",
+			"marines/sergeant1/killedenemyfloodcarriercm_2.wav",
+			"marines/sergeant1/killedenemyfloodcarriercm_4.wav",
+			"marines/sergeant1/killedenemyfloodcarriercm_6.wav",
+			"marines/sergeant1/killedenemyfloodcarriercm_8.wav"
+		},
+		["KilledEnemyFloodCombat"] = {
+			"marines/sergeant1/killedenemyfloodcombat_9.wav",
+			"marines/sergeant1/killedenemyfloodcombat_10.wav",
+			"marines/sergeant1/killedenemyfloodcombat_11.wav",
+			"marines/sergeant1/killedenemyfloodcombat_12.wav",
+			"marines/sergeant1/killedenemyfloodcombat_13.wav",
+			"marines/sergeant1/killedenemyfloodcombat_14.wav",
+			"marines/sergeant1/killedenemyfloodcombat_16.wav"
+		},
+		["KilledEnemyFloodCombatAlly"] = {
+			"marines/sergeant1/killedenemyfloodcombatcm_1.wav",
+			"marines/sergeant1/killedenemyfloodcombatcm_6.wav",
+			"marines/sergeant1/killedenemyfloodcombatcm_8.wav",
+			"marines/sergeant1/killedenemyfloodcombatcm_9.wav",
+			"marines/sergeant1/killedenemyfloodcombatcm_11.wav"
+		},
+		["KilledEnemyGrenade"] = {
+			"marines/sergeant1/killedenemygrenade_5.wav",
+			"marines/sergeant1/killedenemygrenade_6.wav",
+			"marines/sergeant1/killedenemygrenade_8.wav",
+			"marines/sergeant1/killedenemygrenade_10.wav",
+			"marines/sergeant1/killedenemygrenade_11.wav",
+			"marines/sergeant1/killedenemygrenade_12.wav",
+			"marines/sergeant1/killedenemygrenade_13.wav",
+			"marines/sergeant1/killedenemygrenade_14.wav",
+			"marines/sergeant1/killedenemygrenade_15.wav",
+			"marines/sergeant1/killedenemygrenade_16.wav",
+		},
+		["KilledEnemyMountedWeapon"] = {
+			"marines/sergeant1/killedenemymountedweapon_1.wav",
+			"marines/sergeant1/killedenemymountedweapon_2.wav",
+			"marines/sergeant1/killedenemymountedweapon_3.wav",
+			"marines/sergeant1/killedenemymountedweapon_3b.wav",
+			"marines/sergeant1/killedenemymountedweapon_4.wav",
+			"marines/sergeant1/killedenemymountedweapon_4b.wav",
+			"marines/sergeant1/killedenemymountedweapon_5.wav",
+			"marines/sergeant1/killedenemymountedweapon_5b.wav",
+			"marines/sergeant1/killedenemymountedweapon_6.wav",
+			"marines/sergeant1/killedenemymountedweapon_8.wav",
+			"marines/sergeant1/killedenemymountedweapon_9.wav",
+			"marines/sergeant1/killedenemymountedweapon_10.wav"
+		},
+		["KilledEnemyNeedler"] = {
+			"marines/sergeant1/killedenemyneedler_1.wav",
+			"marines/sergeant1/killedenemyneedler_2.wav",
+			"marines/sergeant1/killedenemyneedler_3.wav",
+			"marines/sergeant1/killedenemyneedler_4.wav",
+			"marines/sergeant1/killedenemyneedler_5.wav"
+		},
+		["OnKillPlayer"] = {
+			"marines/sergeant1/killedenemyplayer_1.wav",
+			"marines/sergeant1/killedenemyplayer_2.wav",
+			"marines/sergeant1/killedenemyplayer_3.wav",
+			"marines/sergeant1/killedenemyplayer_4.wav",
+			"marines/sergeant1/killedenemyplayer_5.wav",
+			"marines/sergeant1/killedenemyplayer_6.wav",
+			"marines/sergeant1/killedenemyplayer_7.wav",
+			"marines/sergeant1/killedenemyplayer_25.wav"
+		},
+		["KilledEnemyPlayerAlly"] = {
+			"marines/sergeant1/killedenemyplayercm_2.wav",
+			"marines/sergeant1/killedenemyplayercm_3.wav"
+		},
+		["KilledEnemySentinel"] = {
+			"marines/sergeant1/killedenemysentinel_1.wav",
+			"marines/sergeant1/killedenemysentinel_2.wav",
+			"marines/sergeant1/killedenemysentinel_3.wav",
+			"marines/sergeant1/killedenemysentinel_4.wav",
+			"marines/sergeant1/killedenemysentinel_5.wav"
+		},
+		["KilledEnemyShotgun"] = {
+			"marines/sergeant1/killedenemyshotgun_1.wav",
+			"marines/sergeant1/killedenemyshotgun_2.wav",
+			"marines/sergeant1/killedenemyshotgun_3.wav",
+			"marines/sergeant1/killedenemyshotgun_4.wav"
+		},
+		["KilledEnemySniper"] = {
+			"marines/sergeant1/killedenemysniper_1.wav",
+			"marines/sergeant1/killedenemysniper_2.wav",
+			"marines/sergeant1/killedenemysniper_3.wav",
+			"marines/sergeant1/killedenemysniper_4.wav",
+			"marines/sergeant1/killedenemysniper_5.wav",
+			"marines/sergeant1/killedenemysniper_6.wav"
+		},
+		["KilledFriend"] = {
+			"marines/sergeant1/killedfriend_1.wav",
+			"marines/sergeant1/killedfriend_2.wav",
+			"marines/sergeant1/killedfriend_3.wav",
+			"marines/sergeant1/killedfriend_4.wav",
+			"marines/sergeant1/killedfriend_5.wav",
+			"marines/sergeant1/killedfriend_6.wav",
+			"marines/sergeant1/killedfriend_7.wav",
+			"marines/sergeant1/killedfriend_8.wav",
+			"marines/sergeant1/killedfriend_9.wav",
+			"marines/sergeant1/killedfriend_10.wav"
+		},
+		["KilledFriendAlly"] = {
+			"marines/sergeant1/killedfriendcm_3.wav",
+			"marines/sergeant1/killedfriendcm_4.wav",
+			"marines/sergeant1/killedfriendcm_5.wav",
+			"marines/sergeant1/killedfriendcm_7.wav",
+			"marines/sergeant1/killedfriendcm_8.wav"
+		},
+		["KilledFriendPlayer"] = {
+			"marines/sergeant1/killedfriendplayer_1.wav",
+			"marines/sergeant1/killedfriendplayer_2.wav",
+			"marines/sergeant1/killedfriendplayer_3.wav",
+			"marines/sergeant1/killedfriendplayer_4.wav",
+			"marines/sergeant1/killedfriendplayer_5.wav",
+			"marines/sergeant1/killedfriendplayer_6.wav",
+			"marines/sergeant1/killedfriendplayer_7.wav",
+			"marines/sergeant1/killedfriendplayer_8.wav",
+			"marines/sergeant1/killedfriendplayer_9.wav"
+		},
+		["KilledFriendPlayerAlly"] = {
+			"marines/sergeant1/killedfriendplayercm_4.wav",
+			"marines/sergeant1/killedfriendplayercm_5.wav",
+			"marines/sergeant1/killedfriendplayercm_6.wav",
+			"marines/sergeant1/killedfriendplayercm_7.wav",
+			"marines/sergeant1/killedfriendplayercm_9.wav",
+			"marines/sergeant1/killedfriendplayercm_10.wav",
+			"marines/sergeant1/killedfriendplayercm_11.wav"
+		},
+		["KillingSpree"] = {
+			"marines/sergeant1/killingspree_1.wav",
+			"marines/sergeant1/killingspree_2.wav",
+			"marines/sergeant1/killingspree_3.wav"
+		},
+		["OnLostContact"] = {
+			"marines/sergeant1/lostcontact_1.wav",
+			"marines/sergeant1/lostcontact_2.wav",
+			"marines/sergeant1/lostcontact_3.wav",
+			"marines/sergeant1/lostcontact_4.wav",
+			"marines/sergeant1/lostcontact_5.wav"
+		},
+		["NearMassacre"] = {
+			"marines/sergeant1/nearmassacre_8.wav",
+			"marines/sergeant1/nearmassacre_9.wav",
+			"marines/sergeant1/nearmassacre_10.wav"
+		},
+		["NearMassacreResponse"] = {
+			"marines/sergeant1/nearmassacrere_1.wav",
+			"marines/sergeant1/nearmassacrere_2.wav"
+		},
+		["OnAlert"] = {
+			"marines/sergeant1/newcombatalone_1.wav",
+			"marines/sergeant1/newcombatalone_2.wav",
+			"marines/sergeant1/newcombatalone_3.wav",
+			"marines/sergeant1/newcombatalone_4.wav",
+			"marines/sergeant1/newcombatalone_5.wav",
+			"marines/sergeant1/newcombatalone_6.wav"
+		},
+		["NewContactResponse"] = {
+			"marines/sergeant1/newcombatgroupre_6.wav",
+			"marines/sergeant1/newcombatgroupre_7.wav",
+			"marines/sergeant1/newcombatgroupre_8.wav",
+			"marines/sergeant1/newcombatgroupre_9.wav",
+			"marines/sergeant1/newcombatgroupre_10.wav"
+		},
+		["NewContactNearResponse"] = {
+			"marines/sergeant1/newcombatnearbyre_1.wav",
+			"marines/sergeant1/newcombatnearbyre_2.wav",
+			"marines/sergeant1/newcombatnearbyre_7.wav",
+			"marines/sergeant1/newcombatnearbyre_9.wav",
+			"marines/sergeant1/newcombatnearbyre_10.wav",
+			"marines/sergeant1/newcombatnearbyre_11.wav"
+		},
+		["OnAlertMoreFoes"] = {
+			"marines/sergeant1/newenemyrecentcombat_1.wav",
+			"marines/sergeant1/newenemyrecentcombat_2.wav",
+			"marines/sergeant1/newenemyrecentcombat_3.wav",
+			"marines/sergeant1/newenemyrecentcombat_4.wav"
+		},
+		["NothingThere"] = {
+			"marines/sergeant1/nothingthere_1.wav",
+			"marines/sergeant1/nothingthere_2.wav",
+			"marines/sergeant1/nothingthere_3.wav",
+			"marines/sergeant1/nothingthere_4.wav"
+		},
+		["OldContact"] = {
+			"marines/sergeant1/oldenemysighted_1.wav",
+			"marines/sergeant1/oldenemysighted_2.wav",
+			"marines/sergeant1/oldenemysighted_3.wav",
+			"marines/sergeant1/oldenemysighted_4.wav"
+		},
+		["PainFalling"] = {
+			"marines/sergeant1/painfalling_1.wav",
+			"marines/sergeant1/painfalling_2.wav"
+		},
+		["OnHurtLarge"] = {
+			"marines/sergeant1/painmajor_1.wav",
+			"marines/sergeant1/painmajor_2.wav"
+		},
+		["OnHurt"] = {
+			"marines/sergeant1/painminor_1.wav",
+			"marines/sergeant1/painminor_2.wav",
+			"marines/sergeant1/painminor_3.wav"
+		},
+		["PartiallySighted"] = {
+			"marines/sergeant1/partiallysighted_1.wav",
+			"marines/sergeant1/partiallysighted_2.wav",
+			"marines/sergeant1/partiallysighted_3.wav",
+			"marines/sergeant1/partiallysighted_4.wav",
+			"marines/sergeant1/partiallysighted_5.wav"
+		},
+		["PlayerKillFlameAlly"] = {
+			"marines/sergeant1/playerkillflamecm_1.wav",
+			"marines/sergeant1/playerkillflamecm_2.wav",
+			"marines/sergeant1/playerkillflamecm_3.wav",
+			"marines/sergeant1/playerkillflamecm_4.wav",
+			"marines/sergeant1/playerkillflamecm_5.wav"
+		},
+		["PlayerKillingSpreeAlly"] = {
+			"marines/sergeant1/playerkillingspreecm_1.wav",
+			"marines/sergeant1/playerkillingspreecm_2.wav",
+			"marines/sergeant1/playerkillingspreecm_3.wav",
+			"marines/sergeant1/playerkillingspreecm_4.wav",
+			"marines/sergeant1/playerkillingspreecm_5.wav",
+			"marines/sergeant1/playerkillingspreecm_6.wav",
+			"marines/sergeant1/playerkillingspreecm_7.wav",
+			"marines/sergeant1/playerkillingspreecm_8.wav"
+		},
+		["PlayerKillSniper"] = {
+			"marines/sergeant1/playerkillsnipercm_1.wav"
+		},
+		["PlayerKillVehicleAlly"] = {
+			"marines/sergeant1/playerkillvehiclecm_1.wav",
+			"marines/sergeant1/playerkillvehiclecm_2.wav",
+			"marines/sergeant1/playerkillvehiclecm_3.wav",
+			"marines/sergeant1/playerkillvehiclecm_4.wav",
+			"marines/sergeant1/playerkillvehiclecm_5.wav"
+		},
+		["OnOrderRetreat"] = {
+			"marines/sergeant1/retreat_1.wav",
+			"marines/sergeant1/retreat_2.wav",
+			"marines/sergeant1/retreat_3.wav",
+			"marines/sergeant1/retreat_7.wav",
+			"marines/sergeant1/retreat_8.wav",
+			"marines/sergeant1/retreat_9.wav"
+		},
+		["RetreatResponse"] = {
+			"marines/sergeant1/retreatre_4.wav",
+			"marines/sergeant1/retreatre_5.wav",
+			"marines/sergeant1/retreatre_6.wav",
+			"marines/sergeant1/retreatre_7.wav",
+			"marines/sergeant1/retreatre_8.wav"
+		},
+		["Rout"] = {
+			"marines/sergeant1/rout_21.wav",
+			"marines/sergeant1/rout_22.wav",
+			"marines/sergeant1/rout_23.wav",
+			"marines/sergeant1/rout_24.wav",
+			"marines/sergeant1/rout_26.wav",
+			"marines/sergeant1/rout_27.wav",
+			"marines/sergeant1/rout_28.wav",
+			"marines/sergeant1/rout_29.wav",
+			"marines/sergeant1/rout_30.wav",
+			"marines/sergeant1/rout_31.wav"
+		},
+		["RoutResponse"] = {
+			"marines/sergeant1/routre_12.wav",
+			"marines/sergeant1/routre_13.wav",
+			"marines/sergeant1/routre_14.wav",
+			"marines/sergeant1/routre_15.wav",
+			"marines/sergeant1/routre_16.wav",
+			"marines/sergeant1/routre_17.wav"
+		},
+		["ScreamPain"] = {
+			"marines/sergeant1/screampain_1.wav",
+			"marines/sergeant1/screampain_1a.wav",
+			"marines/sergeant1/screampain_2.wav",
+			"marines/sergeant1/screampain_2a.wav",
+			"marines/sergeant1/screampain_3a.wav"
+		},
+		["SearchAbandon"] = {
+			"marines/sergeant1/searchabandon_1.wav",
+			"marines/sergeant1/searchabandon_2.wav",
+			"marines/sergeant1/searchabandon_3.wav",
+			"marines/sergeant1/searchabandon_4.wav",
+			"marines/sergeant1/searchabandon_5.wav"
+		},
+		["SearchQuery"] = {
+			"marines/sergeant1/searchquery_1.wav",
+			"marines/sergeant1/searchquery_2.wav",
+			"marines/sergeant1/searchquery_3.wav",
+			"marines/sergeant1/searchquery_4.wav",
+			"marines/sergeant1/searchquery_5.wav"
+		},
+		["SearchQueryResponse"] = {
+			"marines/sergeant1/searchqueryre_1.wav",
+			"marines/sergeant1/searchqueryre_2.wav",
+			"marines/sergeant1/searchqueryre_3.wav"
+		},
+		["SearchReport"] = {
+			"marines/sergeant1/searchreport_1.wav",
+			"marines/sergeant1/searchreport_2.wav",
+			"marines/sergeant1/searchreport_3.wav",
+			"marines/sergeant1/searchreport_4.wav",
+			"marines/sergeant1/searchreport_5.wav",
+			"marines/sergeant1/searchreport_6.wav",
+			"marines/sergeant1/searchreport_7.wav",
+			"marines/sergeant1/searchreport_8.wav",
+			"marines/sergeant1/searchreport_9.wav",
+			"marines/sergeant1/searchreport_10.wav",
+			"marines/sergeant1/searchreport_11.wav"
+		},
+		["SearchStart"] = {
+			"marines/sergeant1/searchstart_1.wav",
+			"marines/sergeant1/searchstart_2.wav",
+			"marines/sergeant1/searchstart_3.wav",
+			"marines/sergeant1/searchstart_4.wav",
+			"marines/sergeant1/searchstart_5.wav",
+			"marines/sergeant1/searchstart_6.wav"
+		},
+		["SeriouslyWounded"] = {
+			"marines/sergeant1/seriouslywounded_7.wav",
+			"marines/sergeant1/seriouslywounded_8.wav",
+			"marines/sergeant1/seriouslywounded_9.wav",
+			"marines/sergeant1/seriouslywounded_10.wav",
+			"marines/sergeant1/seriouslywounded_11.wav",
+			"marines/sergeant1/seriouslywounded_12.wav"
+		},
+		["SeriouslyWoundedResponse"] = {
+			"marines/sergeant1/seriouslywoundedre_7.wav",
+			"marines/sergeant1/seriouslywoundedre_8.wav",
+			"marines/sergeant1/seriouslywoundedre_9.wav",
+			"marines/sergeant1/seriouslywoundedre_13.wav",
+			"marines/sergeant1/seriouslywoundedre_14.wav",
+			"marines/sergeant1/seriouslywoundedre_15.wav"
+		},
+		["OnAttack"] = {
+			"marines/sergeant1/shooting_1.wav",
+			"marines/sergeant1/shooting_2.wav",
+			"marines/sergeant1/shooting_3.wav",
+			"marines/sergeant1/shooting_4.wav",
+			"marines/sergeant1/shooting_5.wav",
+			"marines/sergeant1/shooting_6.wav",
+			"marines/sergeant1/shooting_7.wav",
+			"marines/sergeant1/hurtenemy_1.wav",
+			"marines/sergeant1/hurtenemy_2.wav",
+			"marines/sergeant1/hurtenemy_4.wav",
+			"marines/sergeant1/hurtenemy_5.wav"
+		},
+		["ShootingBerserk"] = {
+			"marines/sergeant1/shootingberserk_1.wav",
+			"marines/sergeant1/shootingberserk_2.wav",
+			"marines/sergeant1/shootingberserk_3.wav",
+			"marines/sergeant1/shootingberserk_4.wav",
+			"marines/sergeant1/shootingberserk_5.wav",
+			"marines/sergeant1/shootingberserk_6.wav",
+			"marines/sergeant1/shootingberserk_7.wav",
+			"marines/sergeant1/shootingberserk_8.wav",
+			"marines/sergeant1/shootingberserk_9.wav"
+		},
+		["ShootingDeadEnemy"] = {
+			"marines/sergeant1/shootingdeadenemyplayer_1.wav",
+			"marines/sergeant1/shootingdeadenemyplayer_2.wav",
+			"marines/sergeant1/shootingdeadenemyplayer_3.wav",
+			"marines/sergeant1/shootingdeadenemyplayer_4.wav",
+			"marines/sergeant1/shootingdeadenemyplayer_5.wav",
+			"marines/sergeant1/shootingdeadenemyplayer_6.wav"
+		},
+		["ShootingGroup"] = {
+			"marines/sergeant1/shootinggroup_1.wav",
+			"marines/sergeant1/shootinggroup_2.wav",
+			"marines/sergeant1/shootinggroup_3.wav"
+		},
+		["ShootingTraitor"] = {
+			"marines/sergeant1/shootingtraitor_1.wav",
+			"marines/sergeant1/shootingtraitor_2.wav",
+			"marines/sergeant1/shootingtraitor_3.wav",
+			"marines/sergeant1/shootingtraitor_4.wav",
+			"marines/sergeant1/shootingtraitor_5.wav",
+			"marines/sergeant1/shootingtraitor_6.wav",
+			"marines/sergeant1/shootingtraitor_7.wav",
+			"marines/sergeant1/shootingtraitor_8.wav"
+		},
+		["ShootingVehicle"] = {
+			"marines/sergeant1/shootingvehicle_1.wav",
+			"marines/sergeant1/shootingvehicle_2.wav",
+			"marines/sergeant1/shootingvehicle_3.wav",
+			"marines/sergeant1/shootingvehicle_4.wav"
+		},
+		["SightingFriendlyPlayer"] = {
+			"marines/sergeant1/sightedfriendlyplayer_1.wav"
+		},
+		["Surprise"] = {
+			"marines/sergeant1/surprise_1.wav",
+			"marines/sergeant1/surprise_2.wav",
+			"marines/sergeant1/surprise_3.wav"
+		},
+		["UncoveredExclamation"] = {
+			"marines/sergeant1/uncoverexclamation_1.wav",
+			"marines/sergeant1/uncoverexclamation_2.wav",
+			"marines/sergeant1/uncoverexclamation_3.wav",
+			"marines/sergeant1/uncoverexclamation_4.wav"
+		},
+		["UnexpectedEnemy"] = {
+			"marines/sergeant1/unexpectedenemy_1.wav",
+			"marines/sergeant1/unexpectedenemy_2.wav",
+			"marines/sergeant1/unexpectedenemy_3.wav"
+		},
+		["UnscathledSlightlyWoundedResponse"] = {
+			"marines/sergeant1/unscathedslightlywoundedre_1.wav",
+			"marines/sergeant1/unscathedslightlywoundedre_2.wav"
+		},
+		["VehicleEntry"] = {
+			"marines/sergeant1/vehicleentry_1.wav",
+			"marines/sergeant1/vehicleentry_2.wav",
+			"marines/sergeant1/vehicleentry_3.wav",
+			"marines/sergeant1/vehicleentry_4.wav"
+		},
+		["VehicleExit"] = {
+			"marines/sergeant1/vehicleexit_1.wav",
+			"marines/sergeant1/vehicleexit_2.wav",
+			"marines/sergeant1/vehicleexit_3.wav",
+			"marines/sergeant1/vehicleexit_4.wav",
+			"marines/sergeant1/vehicleexit_5.wav",
+			"marines/sergeant1/vehicleexit_6.wav"
+		},
+		["VehicleScared"] = {
+			"marines/sergeant1/vehiclescared_1.wav",
+			"marines/sergeant1/vehiclescared_2.wav",
+			"marines/sergeant1/vehiclescared_3.wav",
+			"marines/sergeant1/vehiclescared_4.wav",
+			"marines/sergeant1/vehiclescared_5.wav",
+			"marines/sergeant1/vehiclescared_6.wav",
+			"marines/sergeant1/vehiclescared_7.wav",
+			"marines/sergeant1/vehiclescared_8.wav",
+			"marines/sergeant1/vehiclescared_9.wav",
+			"marines/sergeant1/vehiclescared_10.wav"
+		},
+		["VehicleWooHoo"] = {
+			"marines/sergeant1/vehiclewoohoo_1.wav",
+			"marines/sergeant1/vehiclewoohoo_2.wav",
+			"marines/sergeant1/vehiclewoohoo_4.wav",
+			"marines/sergeant1/vehiclewoohoo_5.wav"
+		}
+	},
+
 ["Sergeant3"] = { -- Buck gaming
 ["OnLook"] = { "halo_reach/dialog/combat/trooper_sgt3/13_player/look/look1.ogg", "halo_reach/dialog/combat/trooper_sgt3/13_player/look/look10.ogg",
 			"halo_reach/dialog/combat/trooper_sgt3/13_player/look/look11.ogg", "halo_reach/dialog/combat/trooper_sgt3/13_player/look/look13.ogg",

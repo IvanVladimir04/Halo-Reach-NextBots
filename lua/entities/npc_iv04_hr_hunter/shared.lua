@@ -87,6 +87,10 @@ function ENT:OnInitialize()
 	self.MeleeDamage = (self.MeleeDamage*(self.Difficulty)*0.5)
 	self:DoInit()
 	self.VoiceType = "Hunter"
+	if GetConVar("halo_reach_nextbots_ai_great_schism"):GetInt() == 2 then
+		self.FriendlyToPlayers = true
+		self.Faction = "FACTION_UNSC"
+	end
 end
 
 function ENT:DoInit()
@@ -165,8 +169,8 @@ local thingstoavoid = {
 function ENT:OnContact( ent ) -- When we touch someBODY
 	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
 	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
-		local d = (ent:WorldSpaceCenter()-self:GetPos())
-		ent:SetVelocity(d*5)
+		local d = (ent:GetPos()-self:GetPos())+ent:GetUp()
+		ent:SetVelocity(d*1)
 	end
 	if (ent:GetClass() == "prop_door_rotating" or ent:GetClass() == "func_door" or ent:GetClass() == "func_door_rotating" ) then
 		ent:Fire( "Open" )

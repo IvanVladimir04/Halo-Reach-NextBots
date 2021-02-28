@@ -51,6 +51,8 @@ ENT.SearchJustAsSpawned = false
 
 ENT.CanJump = true
 
+ENT.BloodEffect = "halo_reach_blood_impact_human"
+
 ENT.FlinchHitgroups = {
 	[7] = ACT_FLINCH_RIGHTLEG,
 	[3] = ACT_FLINCH_CHEST,
@@ -164,6 +166,7 @@ function ENT:OnInitialize()
 	if !self.VoiceType then
 		self.VoiceType = self.PossibleVoices[math.random(#self.PossibleVoices)]
 	end
+	self:SetBloodColor(DONT_BLEED)
 	self.AIType = GetConVar("halo_reach_nextbots_ai_type"):GetString() or self.AIType
 	self:DoInit()
 	self:SetupHoldtypes()
@@ -367,6 +370,34 @@ function ENT:SetupHoldtypes()
 	self.WarthogGunnerExit = "Warthog_Gunner_Exit"
 	self.WarthogGunnerIdle = "Warthog_Gunner_Idle"
 	self.DeadAirAnim = "Dead_Airborne"
+	self.PelicanPassengerLIdleAnims = {
+		[5] = "Pelican_Passenger_Rifle_Idle_L1",
+		[4] = "Pelican_Passenger_Rifle_Idle_L2",
+		[3] = "Pelican_Passenger_Rifle_Idle_L3",
+		[2] = "Pelican_Passenger_Rifle_Idle_L4",
+		[1] = "Pelican_Passenger_Rifle_Idle_L5"
+	}
+	self.PelicanPassengerLExitAnims = {
+		[5] = "Pelican_Passenger_Exit_L1",
+		[4] = "Pelican_Passenger_Exit_L2",
+		[3] = "Pelican_Passenger_Exit_L3",
+		[2] = "Pelican_Passenger_Exit_L4",
+		[1] = "Pelican_Passenger_Exit_L5"
+	}
+	self.PelicanPassengerRIdleAnims = {
+		[5] = "Pelican_Passenger_Rifle_Idle_R1",
+		[4] = "Pelican_Passenger_Rifle_Idle_R2",
+		[3] = "Pelican_Passenger_Rifle_Idle_R3",
+		[2] = "Pelican_Passenger_Rifle_Idle_R4",
+		[1] = "Pelican_Passenger_Rifle_Idle_R5"
+	}
+	self.PelicanPassengerRExitAnims = {
+		[5] = "Pelican_Passenger_Exit_R1",
+		[4] = "Pelican_Passenger_Exit_R2",
+		[3] = "Pelican_Passenger_Exit_R3",
+		[2] = "Pelican_Passenger_Exit_R4",
+		[1] = "Pelican_Passenger_Exit_R5"
+	}
 	if self.PistolHolds[hold] then
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Low"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle"))}
@@ -610,6 +641,7 @@ end
 function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
+	ParticleEffect( self.BloodEffect, dmg:GetDamagePosition(), Angle(0,0,0), self )
 	if rel == "friend" and !dmg:GetAttacker():IsPlayer() then
 		if self.BeenInjured then
 			dmg:ScaleDamage(0)
@@ -833,7 +865,7 @@ local thingstoavoid = {
 
 function ENT:OnContact( ent ) -- When we touch someBODY
 	if ent == game.GetWorld() then if self.FlyingDead then self.AlternateLanded = true end return "no" end
-	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) then
+	if (ent.IsVJBaseSNPC == true or ent.CPTBase_NPC == true or ent.IsSLVBaseNPC == true or ent:GetNWBool( "bZelusSNPC" ) == true) or (ent:IsNPC() && ent:GetClass() != "npc_bullseye" && ent:Health() > 0 ) or (ent:IsPlayer() and ent:Alive()) or ((ent:IsNextBot()) and ent != self ) and ent != self.Owner then
 		local d = self:GetPos()-ent:GetPos()
 		self.loco:SetVelocity(d*1)
 	end
@@ -921,14 +953,46 @@ end
 
 function ENT:Think()
 	if self.IsInVehicle then
-		if self.VehicleRole == "Gunner" then
-			self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone(self.TurretBone))+self:GetUp()*26+self:GetForward()*-20)
+		if self.InPelican then
+			local att = self.Pelican:GetAttachment(self.Pelican:LookupAttachment(self.Pelican.InfantryAtts[self.PelicanId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.PLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidPelicanIdleAnim then
+					self.DidPelicanIdleAnim = true
+					local anim
+					if self.SideAnim == "Left" then
+						anim = self.PelicanPassengerLIdleAnims[self.SAnimId]
+					else
+						anim = self.PelicanPassengerRIdleAnims[self.SAnimId]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidPelicanIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
 		else
-			local offs = {
-				["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
-				["Passenger"] = self.Vehicle:GetRight()*18+self.Vehicle:GetUp()*6+self.Vehicle:GetForward()*67
-			}
-			self:SetPos(self.Seat:GetPos()+offs[self.VehicleRole])
+			if self.VehicleRole == "Gunner" then
+				self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone(self.TurretBone))+self:GetUp()*26+self:GetForward()*-20)
+			else
+				local offs = {
+					["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
+					["Passenger"] = self.Vehicle:GetRight()*18+self.Vehicle:GetUp()*6+self.Vehicle:GetForward()*67
+				}
+				self:SetPos(self.Seat:GetPos()+offs[self.VehicleRole])
+			end
 		end
 	end
 end

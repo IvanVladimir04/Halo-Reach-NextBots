@@ -162,6 +162,10 @@ function ENT:DoInit()
 end
 
 function ENT:SetupHoldtypes()
+	if GetConVar("halo_reach_nextbots_ai_great_schism"):GetInt() == 2 then
+		self.FriendlyToPlayers = true
+		self.Faction = "FACTION_UNSC"
+	end
 	local hold = self.Weapon.HoldType_Aim
 	if self.PistolHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_1")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_2")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_3")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_4"))}

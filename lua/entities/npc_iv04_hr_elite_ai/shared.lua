@@ -112,8 +112,14 @@ function ENT:OnInitialize()
 	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)
 	self:SetupHoldtypes()
 	self:DoInit()
-	if self.IsBrute == true then self.VoiceType = "Brute"
-	else  self.VoiceType = "Elite"
+	if self.IsBrute then 
+		self.VoiceType = "Brute"
+	else 
+		self.VoiceType = "Elite"
+		if GetConVar("halo_reach_nextbots_ai_great_schism"):GetInt() != 1 then
+			self.FriendlyToPlayers = true
+			self.Faction = "FACTION_UNSC"
+		end
 	end
 end
 
@@ -1439,7 +1445,7 @@ function ENT:OnOtherKilled( victim, info )
 		if !found then
 			if math.random(1,3) == 1 then
 				local func = function()
-					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[1], self.MoveSpeed )
+					self:WanderToPosition( self.LastSeenEnemyPos, self.RunAnim[1], self.MoveSpeed*self.MoveSpeedMultiplier )
 					self:Speak("OnTaunt")
 				end
 				table.insert(self.StuffToRunInCoroutine,func)

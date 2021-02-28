@@ -32,6 +32,14 @@ ENT.Models = {
 
 ENT.StartHealth = 100
 
+ENT.MaxShield = 100
+
+ENT.Shield = 100
+
+ENT.ShieldRegen = 10
+
+ENT.HasArmor = true
+
 ENT.Relationship = 1
 
 ENT.FriendlyToPlayers = true
@@ -679,6 +687,139 @@ function ENT:CustomBehaviour(ent,range)
 		
 		end
 		
+	end
+end
+
+function ENT:OnInjured(dmg)
+	local rel = self:CheckRelationships(dmg:GetAttacker())
+	local ht = self:Health()
+	if self.HasArmor then
+		ht = ht + self.Shield
+	end
+	if rel == "friend" and !dmg:GetAttacker():IsPlayer() then
+		if self.BeenInjured then
+			dmg:ScaleDamage(0)
+			return
+		else
+			self.BeenInjured = true
+			timer.Simple( math.random(5,10), function()
+				if IsValid(self) then
+					self.BeenInjured = false
+				end
+			end )
+		end
+	end
+	if self.HasArmor then
+		--print(self.Shield, "before")
+		self.ShieldActual = self.Shield
+		self.ShieldH = CurTime()
+		local shield = self.ShieldH
+		local dm = dmg:GetDamage()
+		total = dm-self.Shield
+		if total < 0 then total = 0 end
+		if dmg:IsBulletDamage() then
+			dmg:SubtractDamage(self.Shield*2)
+			self.Shield = self.Shield-math.abs(dm/2)
+		else
+			dmg:SubtractDamage(self.Shield)
+			self.Shield = self.Shield-math.abs(dm)
+		end
+		if self.Shield < 0 then 
+			self.Shield = 0 
+		end
+		local shild = self.Shield
+		timer.Simple( 6, function()
+			if IsValid(self) and shield == self.ShieldH then
+				local stop = false
+				for i = 1, 10 do
+					timer.Simple( 0.3*i, function()
+						if IsValid(self) and shield == self.ShieldH and !stop then
+							self.Shield = self.Shield+self.ShieldRegen
+							if self.Shield > self.MaxShield then self.Shield = self.MaxShield
+								stop = true
+							end
+						end
+					end )
+				end
+			end
+		end )
+	end
+	if IsValid(self.Enemy) then
+		--print(#self:PossibleTargets())
+		if rel == "foe" and !self.Switched then 
+			self.Switched = true
+			timer.Simple( math.random(3,6), function()
+				if IsValid(self) then
+					self.Switched = false
+				end
+			end )
+			self:SetEnemy(dmg:GetAttacker()) 
+		end
+		if (self:Health() < self.StartHealth/2 or #self:PossibleTargets() > 4 )and !self.Covered then
+			self.Covered = true
+			self.NeedsToCover = true
+			timer.Simple( math.random(10,20), function()
+				if IsValid(self) then
+					self.Covered = false
+				end
+			end )
+		end
+	else
+		if rel == "foe" then
+			self:SetEnemy(dmg:GetAttacker()) 
+		end
+	end
+	if !self.SpokeInjured then
+		self.SpokeInjured = true
+		timer.Simple( math.random(5,10), function()
+			if IsValid(self) then
+				self.SpokeInjured = false
+			end
+		end )
+		if dmg:GetDamage() > 10 then
+			self:Speak("OnHurtLarge")
+		else
+			if math.random(1,2) == 1 then
+				self:Speak("OnHurt")
+			else
+				timer.Simple( math.random(0.5,1.5), function()
+					if IsValid(self) then
+						self:Speak("OnUnderAttack")
+					end
+				end )
+			end
+		end
+	end
+	if self.Unkillable then
+		dmg:SetDamage(0)
+	else
+		if self.ShieldActual <= 0 then
+			if dmg:GetDamage() > 0 then
+				ParticleEffect( self.BloodEffect, dmg:GetDamagePosition(), Angle(0,0,0), self )
+			end
+		end
+		local total = dmg:GetDamage()
+		--print(self.Shield, "before")
+		self.HealthActual = self:Health()
+		self.HealthH = CurTime()
+		local htt = CurTime()
+		local htl = self:Health()
+		local dm = dmg:GetDamage()
+		local ht = self:Health()-math.abs(dm)
+		--print(self.Shield, "now")
+		timer.Simple( 2, function()
+			if IsValid(self) and htt == self.HealthH then
+				--print("Starting regeneration")
+				for i = 1, 10 do
+					timer.Simple( 0.4*i, function()
+						if IsValid(self) and htl == self.HealthActual then
+							--print("Regenerating", (self.HealthActual-ht)/10)
+							self:SetHealth(self:Health()+((self.HealthActual-ht)/10))
+						end
+					end )
+				end
+			end
+		end )
 	end
 end
 

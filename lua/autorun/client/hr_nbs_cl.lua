@@ -14,9 +14,9 @@ local tbl1 = {
 		[3] = "Static"
 	},
 	ic = {
-		[1] = "vgui/modes/offensive.png",
-		[2] = "vgui/modes/defensive.png",
-		[3] = "vgui/modes/static.png"
+		[1] = "vgui/modes/offensive",
+		[2] = "vgui/modes/defensive",
+		[3] = "vgui/modes/static"
 	}
 }
 	
@@ -73,7 +73,36 @@ local tbl3 = {
     cv = "halo_reach_nextbots_ai_flood_infection_climb"
 }
 
+local tbl4 = {
+	c = "Options", -- Category	
+	name = "Ivan04",
+	sc = "Halo Reach NextBots", -- Subcategory
+	id = "Halo_Reach_NextBots", -- Creative name
+	dv = 1, --
+	d = "Allow the Covenant to be in the great schism? (Will only affect Covenant NextBots)",
+	cv = "halo_reach_nextbots_ai_great_schism",
+	t = "combobox",
+	n = "Great Schism",
+	options = {
+		[1] = "No",
+		[2] = "Yes (Halo 2)",
+		[3] = "Yes (Halo 3)"
+	},
+	data = {
+		[1] = 1,
+		[2] = 2,
+		[3] = 3
+	},
+	selec = false,
+	ic = {
+		[1] = "vgui/games/halo_reach_icon",
+		[2] = "vgui/games/halo_2_icon",
+		[3] = "vgui/games/halo_3_icon"
+	}
+}
+
 IV04AddMenuOption( tbl )
 IV04AddMenuOption( tbl1 )
 IV04AddMenuOption( tbl2 )
 IV04AddMenuOption( tbl3 )
+IV04AddMenuOption( tbl4 )

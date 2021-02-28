@@ -29,8 +29,7 @@ ENT.DriveThese = {
 ENT.StartWeapons = {
 	[1] = "astw2_haloreach_spiker",
 	[2] = "astw2_haloreach_plasma_repeater",
-	[3] = "astw2_halo2a_carbine",
-	[4] = "astw2_halo2a_plasmarifle_brute"
+	[3] = "astw2_halo2a_carbine"
 }
 
 ENT.RifleHolds = {
