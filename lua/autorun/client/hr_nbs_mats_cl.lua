@@ -24,7 +24,7 @@ matproxy.Add( {
 
 	bind = function( self, mat, ent )
 		if ( !IsValid( ent ) ) then return end
-		if ent.FriendlyToPlayers then print(ent) end
+		if ent.FriendlyToPlayers then end
 		if ent.HasSpecialColor then
 			--print(ent,ent.HasSpecialColor,ent.SpecialColor)
 			local col = HRNBsColors[ent:EntIndex()]
