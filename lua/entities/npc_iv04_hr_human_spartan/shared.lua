@@ -82,7 +82,12 @@ function ENT:PreInit()
 	self.GetPlayerColor = function()
 		return Vector(self.ColR/255,self.ColG/255,self.ColB/255)
 	end
-	self:SetNWVector("SPColor",self:GetPlayerColor())
+	net.Start( "HRNBsSpartanSpawned" )
+	net.WriteEntity( self )
+	net.WriteVector( self:GetPlayerColor() )
+	net.Broadcast()
+	--self:SetNWVector("SPColor",self:GetPlayerColor())
+	--self:SetNWBool("HasSPColor",true)
 end
 
 if CLIENT then
@@ -96,6 +101,17 @@ if CLIENT then
 				end
 			--end
 	--	end )
+	end
+	
+	function ENT:Draw()
+		self:DrawModel()
+		--render.SetColorModulation( 205, 45, 255 )
+		if self:GetNWBool("SPShield") then
+			render.MaterialOverride(HRSpartanShieldMaterial)
+							
+			self:DrawModel()
+			render.MaterialOverride(nil)
+		end
 	end
 
 end
@@ -373,6 +389,26 @@ function ENT:DoCustomIdle()
 	self:SearchEnemy()
 end
 
+function ENT:OnHaveEnemy(ent)
+	if !self.HasSeenEnemies then
+		self.HasSeenEnemies = true
+		self:Speak("OnAlert")
+	else
+		if !self.SpokeMore then
+			self:Speak("OnAlertMoreFoes")
+			self.SpokeMore = true
+			timer.Simple( math.random(5,10), function()
+				if IsValid(self) then
+					self.SpokeMore = false
+				end
+			end )
+		end
+	end
+	if !self.IsInVehicle then
+		self:ResetAI()
+	end
+end
+
 function ENT:CustomBehaviour(ent,range)
 	ent = ent or self.Enemy
 	if !IsValid(ent) then self:GetATarget() end
@@ -430,7 +466,7 @@ function ENT:CustomBehaviour(ent,range)
 		else
 			self:SetEnemy(nil)
 		end
-		coroutine.wait(math.random(2,3))
+		coroutine.wait(1.5)
 		
 	elseif self.AIType == "Defensive" then
 	
@@ -477,7 +513,7 @@ function ENT:CustomBehaviour(ent,range)
 			end
 		end
 		if !IsValid(ent) then return end
-		local wait = math.Rand(1,1.5)
+		local wait = math.Rand(0.5,1)
 		if los then
 			if math.random(1,3) == 1 then
 				local anim
@@ -520,6 +556,7 @@ function ENT:CustomBehaviour(ent,range)
 						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							if IsValid(self.Enemy) then
 								self.loco:Approach(self:GetPos()+dir,1)
+								self.loco:FaceTowards(self.Enemy:GetPos())
 							else
 								self:StartActivity( self.IdleAnim[math.random(#self.IdleAnim)] )
 							end
@@ -604,7 +641,7 @@ function ENT:CustomBehaviour(ent,range)
 			end
 			if !IsValid(ent) then return end
 	
-			local wait = math.Rand(1,1.5)
+			local wait = math.Rand(0.5,1)
 			if math.random(1,2) == 1 then
 				local anim
 				local speed
@@ -652,6 +689,7 @@ function ENT:CustomBehaviour(ent,range)
 					timer.Simple( 0.01*i, function()
 						if IsValid(self) and self:Health() > 0 and !self.DoneFlinch and !self.Taunting then
 							if IsValid(self.Enemy) then
+								self.loco:FaceTowards(self.Enemy:GetPos())
 								self.loco:Approach(self:GetPos()+dir,1)
 							else
 								if !idled then
@@ -709,7 +747,7 @@ function ENT:OnInjured(dmg)
 			end )
 		end
 	end
-	if self.HasArmor then
+	if self.HasArmor and self.Shield > 0 then
 		--print(self.Shield, "before")
 		self.ShieldActual = self.Shield
 		self.ShieldH = CurTime()
@@ -727,6 +765,12 @@ function ENT:OnInjured(dmg)
 		if self.Shield < 0 then 
 			self.Shield = 0 
 		end
+		self:SetNWBool("SPShield",true)
+		timer.Simple( 1, function()
+			if IsValid(self) and shield == self.ShieldH then
+				self:SetNWBool("SPShield",false)
+			end
+		end )
 		local shild = self.Shield
 		timer.Simple( 6, function()
 			if IsValid(self) and shield == self.ShieldH then
@@ -792,7 +836,7 @@ function ENT:OnInjured(dmg)
 	end
 	if self.Unkillable then
 		dmg:SetDamage(0)
-	else
+	elseif dmg:GetDamage() > 0 then
 		if self.ShieldActual <= 0 then
 			if dmg:GetDamage() > 0 then
 				ParticleEffect( self.BloodEffect, dmg:GetDamagePosition(), Angle(0,0,0), self )

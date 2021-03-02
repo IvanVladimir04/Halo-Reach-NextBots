@@ -12,21 +12,6 @@ ENT.FriendlyToPlayers = true
 
 ENT.VoiceType = "FemaleSpartan"
 
-ENT.PossibleWeapons = {
-	"astw2_haloreach_assault_rifle",
-	"astw2_haloreach_assault_rifle",
-	"astw2_haloreach_assault_rifle",
-	"astw2_haloreach_dmr",
-	"astw2_haloreach_dmr",
-	"astw2_haloreach_shotgun",
-	"astw2_haloreach_sniper_rifle",
-	"astw2_haloreach_magnum",
-	"astw2_haloreach_magnum",
-	"astw2_haloreach_rocket_launcher",
-	"astw2_haloreach_sniper_rifle",
-	"astw2_haloreach_spartan_laser"
-}
-
 ENT.WepOffsets = {
 	["astw2_haloreach_assault_rifle"] = {ang = Angle(-10,0,0), pos = {x=8,y=3,z=-2}},
 	["astw2_haloreach_rocket_launcher"] = {ang = Angle(260,160,120), pos = {x=5,y=2,z=-3}},
@@ -54,7 +39,11 @@ function ENT:PreInit()
 	self.GetPlayerColor = function()
 		return Vector(self.ColR/255,self.ColG/255,self.ColB/255)
 	end
-	self:SetNWVector("SPColor",self:GetPlayerColor())
+	net.Start( "HRNBsSpartanSpawned" )
+	net.WriteEntity( self )
+	net.WriteVector( self:GetPlayerColor() )
+	net.Broadcast()
+	--self:SetNWVector("SPColor",self:GetPlayerColor())
 	 self.Models = {
 	"models/halo_reach/players/spartan_female_1.mdl",
 	"models/halo_reach/players/spartan_female_2.mdl",
@@ -79,6 +68,7 @@ function ENT:PreInit()
 	"models/halo_reach/players/spartan_female_21.mdl",
 	"models/halo_reach/players/spartan_female_22.mdl"
 	}
+	--self:SetNWBool("HasSPColor",true)
 end
 
 function ENT:DoInit()

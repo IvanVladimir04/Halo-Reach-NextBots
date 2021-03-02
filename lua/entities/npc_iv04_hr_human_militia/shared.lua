@@ -32,14 +32,14 @@ ENT.RandomCombinations = {
 }
 
 function ENT:PreInit()
-	local r = self.RandomCombinations[math.random(#self.RandomCombinations)]
+	--[[local r = self.RandomCombinations[math.random(#self.RandomCombinations)]
 	self.ColR = r.r
 	self.ColG = r.g
 	self.ColB = r.b
 	self.GetPlayerColor = function()
 		return Vector(self.ColR/255,self.ColG/255,self.ColB/255)
 	end
-	self:SetNWVector("SPColor",self:GetPlayerColor())
+	self:SetNWVector("SPColor",self:GetPlayerColor())]]
 end
 
 if CLIENT then
@@ -48,9 +48,9 @@ if CLIENT then
 		--timer.Simple( 1, function()
 			--print(self:GetNWVector("SPColor"))
 		--	if IsValid(self) then
-				self.GetPlayerColor = function()
+			--[[	self.GetPlayerColor = function()
 					return self:GetNWVector("SPColor",Vector(0,0,0))
-				end
+				end]]
 			--end
 	--	end )
 	end

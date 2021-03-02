@@ -70,6 +70,8 @@ HRNBsTbl = {
 
 if SERVER then
 
+	util.AddNetworkString( "HRNBsSpartanSpawned" )
+
 	HRHS = {} -- Halo Reach Human Squads
 	
 	HRHS.Signals = {

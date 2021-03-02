@@ -2246,7 +2246,13 @@ function ENT:DoKilledAnim()
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
-				local rag = self:BecomeRagdoll(DamageInfo())
+				local rag = self:CreateRagdoll(DamageInfo())
+				if self.GetPlayerColor then
+					net.Start( "HRNBsSpartanSpawned" )
+					net.WriteEntity( rag )
+					net.WriteVector( self:GetPlayerColor() )
+					net.Broadcast()
+				end
 				return
 			end
 			local seq, len = self:LookupSequence(anim)
@@ -2268,7 +2274,14 @@ function ENT:DoKilledAnim()
 							end
 						end)
 					end
-					rag = self:BecomeRagdoll(DamageInfo())
+					rag = self:CreateRagdoll(DamageInfo())
+					if self.GetPlayerColor then
+						net.Start( "HRNBsSpartanSpawned" )
+						net.WriteEntity( rag )
+						net.WriteVector( self:GetPlayerColor() )
+						net.Broadcast()
+						--print(self:GetPlayerColor())
+					end
 				end
 			end )
 			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
@@ -2290,7 +2303,13 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:BecomeRagdoll(self.KilledDmgInfo)
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
+			if self.GetPlayerColor then
+				net.Start( "HRNBsSpartanSpawned" )
+				net.WriteEntity( rag )
+				net.WriteVector( self:GetPlayerColor() )
+				net.Broadcast()
+			end
 		end
 	else
 		self:Speak("OnDeathThrown")
@@ -2313,6 +2332,12 @@ function ENT:DoKilledAnim()
 					end)
 				end
 				rag = self:CreateRagdoll(DamageInfo())
+				if self.GetPlayerColor then
+					net.Start( "HRNBsSpartanSpawned" )
+					net.WriteEntity( rag )
+					net.WriteVector( self:GetPlayerColor() )
+					net.Broadcast()
+				end
 				return
 			end
 			coroutine.wait(0.01)
@@ -2334,6 +2359,12 @@ function ENT:DoKilledAnim()
 				end
 			end)
 		end
-		rag = self:BecomeRagdoll(DamageInfo())
+		rag = self:CreateRagdoll(DamageInfo())
+		if self.GetPlayerColor then
+			net.Start( "HRNBsSpartanSpawned" )
+			net.WriteEntity( rag )
+			net.WriteVector( self:GetPlayerColor() )
+			net.Broadcast()
+		end
 	end
 end

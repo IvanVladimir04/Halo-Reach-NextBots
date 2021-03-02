@@ -51,8 +51,6 @@ local tbl = {
 	}
 }
 
-HRShieldMaterial = Material("models/halo_reach/characters/covenant/elite/minor/energy_shield")
-
 local tbl2 = {
     c = "Options",
     name = "Ivan04",
@@ -106,3 +104,19 @@ IV04AddMenuOption( tbl1 )
 IV04AddMenuOption( tbl2 )
 IV04AddMenuOption( tbl3 )
 IV04AddMenuOption( tbl4 )
+
+HRShieldMaterial = Material("models/halo_reach/characters/covenant/elite/minor/energy_shield")
+
+HRSpartanShieldMaterial = Material("models/halo_reach/characters/shared/energy_shield_spartan")
+
+HRNBsColors = {}
+
+net.Receive( "HRNBsSpartanSpawned", function()
+    local ent = net.ReadEntity()
+	local col = net.ReadVector()
+    if !IsValid(ent) then return end
+    ent.HasSpecialColor = true
+	ent.SpecialColor = col
+	HRNBsColors[ent:EntIndex()] = col
+	--print(ent.HasSpecialColor,ent.SpecialColor,HRNBsColors[ent:EntIndex()])
+end )
