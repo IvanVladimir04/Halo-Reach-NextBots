@@ -179,20 +179,11 @@ function ENT:SetupHoldtypes()
 		self.CalmTurnRightAnim = "Pistol_Turn_Right_Idle"
 		self.TurnLeftAnim = "Pistol_Turn_Left_Idle"
 		self.TurnRightAnim = "Pistol_Turn_Right_Idle"
+		self.DropshipPassengerIdleAnims = {"Phantom_Passenger_Idle_1"}
+		self.DropshipPassengerExitAnims = {"Phantom_Passenger_Exit_5","Phantom_Passenger_Exit_4","Phantom_Passenger_Exit_3","Phantom_Passenger_Exit_2","Phantom_Passenger_Exit_1"}
 		if self.Weapon:GetClass() == "astw2_haloreach_needler" then
 			self.Weapon.BurstLength = self.CovRank+2
 		end
-	elseif hold == "rpg" then
-		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Missile_1")),self:GetSequenceActivity(self:LookupSequence("Move_Missile_2"))}
-		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
-		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Missile_Idle"))}
-		self.WarnAnim = "Warn_Fuel_Rod"
-		self.SurpriseAnim = "Surprised_Fuel_Rod"
-		self.FireAnim = "Attack_Fuel_Rod"
-		self.CalmTurnLeftAnim = "Missile_Turn_Left_Idle"
-		self.CalmTurnRightAnim = "Missile_Turn_Right_Idle"
-		self.TurnLeftAnim = "Missile_Turn_Left_Idle"
-		self.TurnRightAnim = "Missile_Turn_Right_Idle"
 	end
 end
 
@@ -320,7 +311,35 @@ if SERVER then
 					end
 				end]]
 			end
-			
+		
+		elseif self.IsInVehicle then
+			if self.InDropship then
+				local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+				local ang = att.Ang
+				local pos = att.Pos
+				self:SetAngles(att.Ang)
+				if !self.DLanded then
+					self:SetPos(att.Pos+Vector(0,0,3))
+					if !self.DidDropshipIdleAnim then
+						self.DidDropshipIdleAnim = true
+						local anim
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+						local id, len = self:LookupSequence(anim)
+						self:ResetSequence(id)
+						--print(id,len)
+						timer.Simple( len, function()
+							if IsValid(self) then
+								self.DidDropshipIdleAnim = false
+							end
+						end )
+					end
+				else
+					local off = 0
+					if self.SideAnim == "Right" then off = -0 end
+					self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+				end
+				--self.loco:SetVelocity(Vector(0,0,0))
+			end
 		
 		end
 	

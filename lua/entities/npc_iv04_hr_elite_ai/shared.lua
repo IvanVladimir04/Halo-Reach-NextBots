@@ -112,6 +112,7 @@ function ENT:OnInitialize()
 	self.Weapon.Primary.Damage = ((self.Weapon.Primary.Damage*self.Difficulty)*0.5)
 	self:SetupHoldtypes()
 	self:DoInit()
+	self.StartPosition = self:GetPos()
 	if self.IsBrute then 
 		self.VoiceType = "Brute"
 	else 
@@ -185,6 +186,42 @@ function ENT:OnLandOnGround(ent)
 			end
 			table.insert(self.StuffToRunInCoroutine,func)
 			self:ResetAI()
+		end
+	end
+end
+
+function ENT:Think()
+	if self.IsInVehicle then
+		if self.InDropship then
+			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.DLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidDropshipIdleAnim then
+					self.DidDropshipIdleAnim = true
+					local anim
+					if self.InPhantom then
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+					else
+						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidDropshipIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
 		end
 	end
 end
@@ -343,6 +380,18 @@ function ENT:SetupHoldtypes()
 	end
 	--print(hold)
 	if self.IsBrute then
+		self.SpiritPassengerIdleAnims = {
+			[1] = "Spirit_Passenger_Idle_1",
+			[2] = "Spirit_Passenger_Idle_2",
+			[3] = "Spirit_Passenger_Idle_3",
+			[4] = "Spirit_Passenger_Idle_4"
+		}
+		self.SpiritPassengerExitAnims = {
+			[1] = "Spirit_Passenger_Exit_1",
+			[2] = "Spirit_Passenger_Exit_2",
+			[3] = "Spirit_Passenger_Exit_3",
+			[4] = "Spirit_Passenger_Exit_4"
+		}
 		if self.HammerHolds[hold] then
 			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Hammer"))}
 			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Hammer"))}
@@ -389,6 +438,22 @@ function ENT:SetupHoldtypes()
 			self.CanMelee = true
 		end
 	else
+		self.DropshipPassengerIdleAnims = {
+			[1] = "Phantom_Passenger_Idle_1",
+			[2] = "Phantom_Passenger_Idle_2"
+		}
+		self.DropshipPassengerExitAnims = {
+			[1] = "Phantom_Passenger_Exit_1",
+			[2] = "Phantom_Passenger_Exit_2"
+		}
+		self.SpiritPassengerIdleAnims = {
+			[1] = "Spirit_Passenger_Idle_1",
+			[2] = "Spirit_Passenger_Idle_2"
+		}
+		self.SpiritPassengerExitAnims = {
+			[1] = "Spirit_Passenger_Exit_1",
+			[2] = "Spirit_Passenger_Exit_2"
+		}
 		if self.PistolHolds[hold] then
 			self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Pistol"))}
 			self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Pistol"))}
@@ -619,14 +684,46 @@ end
 
 function ENT:Think()
 	if self.IsInVehicle then
-		if self.VehicleRole == "Gunner" then
-			self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone(self.TurretBone))+self:GetUp()*26+self:GetForward()*-20)
+		if self.InDropship then
+			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.DLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidDropshipIdleAnim then
+					self.DidDropshipIdleAnim = true
+					local anim
+					if self.InPhantom then
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+					else
+						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidDropshipIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
 		else
-			local offs = {
-				["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
-				["Passenger"] = self.Vehicle:GetRight()*18+self.Vehicle:GetUp()*6+self.Vehicle:GetForward()*67
-			}
-			self:SetPos(self.Seat:GetPos()+offs[self.VehicleRole])
+			if self.VehicleRole == "Gunner" then
+				self:SetPos(self.Vehicle:GetBonePosition(self.Vehicle:LookupBone(self.TurretBone))+self:GetUp()*26+self:GetForward()*-20)
+			else
+				local offs = {
+					["Driver"] = self.Vehicle:GetRight()*-18+self.Vehicle:GetUp()*38+self.Vehicle:GetForward()*-16,
+					["Passenger"] = self.Vehicle:GetRight()*18+self.Vehicle:GetUp()*6+self.Vehicle:GetForward()*67
+				}
+				self:SetPos(self.Seat:GetPos()+offs[self.VehicleRole])
+			end
 		end
 	end
 end

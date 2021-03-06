@@ -195,10 +195,6 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 	end
 end
 
-function ENT:Wander()
-	return self:DoWander()
-end
-
 function ENT:OnInjured(dmg)
 	if self:CheckRelationships(dmg:GetAttacker()) == "friend" then dmg:ScaleDamage(0) return end
 	if dmg:GetDamageType() != DMG_BLAST and dmg:GetDamageType() != DMG_AIRBOAT then dmg:ScaleDamage(0) end
@@ -206,54 +202,6 @@ function ENT:OnInjured(dmg)
 		self:SetEnemy(dmg:GetAttacker())
 	end
 end
-
-function ENT:DoWander(del)
-	local stop = false
-	local timed = false
-	local de
-	if isnumber(del) then
-		de = CurTime()+del
-		timed = true
-	end
-	local t = CurTime()+3
-	while ( !stop ) do
-		if !IsValid(self.Enemy) and !timed and self.NUT < CurTime() then
-			local found = self:SearchEnemy()
-			stop = found
-			self.NUT = CurTime()+0.25
-		end
-		if timed and de < CurTime() then
-			stop = true
-		end
-		self.loco:SetVelocity(Vector(0,0,0))
-		coroutine.wait( 0.01 )
-	end
-	if self.DState < 3 then
-		self.DState = 2
-	end
-	self:CustomBehaviour()
-end
-
-function ENT:MakeGoal()
-	local pos = self:GetPos()
-	if IsValid(self.Enemy) then pos = Vector(self.Enemy:GetPos().x,self.Enemy:GetPos().y,self:GetPos().z) end
-	self.Goal = pos+(self:GetRight()*(math.Rand(1,-1)*1600))+(self:GetForward()*(math.Rand(1,-1)*1600))
-end
-
---[[
-
-	Dropship states
-	1 - Need enemy
-	2 - Need to get near to ground to drop off troops
-	3 - Near ground, drop off troops
-	4 - Troops were dropped off, need to take off and wander
-	5 - Wander until we can drop again
-	
-	if IsValid(self.Enemy) then
-		self.DState = 2
-	end
-	
-]]
 
 function ENT:PelicanCycle()
 	self:PlaySequenceAndWait("Arrival")
@@ -423,7 +371,7 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	ParticleEffect("dusty_explosion_rockets",self:GetPos()+self:GetForward()*-300+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+	ParticleEffect("halo_reach_explosion_unsc",self:GetPos()+self:GetForward()*-300+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
 	self:Remove()
 end
 

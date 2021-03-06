@@ -639,6 +639,7 @@ function ENT:OnLandOnGround(ent)
 end
 
 function ENT:OnInjured(dmg)
+	--print(dmg:GetInflictor())
 	local rel = self:CheckRelationships(dmg:GetAttacker())
 	local ht = self:Health()
 	ParticleEffect( self.BloodEffect, dmg:GetDamagePosition(), Angle(0,0,0), self )
@@ -2246,7 +2247,7 @@ function ENT:DoKilledAnim()
 				wep:SetAngles(self.Weapon:GetAngles())
 				wep:Spawn()
 				self.Weapon:Remove()
-				local rag = self:CreateRagdoll(DamageInfo())
+				local rag = self:CreateRagdoll(self.KilledDmgInfo)
 				if self.GetPlayerColor then
 					net.Start( "HRNBsSpartanSpawned" )
 					net.WriteEntity( rag )

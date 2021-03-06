@@ -1,0 +1,664 @@
+AddCSLuaFile()
+ENT.Base = "npc_iv04_base"
+ENT.PrintName = "Phantom"
+ENT.Models  = {"models/halo_reach/vehicles/covenant/phantom.mdl"}
+
+ENT.MoveSpeed = 300
+ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times faster
+
+ENT.Faction = "FACTION_COVENANT"
+
+ENT.StartHealth = 500
+
+ENT.LoseEnemyDistance = 9999999
+
+ENT.SightDistance = 9999999
+
+ENT.BehaviourType = 3
+
+ENT.DState = 1
+
+ENT.NUT = 0
+
+ENT.Preset = {}
+
+ENT.IsDropship = true
+
+--ENT.TakeOffSounds = { "oddworld/strangers_wrath/dropship/fx_native4_01_drop01_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_native4_01_drop02_takeoff.ogg","oddworld/strangers_wrath/dropship/fx_native4_01_drop03_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_cargoship_fly_away.ogg" }
+ENT.SoundIdle = { "halo_reach/vehicles/phantom/phantom_engine_lod/track2/loop.ogg" }
+--ENT.LandingSounds = { "oddworld/strangers_wrath/dropship/fx_drop01_landing.ogg", "oddworld/strangers_wrath/dropship/fx_drop02_landing.ogg","oddworld/strangers_wrath/dropship/fx_drop03_landing.ogg" }
+--ENT.ShootSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_missle.ogg" }
+--ENT.OpenDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_open.ogg" }
+--ENT.CloseDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_close.ogg" }
+--ENT.FlySounds = { "oddworld/strangers_wrath/dropship/fx_dropship_flyby1_r05w.ogg", "oddworld/strangers_wrath/dropship/fx_dropship_flyby2.ogg" }
+
+ENT.Gibs = {
+	[1] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_1.mdl",
+	[2] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_2.mdl",
+	[3] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_3.mdl",
+	[4] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_4.mdl",
+	[5] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_5.mdl",
+	[6] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_6.mdl",
+	[7] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_7.mdl",
+	[8] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_8.mdl",
+	[9] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_turret_door.mdl"
+}
+
+function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
+	--[[if options ==  "event_osw_dropship_deploy" then
+		self:DeploySquad()
+	end]]
+end
+
+ENT.InfantryAtts = {
+	[1] = "spawner_1",
+	[2] = "spawner_2",
+	[3] = "spawner_3",
+	[4] = "spawner_4",
+	[5] = "spawner_5",
+	[6] = "spawner_6",
+	[7] = "spawner_7",
+	[8] = "spawner_8",
+	[9] = "spawner_9",
+	[10] = "spawner_10",
+	[11] = "spawner_11",
+	[12] = "spawner_12",
+	[13] = "spawner_13",
+	[14] = "spawner_14",
+	[15] = "spawner_15",
+	[16] = "spawner_16"
+}
+
+ENT.Squads = {
+	[1] = {
+		["Minor"] = {
+			[1] = "npc_iv04_hr_elite_minor",
+			[2] = "npc_iv04_hr_grunt_minor",
+			[3] = "npc_iv04_hr_grunt_minor",
+			[4] = "npc_iv04_hr_grunt_minor",
+			[5] = "npc_iv04_hr_elite_minor",
+			[6] = "npc_iv04_hr_grunt_minor",
+			[7] = "npc_iv04_hr_grunt_minor",
+			[8] = "npc_iv04_hr_grunt_minor",
+			[9] = "npc_iv04_hr_grunt_minor",
+			[10] = "npc_iv04_hr_grunt_minor"
+		},
+		["Major"] = {
+			[1] = "npc_iv04_hr_elite_major",
+			[2] = "npc_iv04_hr_grunt_major",
+			[3] = "npc_iv04_hr_grunt_major",
+			[4] = "npc_iv04_hr_grunt_minor",
+			[5] = "npc_iv04_hr_elite_minor",
+			[6] = "npc_iv04_hr_grunt_major",
+			[7] = "npc_iv04_hr_grunt_major",
+			[8] = "npc_iv04_hr_grunt_minor",
+			[9] = "npc_iv04_hr_grunt_major",
+			[10] = "npc_iv04_hr_grunt_minor"
+		},
+		["Heavy"] = {
+			[1] = "npc_iv04_hr_elite_ranger",
+			[2] = "npc_iv04_hr_elite_ranger",
+			[3] = "npc_iv04_hr_elite_ranger",
+			[4] = "npc_iv04_hr_elite_ranger",
+			[5] = "npc_iv04_hr_elite_ranger",
+			[6] = "npc_iv04_hr_grunt_heavy",
+			[7] = "npc_iv04_hr_grunt_heavy",
+			[8] = "npc_iv04_hr_grunt_heavy",
+			[9] = "npc_iv04_hr_grunt_heavy",
+			[10] = "npc_iv04_hr_grunt_heavy"
+		},
+		["Ultra"] = {
+			[1] = "npc_iv04_hr_elite_ultra",
+			[2] = "npc_iv04_hr_elite_ultra",
+			[3] = "npc_iv04_hr_elite_ultra",
+			[4] = "npc_iv04_hr_elite_ultra",
+			[5] = "npc_iv04_hr_grunt_ultra",
+			[6] = "npc_iv04_hr_grunt_ultra",
+			[7] = "npc_iv04_hr_grunt_ultra",
+			[8] = "npc_iv04_hr_grunt_ultra",
+			[9] = "npc_iv04_hr_grunt_ultra",
+			[10] = "npc_iv04_hr_grunt_ultra"
+		},
+		["Generals"] = {
+			[1] = "npc_iv04_hr_elite_general",
+			[2] = "npc_iv04_hr_elite_general",
+			[3] = "npc_iv04_hr_elite_general",
+			[4] = "npc_iv04_hr_elite_general",
+			[5] = "npc_iv04_hr_elite_general",
+			[6] = "npc_iv04_hr_elite_general",
+			[7] = "npc_iv04_hr_elite_general",
+			[8] = "npc_iv04_hr_elite_general",
+			[9] = "npc_iv04_hr_elite_general",
+			[10] = "npc_iv04_hr_elite_general"
+		},
+	},
+	[2] = {
+		["Minor"] = {
+			[1] = "npc_iv04_hr_jackal_minor",
+			[2] = "npc_iv04_hr_jackal_minor",
+			[3] = "npc_iv04_hr_grunt_minor",
+			[4] = "npc_iv04_hr_grunt_minor",
+			[5] = "npc_iv04_hr_jackal_minor",
+			[6] = "npc_iv04_hr_jackal_minor",
+			[7] = "npc_iv04_hr_grunt_minor",
+			[8] = "npc_iv04_hr_grunt_minor",
+			[9] = "npc_iv04_hr_grunt_minor",
+			[10] = "npc_iv04_hr_grunt_minor"
+		},
+		["Major"] = {
+			[1] = "npc_iv04_hr_jackal_major",
+			[2] = "npc_iv04_hr_grunt_major",
+			[3] = "npc_iv04_hr_grunt_major",
+			[4] = "npc_iv04_hr_jackal_major",
+			[5] = "npc_iv04_hr_jackal_major",
+			[6] = "npc_iv04_hr_jackal_major",
+			[7] = "npc_iv04_hr_grunt_major",
+			[8] = "npc_iv04_hr_grunt_major",
+			[9] = "npc_iv04_hr_grunt_major",
+			[10] = "npc_iv04_hr_grunt_major"
+		},
+		["Support"] = {
+			[1] = "npc_iv04_hr_jackal_major",
+			[2] = "npc_iv04_hr_jackal_major",
+			[3] = "npc_iv04_hr_jackal_sniper",
+			[4] = "npc_iv04_hr_jackal_sniper",
+			[5] = "npc_iv04_hr_jackal_sniper",
+			[6] = "npc_iv04_hr_grunt_heavy",
+			[7] = "npc_iv04_hr_grunt_heavy",
+			[8] = "npc_iv04_hr_grunt_heavy",
+			[9] = "npc_iv04_hr_grunt_heavy",
+			[10] = "npc_iv04_hr_grunt_heavy"
+		},
+		["Ultra"] = {
+			[1] = "npc_iv04_hr_jackal_major",
+			[2] = "npc_iv04_hr_jackal_major",
+			[3] = "npc_iv04_hr_jackal_major",
+			[4] = "npc_iv04_hr_jackal_major",
+			[5] = "npc_iv04_hr_grunt_ultra",
+			[6] = "npc_iv04_hr_grunt_ultra",
+			[7] = "npc_iv04_hr_grunt_ultra",
+			[8] = "npc_iv04_hr_grunt_ultra",
+			[9] = "npc_iv04_hr_grunt_ultra",
+			[10] = "npc_iv04_hr_grunt_ultra"
+		}
+	},
+	[3] = {
+		["Minor"] = {
+			[1] = "npc_iv04_hr_skirmisher_major",
+			[2] = "npc_iv04_hr_skirmisher_minor",
+			[3] = "npc_iv04_hr_skirmisher_minor",
+			[4] = "npc_iv04_hr_skirmisher_minor",
+			[5] = "npc_iv04_hr_skirmisher_major",
+			[6] = "npc_iv04_hr_skirmisher_minor",
+			[7] = "npc_iv04_hr_skirmisher_minor",
+			[8] = "npc_iv04_hr_skirmisher_minor",
+			[9] = "npc_iv04_hr_skirmisher_minor",
+			[10] = "npc_iv04_hr_skirmisher_minor"
+		},
+		["Major"] = {
+			[1] = "npc_iv04_hr_skirmisher_commando",
+			[2] = "npc_iv04_hr_skirmisher_major",
+			[3] = "npc_iv04_hr_skirmisher_major",
+			[4] = "npc_iv04_hr_skirmisher_major",
+			[5] = "npc_iv04_hr_skirmisher_commando",
+			[6] = "npc_iv04_hr_skirmisher_major",
+			[7] = "npc_iv04_hr_skirmisher_major",
+			[8] = "npc_iv04_hr_skirmisher_major",
+			[9] = "npc_iv04_hr_skirmisher_major",
+			[10] = "npc_iv04_hr_skirmisher_major"
+		},
+		["Champions"] = {
+			[1] = "npc_iv04_hr_skirmisher_murmillo",
+			[2] = "npc_iv04_hr_skirmisher_murmillo",
+			[3] = "npc_iv04_hr_skirmisher_champion",
+			[4] = "npc_iv04_hr_skirmisher_champion",
+			[5] = "npc_iv04_hr_skirmisher_murmillo",
+			[6] = "npc_iv04_hr_skirmisher_murmillo",
+			[7] = "npc_iv04_hr_skirmisher_champion",
+			[8] = "npc_iv04_hr_skirmisher_champion",
+			[9] = "npc_iv04_hr_skirmisher_champion",
+			[10] = "npc_iv04_hr_skirmisher_champion"
+		}
+	},
+	[4] = {
+		["Minor"] = {
+			[1] = "npc_iv04_hr_drone_major",
+			[2] = "npc_iv04_hr_drone_minor",
+			[3] = "npc_iv04_hr_drone_minor",
+			[4] = "npc_iv04_hr_drone_minor",
+			[5] = "npc_iv04_hr_drone_major",
+			[6] = "npc_iv04_hr_drone_minor",
+			[7] = "npc_iv04_hr_drone_minor",
+			[8] = "npc_iv04_hr_drone_minor",
+			[9] = "npc_iv04_hr_drone_minor",
+			[10] = "npc_iv04_hr_drone_minor"
+		},
+		["Major"] = {
+			[1] = "npc_iv04_hr_drone_captain",
+			[2] = "npc_iv04_hr_drone_major",
+			[3] = "npc_iv04_hr_drone_major",
+			[4] = "npc_iv04_hr_drone_major",
+			[5] = "npc_iv04_hr_drone_captain",
+			[6] = "npc_iv04_hr_drone_major",
+			[7] = "npc_iv04_hr_drone_major",
+			[8] = "npc_iv04_hr_drone_major",
+			[9] = "npc_iv04_hr_drone_major",
+			[10] = "npc_iv04_hr_drone_major"
+		},
+		["Ultra"] = {
+			[1] = "npc_iv04_hr_drone_ultra",
+			[2] = "npc_iv04_hr_drone_ultra",
+			[3] = "npc_iv04_hr_drone_captain",
+			[4] = "npc_iv04_hr_drone_captain",
+			[5] = "npc_iv04_hr_drone_ultra",
+			[6] = "npc_iv04_hr_drone_ultra",
+			[7] = "npc_iv04_hr_drone_captain",
+			[8] = "npc_iv04_hr_drone_captain",
+			[9] = "npc_iv04_hr_drone_captain",
+			[10] = "npc_iv04_hr_drone_captain"
+		}
+	},
+	[5] = {
+		["Hunters"] = {
+			[1] = "npc_iv04_hr_hunter",
+			[2] = "npc_iv04_hr_hunter",
+			[3] = "npc_iv04_hr_grunt_major",
+			[4] = "npc_iv04_hr_jackal_major",
+			[5] = "npc_iv04_hr_jackal_major",
+			[6] = "npc_iv04_hr_jackal_major",
+			[7] = "npc_iv04_hr_grunt_major",
+			[8] = "npc_iv04_hr_grunt_major",
+			[9] = "npc_iv04_hr_grunt_major",
+			[10] = "npc_iv04_hr_grunt_major"
+		}
+	}
+}
+
+ENT.Weights = {
+	["Minor"] = 100,
+	["Major"] = 50,
+	["Heavy"] = 40,
+	["Ultra"] = 40,
+	["Support"] = 40,
+	["Generals"] = 30,
+	["Champions"] = 30,
+	["Hunters"] = 100
+}
+
+ENT.Passengers = {
+
+}
+
+function ENT:PrepareTroops(int)
+	local typ = self.Squads[math.random(#self.Squads)]
+	local class
+	local chances = 0
+	local rand = {}
+	for squad, tbl in pairs(typ) do
+		chances = chances+self.Weights[squad]
+		rand[chances] = squad
+	end
+	local r1 = math.random(chances)
+	for weight, squad in pairs(rand) do
+		if r1 > weight then
+			print("nope")
+		else
+			print("yes",weight,squad)
+			class = typ[squad]
+		end
+	end
+	for i = 1, int do
+		local at = self.InfantryAtts[i]
+		local attachment = self:GetAttachment(self:LookupAttachment(at))
+		local cl = class[i]
+		if math.random(1,20) == 1 and !self.SpawnedEngineer then self.SpawnedEngineer = true cl = "npc_iv04_hr_engineer" end
+		local ent = ents.Create( cl )
+		ent.OldGravity = ent.loco:GetGravity()
+		ent.loco:SetGravity(0)
+		ent:SetPos(attachment.Pos)
+		ent:SetAngles(attachment.Ang)
+		ent.InDropship = true
+		ent.IsInVehicle = true
+		ent.InPhantom = true
+		ent.Dropship = self
+		ent.DropshipId = i
+		local s = i
+		ent.SideAnim = "Left"
+		if s > 5 then s = s-5 ent.SideAnim = "Right" end
+		ent.SAnimId = s
+		ent:Spawn()
+		ent:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
+		ent.OCG = ent:GetCollisionGroup()
+		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+		ent:SetParent(self)
+		ent:SetOwner(self)
+		local func = function()
+			while (ent.InDropship and !ent.DLanded) do
+				coroutine.wait(0.01)
+			end
+			local anim
+			anim = ent.DropshipPassengerExitAnims[math.random(#ent.DropshipPassengerExitAnims)]
+			ent:PlaySequenceAndPWait(anim,1,ent:GetPos())
+			ent.DExited = true
+			local dir = ent:GetRight()
+			if !ent.IsEngineer then
+				while (!ent.loco:IsOnGround() ) do
+					ent.loco:SetVelocity(Vector(0,0,-800)+ent:GetForward()*math.random(1,5))
+					coroutine.wait(0.01)
+				end
+			else
+				ent:MoveToPos( ent:GetPos()+ent:GetUp()*-200 )
+			end
+			ent:SetCollisionGroup(ent.OCG)
+		end
+		table.insert(ent.StuffToRunInCoroutine,func)
+		self.Passengers[#self.Passengers+1] = ent
+	end
+end
+
+function ENT:PreInit()
+	self.StopMovement = true
+	self.loco:SetGravity( 0 )
+	local func = function()
+		self:PhantomCycle()
+	end
+	table.insert(self.StuffToRunInCoroutine,func)
+	self:ResetAI()
+	--self.IsNTarget = (GetConVar("hce_dropship_targetting"):GetInt() == 0)
+	--self.loco:Jump()
+end
+
+function ENT:BeforeThink()
+	--self:StartActivity(ACT_IDLE)
+end
+
+ENT.Quotes = {}
+
+function ENT:Speak(quote)
+	local tbl = self.Quotes[quote]
+	if tbl then
+		local snd = table.Random(tbl) 
+		--self:EmitSound(snd,100)
+		if self.VSound and self.VSound:IsPlaying() then self.VSound:Stop() end
+		self.VSound = CreateSound( self, snd )
+		self.VSound:SetSoundLevel( 100 )
+		self.VSound:Play()
+		--print("indeed")
+	end
+end
+
+function ENT:OnInitialize()
+	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
+	self.IsNTarget = true
+	self:SetBloodColor( BLOOD_COLOR_MECH )
+	snd = table.Random(self.SoundIdle)
+	--if self:WaterLevel() != 0 then 	if self.EngineSnd then self.EngineSnd:Stop() end return end
+	--if !self.EngineSnd and isstring(snd) then self.EngineSnd = CreateSound(self,snd) end
+	--if self.EngineSnd then
+	--	self.EngineSnd:Play()
+	--end
+	--for i = 2, 5 do
+	--	ParticleEffectAttach( "halo_reach_Dropship_thruster_fx", PATTACH_POINT_FOLLOW, self, i )
+	--end
+	local r = math.random(8,10)
+	self.TroopsCount = r
+	self:PrepareTroops(r)
+	--self:SetPos(self:GetPos()+Vector(0,0,200))
+	--local who = math.random(0,2)
+	--self:SetBodygroup(1,who)
+	local mins, maxs = self:GetCollisionBounds()
+	self:SetCollisionBounds(mins+Vector(50,50,30),maxs+Vector(-50,-50,-30))
+	--print(who)
+end
+
+function ENT:OnRemove()
+	if SERVER then
+		if self.EngineSnd then self.EngineSnd:Stop() end
+		if IsValid(self.CurrentExitor) then
+			local ent = self.CurrentExitor
+	   		ent.IsInVehicle = false
+			ent.InDropship = false
+			ent.Dropship = nil
+			ent.loco:SetGravity(ent.OldGravity)
+			ent:SetParent(nil)
+			--ent:ResetSequence(ent.AirAnim)
+			local dir = ent:GetRight()
+			if ent.SideAnim == "Right" then dir = -ent:GetRight() end
+			ent:SetPos(ent:GetPos()+(dir*((40*1)-10)))
+		end
+    end
+end
+
+function ENT:OnContact( ent ) -- When we touch someBODY
+	if ent == game.GetWorld() then return "no" end
+	local v = ent
+	--[[if (v.IsVJBaseSNPC == true or v.CPTBase_NPC == true or v.IsSLVBaseNPC == true or v:GetNWBool( "bZelusSNPC" ) == true) or (v:IsNPC() && v:GetClass() != "npc_bullseye" && v:Health() > 0 ) or (v:IsPlayer() and v:Alive()) or ( (v:IsNextBot()) and v != self ) then
+		local d = self:GetPos()-ent:GetPos()
+		self.loco:SetVelocity(d*0.25)
+	end]]
+	local tbl = {
+		HitPos = self:NearestPoint(ent:GetPos()),
+		HitEntity = self,
+		OurOldVelocity = ent:GetVelocity(),
+		DeltaTime = 0,
+		TheirOldVelocity = self.loco:GetVelocity(),
+		HitNormal = self:NearestPoint(ent:GetPos()):GetNormalized(),
+		Speed = ent:GetVelocity().x,
+		HitObject = self:GetPhysicsObject(),
+		PhysObject = self:GetPhysicsObject()
+	}
+	if isfunction(ent.DoDamageCode) then
+		ent:DoDamageCode(tbl,self:GetPhysicsObject())
+	elseif isfunction(ent.PhysicsCollide) then 
+		ent:PhysicsCollide(tbl,self:GetPhysicsObject())
+	end
+end
+
+function ENT:OnInjured(dmg)
+	if self:CheckRelationships(dmg:GetAttacker()) == "friend" then dmg:ScaleDamage(0) return end
+	if dmg:GetDamageType() != DMG_BLAST and dmg:GetDamageType() != DMG_AIRBOAT then dmg:ScaleDamage(0) end
+	if self:CheckRelationships(dmg:GetAttacker()) == true then
+		self:SetEnemy(dmg:GetAttacker())
+	end
+end
+
+function ENT:PhantomCycle()
+	self:PlaySequenceAndWait("Arrival")
+	self.IsNTarget = false
+	self:DropTroops()
+	self.IsNTarget = true
+	self:PlaySequenceAndWait("Departure")
+	self:Remove() -- Very cool
+end
+
+ENT.NInvisT = 0
+
+ENT.InvisDel = 0.5
+
+function ENT:CanSee(pos)
+	local tr = {
+		start = self:GetPos(),
+		endpos = pos,
+		mins = self:OBBMins(),
+		maxs = self:OBBMaxs(),
+		mask = MASK_NPCSOLID_BRUSHONLY,
+		filter = {self,self:GetOwner()}
+	}
+	return !util.TraceHull(tr).Hit
+end
+
+ENT.NextTurretThink = 0
+
+function ENT:GetShootPos()
+	return self:GetAttachment(1).Pos
+end
+
+if SERVER then
+
+	function ENT:Think()
+		if self.StopMovement then
+			self.loco:SetVelocity(Vector(0,0,0))
+		end
+		if self.NextTurretThink < CurTime() then
+			self.NextTurretThink = CurTime()+math.random(4,6)
+			if !IsValid(self.Enemy) then
+				self:SearchEnemy()
+			else
+				if self.GunnerShoot then
+					for i = 1, math.random(2,4) do
+						timer.Simple( (i*0.4)-0.4, function()
+							if IsValid(self) and IsValid(self.Enemy) then
+								local att = self:GetAttachment(1)
+								local projec = ents.Create( "astw2_haloreach_concussion_round" )
+								projec:SetPos(att.Pos)
+								projec:SetAngles(att.Ang)
+								projec:Spawn()
+								--projec:SetCollisionGroup( COLLISION_GROUP_WORLD )
+								projec.ServerThink = function() end
+								projec:SetOwner(self)
+								local phys = projec:GetPhysicsObject()
+								if IsValid(phys) then
+									phys:Wake()
+									phys:SetVelocity( (self:GetAimVector()+self:GetRight()*(math.random(1,-1)*math.random(100))+self:GetForward()*(math.random(1,-1)*math.random(100)))*3000 )
+								end
+								ParticleEffect( "astw2_halo_reach_muzzle_concussion_rifle", att.Pos, att.Ang, self )
+								sound.Play("halo_reach/vehicles/phantom/phantom_turret_fire.ogg",self:GetShootPos(),100)
+							end
+						end )
+					end
+				end
+			end
+		end
+		--self:ResetSequence("reference")
+	end
+
+end
+
+function ENT:DropTroops()
+	local pass = #self.Passengers
+	self:DoGestureSeq("Doors Open")
+	--self:DoGestureSeq("Doors Open Idle",false)
+	timer.Simple( 1, function()
+		if IsValid(self) then
+			self:DoGestureSeq("Doors Open Idle",false,0)
+		end
+	end )
+	coroutine.wait(1)
+	local s1 = 0
+	local s2 = 2
+	for i = 1, pass do 
+		local ent = self.Passengers[i]
+		ent.DLanded = true
+		s1 = s1+1
+		self.CurrentExitor = ent
+		if s1 == s2 then
+			s2 = s2+2
+			while (!ent.DExited) do
+				coroutine.wait(0.01)
+			end
+		end
+		ent.IsInVehicle = false
+		ent.InDropship = false
+		ent.Dropship = nil
+		ent.loco:SetGravity(ent.OldGravity)
+		ent:SetParent(nil)
+		--ent:ResetSequence(ent.AirAnim)
+		local dir = ent:GetRight()
+		if ent.SideAnim == "Right" then dir = -ent:GetRight() end
+		ent:SetPos(ent:GetPos()+(dir*((40*pass)-10)))
+	end
+	self:RemoveAllGestures()
+	self:DoGestureSeq("Doors Close")
+	timer.Simple( 1, function()
+		if IsValid(self) then
+			self:DoGestureSeq("Doors Close Idle",false,0)
+		end
+	end )
+end
+
+ENT.WA = 20
+ENT.WR = 20
+ENT.WL = 20
+
+ENT.LTP = 0
+ENT.LTPP = 0
+
+function ENT:BodyUpdate()
+	local goal = self:GetPos()+self.loco:GetVelocity()
+	local y = (goal-self:GetPos()):Angle().y
+	local di = math.AngleDifference(self:GetAngles().y,y)
+	self:SetPoseParameter("move_yaw",di)
+	self:SetPoseParameter("walk_yaw",di)
+	local look = false
+	local goal
+	local y
+	local di = 0
+	local p
+	local dip = 0
+	if IsValid(self.Enemy) then
+		goal = self.Enemy:WorldSpaceCenter()
+		local an = (goal-self:GetAttachment(1).Pos):Angle()
+		y = an.y
+		di = math.AngleDifference(self:GetAngles().y,y)
+		p = an.p
+		dip = math.AngleDifference(self:GetAngles().p,p)
+			if !self.Transitioned then
+				local vy = math.AngleDifference(self:GetAngles().y+self.LTPP,y)
+				local vp = math.AngleDifference(self:GetAngles().p+self.LTP,p)
+				self.Transitioned = true
+				timer.Simple(0.01, function()
+					if IsValid(self) then
+						self.Transitioned = false
+					end
+				end )
+				if math.abs(vy) > 5 then
+					self.LTPP = self:GetPoseParameter("aim_yaw")
+					local i
+					if vy < 0 then
+						i = 2
+					else
+						i = -2
+					end
+					self:SetPoseParameter("aim_yaw",self.LTPP+i)
+					self.GunnerShoot = false
+				else
+					self.GunnerShoot = true
+				end
+				if math.abs(vp) > 2 then
+					self.LTP = self:GetPoseParameter("aim_pitch")
+					local i
+					if (vp) <= self.LTP then
+						i = 1
+					else
+						i = -1
+					end
+					self:SetPoseParameter("aim_pitch",self.LTP+i)
+				end
+			end
+	end
+	self:FrameAdvance()
+end
+
+function ENT:OnKilled( dmginfo ) -- When killed
+	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+	self:EmitSound("halo_reach/vehicles/phantom/phantom_windup.ogg",100)
+	timer.Simple( 1.5, function()
+		if IsValid(self) then
+			self:EmitSound("halo_reach/vehicles/phantom/phantom_destroyed.ogg",100)
+			ParticleEffect("halo_reach_explosion_covenant_large",self:GetPos()+self:GetForward()*-300+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+			for i = 1, #self.Gibs do
+				local gib = ents.Create("prop_physics")
+				gib:SetModel(self.Gibs[i])
+				gib:SetPos( self:WorldSpaceCenter()+self:GetForward()*(80*i) )
+				gib:Spawn()
+			end
+			self:Remove()
+		end
+	end )
+end
+
+list.Set( "NPC", "npc_iv04_hr_phantom", {
+	Name = "Phantom",
+	Class = "npc_iv04_hr_phantom",
+	Category = "Halo Reach"
+} )

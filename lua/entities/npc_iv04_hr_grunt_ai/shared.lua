@@ -167,6 +167,26 @@ function ENT:SetupHoldtypes()
 		self.Faction = "FACTION_UNSC"
 	end
 	local hold = self.Weapon.HoldType_Aim
+	self.DropshipPassengerIdleAnims = {
+		[1] = "Phantom_Passenger_Idle_1",
+		[2] = "Phantom_Passenger_Idle_2"
+	}
+	self.DropshipPassengerExitAnims = {
+		[1] = "Phantom_Passenger_Exit_1",
+		[2] = "Phantom_Passenger_Exit_2"
+	}
+	self.SpiritPassengerIdleAnims = {
+		[1] = "Spirit_Passenger_Idle_1",
+		[2] = "Spirit_Passenger_Idle_2",
+		[3] = "Spirit_Passenger_Idle_3",
+		[4] = "Spirit_Passenger_Idle_4"
+	}
+	self.SpiritPassengerExitAnims = {
+		[1] = "Spirit_Passenger_Exit_1",
+		[2] = "Spirit_Passenger_Exit_2",
+		[3] = "Spirit_Passenger_Exit_3",
+		[4] = "Spirit_Passenger_Exit_4"
+	}
 	if self.PistolHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_1")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_2")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_3")),self:GetSequenceActivity(self:LookupSequence("Move_Pistol_4"))}
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_1")),self:GetSequenceActivity(self:LookupSequence("Idle_2")),self:GetSequenceActivity(self:LookupSequence("Idle_3")),self:GetSequenceActivity(self:LookupSequence("Idle_4")),self:GetSequenceActivity(self:LookupSequence("Idle_5")),self:GetSequenceActivity(self:LookupSequence("Idle_6"))}
@@ -228,6 +248,42 @@ function ENT:OnLandOnGround(ent)
 		self:ResetAI()
 	elseif self.OldSeq then
 		self:ResetSequence(self.OldSeq)
+	end
+end
+
+function ENT:Think()
+	if self.IsInVehicle then
+		if self.InDropship then
+			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.DLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidDropshipIdleAnim then
+					self.DidDropshipIdleAnim = true
+					local anim
+					if self.InPhantom then
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+					else
+						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidDropshipIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
+		end
 	end
 end
 

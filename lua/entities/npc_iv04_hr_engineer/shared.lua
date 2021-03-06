@@ -31,6 +31,8 @@ ENT.MeleeDistance = 180
 
 ENT.ShieldHealth = 100
 
+ENT.IsEngineer = true
+
 -- Flinching
 
 ENT.FlinchChance = 30
@@ -169,6 +171,12 @@ function ENT:DoInit()
 	self.Difficulty = GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()
 	self:SetBloodColor(DONT_BLEED)
 	self.ShouldWander = false
+	self.DropshipPassengerIdleAnims = {
+		[1] = "Phantom_Passenger_Idle"
+	}
+	self.DropshipPassengerExitAnims = {
+		[1] = "Phantom_Passenger_Exit"
+	}
 end
 
 function ENT:SetupAnimations()
@@ -255,8 +263,36 @@ ENT.SRadius = 1024
 if SERVER then
 
 	function ENT:Think()
-		
-		if ( self:Health() > 0 ) then -- Stay in the air you fool
+	
+		if self.IsInVehicle then
+			if self.InDropship then
+				local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+				local ang = att.Ang
+				local pos = att.Pos
+				self:SetAngles(att.Ang)
+				if !self.DLanded then
+					self:SetPos(att.Pos+Vector(0,0,3))
+					if !self.DidDropshipIdleAnim then
+						self.DidDropshipIdleAnim = true
+						local anim
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+						local id, len = self:LookupSequence(anim)
+						self:ResetSequence(id)
+						--print(id,len)
+						timer.Simple( len, function()
+							if IsValid(self) then
+								self.DidDropshipIdleAnim = false
+							end
+						end )
+					end
+				else
+					local off = 0
+					if self.SideAnim == "Right" then off = -0 end
+					self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+				end
+				--self.loco:SetVelocity(Vector(0,0,0))
+			end
+		elseif ( self:Health() > 0 ) then -- Stay in the air you fool
 
 			if !self.FlyGoal and !IsValid(self.Enemy) then 
 				self.loco:SetVelocity(Vector(0,0,0))

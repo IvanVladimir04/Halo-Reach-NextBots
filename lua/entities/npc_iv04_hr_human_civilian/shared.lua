@@ -23,6 +23,12 @@ function ENT:DoInit()
 	end
 end
 
+function ENT:OnLandOnGround(ent)
+	if self.FlyingDead then
+		self.HasLanded = true
+	end
+end
+
 function ENT:SetupHoldtypes()
 	self.DeadAirAnim = "Dead_Airborne"
 	self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Panic_Idle_1")),self:GetSequenceActivity(self:LookupSequence("Panic_Idle_2"))}
@@ -252,30 +258,27 @@ function ENT:DoKilledAnim()
 		if self.KilledDmgInfo:GetDamage() <= 150 then
 			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
+			print("dead",anim)
 			if anim == true then 
-				local wep = ents.Create(self.Weapon:GetClass())
-				wep:SetPos(self.Weapon:GetPos())
-				wep:SetAngles(self.Weapon:GetAngles())
-				wep:Spawn()
-				self.Weapon:Remove()
-				local rag = self:BecomeRagdoll(DamageInfo())
+				local rag = self:BecomeRagdoll(self.KilledDmgInfo)
 				return
-			end
-			local seq, len = self:LookupSequence(anim)
-			timer.Simple( len, function()
-				if IsValid(self) then
-					local rag
-					if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
-						timer.Simple( 60, function()
-							if IsValid(rag) then
-								rag:Remove()
-							end
-						end)
+			else
+				local seq, len = self:LookupSequence(anim)
+				timer.Simple( len, function()
+					if IsValid(self) then
+						local rag
+						if GetConVar( "ai_serverragdolls" ):GetInt() == 0 then
+							timer.Simple( 60, function()
+								if IsValid(rag) then
+									rag:Remove()
+								end
+							end)
+						end
+						rag = self:CreateRagdoll(DamageInfo())
 					end
-					rag = self:BecomeRagdoll(DamageInfo())
-				end
-			end )
-			self:PlaySequenceAndPWait(seq, 1, self:GetPos())
+				end )
+				self:PlaySequenceAndPWait(seq, 1, self:GetPos())
+			end
 		else
 			self:Speak("OnDeathPainful")
 			local rag
@@ -286,7 +289,7 @@ function ENT:DoKilledAnim()
 					end
 				end)
 			end
-			rag = self:BecomeRagdoll(self.KilledDmgInfo)
+			rag = self:CreateRagdoll(self.KilledDmgInfo)
 		end
 	else
 		self:Speak("OnDeathThrown")
@@ -322,7 +325,7 @@ function ENT:DoKilledAnim()
 				end
 			end)
 		end
-		rag = self:BecomeRagdoll(DamageInfo())
+		rag = self:CreateRagdoll(DamageInfo())
 	end
 end
 

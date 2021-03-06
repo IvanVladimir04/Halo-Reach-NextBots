@@ -87,6 +87,18 @@ function ENT:OnInitialize()
 	self.MeleeDamage = (self.MeleeDamage*(self.Difficulty)*0.5)
 	self:DoInit()
 	self.VoiceType = "Hunter"
+	self.DropshipPassengerIdleAnims = {
+		[1] = "Phantom_Passenger_Idle"
+	}
+	self.DropshipPassengerExitAnims = {
+		[1] = "Phantom_Passenger_Exit"
+	}
+	self.SpiritPassengerIdleAnims = {
+		[1] = "Spirit_Passenger_Idle"
+	}
+	self.SpiritPassengerExitAnims = {
+		[1] = "Spirit_Passenger_Exit"
+	}
 	if GetConVar("halo_reach_nextbots_ai_great_schism"):GetInt() == 2 then
 		self.FriendlyToPlayers = true
 		self.Faction = "FACTION_UNSC"
@@ -568,6 +580,42 @@ function ENT:StartShooting(ent)
 		coroutine.wait(3/self.RageBonus)
 	else
 		self:GetNear(ent)
+	end
+end
+
+function ENT:Think()
+	if self.IsInVehicle then
+		if self.InDropship then
+			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.DLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidDropshipIdleAnim then
+					self.DidDropshipIdleAnim = true
+					local anim
+					if self.InPhantom then
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+					else
+						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidDropshipIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
+		end
 	end
 end
 

@@ -176,6 +176,20 @@ end
 
 function ENT:SetupHoldtypes()
 	local hold = self.Weapon.HoldType_Aim
+	self.DropshipPassengerIdleAnims = {
+		[1] = "Phantom_Passenger_Idle_1"
+	}
+	self.DropshipPassengerExitAnims = {
+		[1] = "Phantom_Passenger_Exit_1"
+	}
+	self.SpiritPassengerIdleAnims = {
+		[1] = "Spirit_Passenger_Idle_1",
+		[2] = "Spirit_Passenger_Idle_2"
+	}
+	self.SpiritPassengerExitAnims = {
+		[1] = "Spirit_Passenger_Exit_1",
+		[2] = "Spirit_Passenger_Exit_2"
+	}
 	if self.PistolHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
 		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
@@ -266,6 +280,42 @@ function ENT:Speak(voice)
 end
 
 function ENT:BeforeThink()
+end
+
+function ENT:Think()
+	if self.IsInVehicle then
+		if self.InDropship then
+			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
+			local ang = att.Ang
+			local pos = att.Pos
+			self:SetAngles(att.Ang)
+			if !self.DLanded then
+				self:SetPos(att.Pos+Vector(0,0,3))
+				if !self.DidDropshipIdleAnim then
+					self.DidDropshipIdleAnim = true
+					local anim
+					if self.InPhantom then
+						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
+					else
+						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
+					end
+					local id, len = self:LookupSequence(anim)
+					self:ResetSequence(id)
+					--print(id,len)
+					timer.Simple( len, function()
+						if IsValid(self) then
+							self.DidDropshipIdleAnim = false
+						end
+					end )
+				end
+			else
+				local off = 0
+				if self.SideAnim == "Right" then off = -0 end
+				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
+			end
+			--self.loco:SetVelocity(Vector(0,0,0))
+		end
+	end
 end
 
 function ENT:Use( activator )

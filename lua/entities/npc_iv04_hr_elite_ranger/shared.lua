@@ -16,6 +16,10 @@ ENT.StartWeapons = {
 	[3] = "astw2_haloreach_needler_rifle"
 }
 
+function ENT:PreInit()
+	if math.random(1,100) == 1 then self.Models = {"models/halo_reach/characters/covenant/elite_ranger_bob.mdl"} end
+end
+
 list.Set( "NPC", "npc_iv04_hr_elite_ranger", {
 	Name = "Elite Ranger",
 	Class = "npc_iv04_hr_elite_ranger",
