@@ -311,7 +311,7 @@ function ENT:PrepareTroops(int)
 		local at = self.InfantryAtts[i]
 		local attachment = self:GetAttachment(self:LookupAttachment(at))
 		local cl = class[i]
-		if math.random(1,2) == 1 and !self.SpawnedEngineer then self.SpawnedEngineer = true cl = "npc_iv04_hr_engineer" end
+		if math.random(1,20) == 1 and !self.SpawnedEngineer then self.SpawnedEngineer = true cl = "npc_iv04_hr_engineer" end
 		local ent = ents.Create( cl )
 		ent.OldGravity = ent.loco:GetGravity()
 		ent.loco:SetGravity(0)
