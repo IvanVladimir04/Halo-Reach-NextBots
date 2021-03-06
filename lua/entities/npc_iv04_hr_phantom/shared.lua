@@ -301,9 +301,9 @@ function ENT:PrepareTroops(int)
 	local r1 = math.random(chances)
 	for weight, squad in pairs(rand) do
 		if r1 > weight then
-			print("nope")
+			--print("nope")
 		else
-			print("yes",weight,squad)
+			--print("yes",weight,squad)
 			class = typ[squad]
 		end
 	end
@@ -311,7 +311,7 @@ function ENT:PrepareTroops(int)
 		local at = self.InfantryAtts[i]
 		local attachment = self:GetAttachment(self:LookupAttachment(at))
 		local cl = class[i]
-		if math.random(1,20) == 1 and !self.SpawnedEngineer then self.SpawnedEngineer = true cl = "npc_iv04_hr_engineer" end
+		if math.random(1,2) == 1 and !self.SpawnedEngineer then self.SpawnedEngineer = true cl = "npc_iv04_hr_engineer" end
 		local ent = ents.Create( cl )
 		ent.OldGravity = ent.loco:GetGravity()
 		ent.loco:SetGravity(0)
@@ -327,6 +327,7 @@ function ENT:PrepareTroops(int)
 		if s > 5 then s = s-5 ent.SideAnim = "Right" end
 		ent.SAnimId = s
 		ent:Spawn()
+		ent.OSM = ent:GetSolidMask()
 		ent:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 		ent.OCG = ent:GetCollisionGroup()
 		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
@@ -341,15 +342,20 @@ function ENT:PrepareTroops(int)
 			ent:PlaySequenceAndPWait(anim,1,ent:GetPos())
 			ent.DExited = true
 			local dir = ent:GetRight()
+			ent:SetCollisionGroup(ent.OCG)
+			ent:SetSolidMask(ent.OSM)
 			if !ent.IsEngineer then
 				while (!ent.loco:IsOnGround() ) do
 					ent.loco:SetVelocity(Vector(0,0,-800)+ent:GetForward()*math.random(1,5))
 					coroutine.wait(0.01)
 				end
 			else
+				ent.FlyGoal = ent:GetPos()+ent:GetUp()*-200
+				--print(1)
 				ent:MoveToPos( ent:GetPos()+ent:GetUp()*-200 )
+				--print(2)
+				ent.FlyGoal = nil
 			end
-			ent:SetCollisionGroup(ent.OCG)
 		end
 		table.insert(ent.StuffToRunInCoroutine,func)
 		self.Passengers[#self.Passengers+1] = ent

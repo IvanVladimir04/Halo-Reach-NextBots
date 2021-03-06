@@ -788,21 +788,6 @@ function ENT:CustomBehaviour(ent)
 	end
 end
 
-function ENT:StartShooting(ent)
-	ent = ent or self.Enemy or self:GetEnemy()
-	if !IsValid(ent) then return end
-	if !self.ShootQuote and math.random(1,4) == 1 then
-		self.ShootQuote = true
-		timer.Simple( 5, function()
-			if IsValid(self) then
-				self.ShootQuote = false
-			end
-		end )
-		self:Speak("OnDamagedFoe")
-	end
-	self:ShootBullet(ent)
-end
-
 function ENT:RunToPosition( pos, anim, speed )
 	if !util.IsInWorld( pos ) then return "Tried to move out of the world!" end
 	self:StartActivity( anim )			-- Move animation
@@ -810,61 +795,6 @@ function ENT:RunToPosition( pos, anim, speed )
 	self.loco:SetAcceleration( speed+speed )
 	self:MoveToPos( pos )
 end	
-
-function ENT:ShootBullet(ent)
-	ent = ent or self.Enemy
-	if !IsValid(ent) then return end
-	self:FireWep()
-	--self:CustomBehaviour(ent)
-end
-
-function ENT:FireWep()
-	for i = 1, self:GetCurrentWeaponProficiency()+2 do
-		timer.Simple( math.random(0.2,0.4)*i, function()
-			if IsValid(self) then
-				--self:DoGestureSeq(self.FireAnim)
-				if IsValid(self.Weapon) then
-					self.Weapon:AI_PrimaryAttack()
-				end
-			end
-		end )
-	end
-end
-
-function ENT:Dodge( name, speed )
-
-	self.Dodged = true
-	
-	timer.Simple( math.random(3,5), function()
-		if IsValid(self) then
-			self.Dodged = false
-		end
-	end )
-
-	self.loco:SetDesiredSpeed( self.MoveSpeed*self.MoveSpeedMultiplier )
-	local len = self:SetSequence( name )
-	self:StartActivity(self:GetSequenceActivity(self:LookupSequence(name)))
-	speed = speed or 1
-
-	self:ResetSequenceInfo()
-	self:SetCycle( 0 )
-	self:SetPlaybackRate( speed )
-
-	local dir = -1
-	
-	if name == "evade_right" then dir = 1 end
-	
-	for i = 1, len*20 do
-		timer.Simple( i*0.05, function()
-			if IsValid(self) then
-				self.loco:Approach(self:GetPos()+self:GetRight()*dir,1)
-			end
-		end )
-	end
-
-	coroutine.wait( len / speed )
-
-end
 
 function ENT:GetShootPos()
 	--[[if IsValid(self:GetActiveWeapon()) then
@@ -889,33 +819,12 @@ function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	print(cycle)
 	print(type)
 	print(options)]]
-	if options == "event_halo_reach_drones_toggle_wings_on" then
-		self:SetBodygroup(3,0)
-	elseif options == "event_halo_reach_drones_toggle_wings_off" then
-		self:SetBodygroup(3,1)
-	end
 end
 
 local se = {
 	[1] = "Step Right",
 	[2] = "Step Left"
 }
-
-function ENT:DoMeleeDamage()
-	local damage = self.MeleeDamage
-	for	k,v in pairs(ents.FindInCone(self:GetPos()+self:OBBCenter(), self:GetForward(), self.MeleeRange,  math.cos( math.rad( self.MeleeConeAngle ) ))) do
-		if v != self and self:CheckRelationships(v) != "friend" then
-			v:TakeDamage( damage, self, self )
-			--v:EmitSound( self.OnMeleeSoundTbl[math.random(1,#self.OnMeleeSoundTbl)] )
-			if v:IsPlayer() then
-				v:ViewPunch( self.ViewPunchPlayers )
-			end
-			if IsValid(v:GetPhysicsObject()) then
-				v:GetPhysicsObject():ApplyForceCenter( v:GetPhysicsObject():GetPos() +((v:GetPhysicsObject():GetPos()-self:GetPos()):GetNormalized())*self.MeleeForce )
-			end
-		end
-	end
-end
 
 function ENT:StartChasing( ent, anim, speed, los, kam )
 	self:StartActivity( anim )
