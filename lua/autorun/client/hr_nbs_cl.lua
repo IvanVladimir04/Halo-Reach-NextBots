@@ -118,5 +118,6 @@ net.Receive( "HRNBsSpartanSpawned", function()
     ent.HasSpecialColor = true
 	ent.SpecialColor = col
 	HRNBsColors[ent:EntIndex()] = col
+	if !ent.GetPlayerColor then ent.GetPlayerColor = function() return ent.SpecialColor or Vector(0,0,0) end end
 	--print(ent.HasSpecialColor,ent.SpecialColor,HRNBsColors[ent:EntIndex()])
 end )

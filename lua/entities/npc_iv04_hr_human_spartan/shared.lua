@@ -97,7 +97,7 @@ if CLIENT then
 			--print(self:GetNWVector("SPColor"))
 		--	if IsValid(self) then
 				self.GetPlayerColor = function()
-					return self:GetNWVector("SPColor",Vector(0,0,0))
+					return self.SpecialColor or Vector(0,0,0)
 				end
 			--end
 	--	end )
@@ -126,7 +126,7 @@ function ENT:DoInit()
 end
 
 function ENT:StartChasing( ent, anim, speed, los )
-	if !los then anim = self.SprintAnim speed = speed*2 end
+	if !los and !self.StopSprint then anim = self.SprintAnim speed = speed*2 end
 	self:StartActivity( anim )			-- Move animation
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
 	self:ChaseEnt(ent,los)
@@ -245,6 +245,29 @@ function ENT:SetupHoldtypes()
 		self.AllowGrenade = true
 		self.CanShootCrouch = true
 		self.CanMelee = true
+	elseif hold == "physgun" then
+		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_03"))}
+		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_All_03"))}
+		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Run_All_Single_03"))}
+		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_03"))}
+		self.RunCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Walk_All_Single_03"))}
+		self.ShootAnim = self:GetSequenceActivity(self:LookupSequence("Attack_Physgun"))
+		self.SprintAnim = self:GetSequenceActivity(self:LookupSequence("Run_All_Single_03"))
+		self.StopSprint = true
+		self.Weapon.BurstLength = 2
+		self.ReloadAnim = self:GetSequenceActivity(self:LookupSequence("Reload_Turret"))
+		self.MeleeAnim = "Bash_2hands_3"
+		self.AirAnim = "Jump_PHYSGUN"
+		self.LandAnim = "Land_Soft"
+		self.LandHardAnim = "Land_Hard"
+		self.SurpriseAnim = "Surprised_2handed"
+		self.CrouchIdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_Crouch_RPG"))}
+		self.CrouchMoveAnim = {self:GetSequenceActivity(self:LookupSequence("Cwalk_All_Single_07"))}
+		self.GrenadeAnim = "Attack_GRENADE"
+		self.WarthogPassengerIdle = "Warthog_Passenger_Idle_Rifle"
+		self.AllowGrenade = false
+		self.CanShootCrouch = false
+		self.CanMelee = false
 	end
 end
 
@@ -536,7 +559,7 @@ function ENT:CustomBehaviour(ent,range)
 					end
 				end )
 				local ra = math.random(1,3)
-				if ra == 1 then
+				if ra == 1 and self.CanShootCrouch then
 					anim = self.CrouchMoveAnim
 					speed = self.MoveSpeed
 					mul = 1
@@ -668,7 +691,7 @@ function ENT:CustomBehaviour(ent,range)
 					end
 				end )
 				local re = math.random(1,3)
-				if re == 1 then
+				if re == 1 and self.CanShootCrouch then
 					anim = self.CrouchMoveAnim
 					speed = self.MoveSpeed
 					mul = 1
@@ -727,6 +750,10 @@ function ENT:CustomBehaviour(ent,range)
 		
 	end
 end
+
+--function ENT:OnNavAreaChanged( old, new )
+	--print(old,new)
+--end
 
 function ENT:OnInjured(dmg)
 	local rel = self:CheckRelationships(dmg:GetAttacker())
