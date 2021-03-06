@@ -330,7 +330,23 @@ function ENT:PrepareTroops(int)
 		ent.OSM = ent:GetSolidMask()
 		ent:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 		ent.OCG = ent:GetCollisionGroup()
+		ent.OOHE = ent.OnHaveEnemy
+		ent.OnHaveEnemy = function(ent) end -- lol
 		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+		ent.OOLOG = ent.OnLandOnGround
+		ent.OOI = ent.OnInjured
+		ent.OOTA = ent.OnTraceAttack
+		ent.OnInjured = function(s) end
+		ent.OnTraceAttack = function(s,a,e) end
+		ent.OnLandOnGround = function(s,e)
+			ent:SetCollisionGroup(ent.OCG)
+			ent:SetSolidMask(ent.OSM)
+			ent.OnHaveEnemy = ent.OOHE
+			ent:OOLOG(s,e)
+			ent.OnLandOnGround = ent.OOLOG
+			ent.OnInjured = ent.OOI
+			ent.OnTraceAttack = ent.OOTA
+		end
 		ent:SetParent(self)
 		ent:SetOwner(self)
 		local func = function()
@@ -342,19 +358,19 @@ function ENT:PrepareTroops(int)
 			ent:PlaySequenceAndPWait(anim,1,ent:GetPos())
 			ent.DExited = true
 			local dir = ent:GetRight()
-			ent:SetCollisionGroup(ent.OCG)
-			ent:SetSolidMask(ent.OSM)
 			if !ent.IsEngineer then
 				while (!ent.loco:IsOnGround() ) do
 					ent.loco:SetVelocity(Vector(0,0,-800)+ent:GetForward()*math.random(1,5))
 					coroutine.wait(0.01)
 				end
 			else
+				ent:OnLandOnGround(game.GetWorld())
 				ent.FlyGoal = ent:GetPos()+ent:GetUp()*-200
 				--print(1)
+				ent:StartActivity(ent.IdleAnim[math.random(#ent.IdleAnim)])
 				ent:MoveToPos( ent:GetPos()+ent:GetUp()*-200 )
 				--print(2)
-				ent.FlyGoal = nil
+				--ent.FlyGoal = nil
 			end
 		end
 		table.insert(ent.StuffToRunInCoroutine,func)
@@ -557,6 +573,7 @@ function ENT:DropTroops()
 		ent.DLanded = true
 		s1 = s1+1
 		self.CurrentExitor = ent
+		ent:SetEnemy(self.Enemy)
 		if s1 == s2 then
 			s2 = s2+2
 			while (!ent.DExited) do

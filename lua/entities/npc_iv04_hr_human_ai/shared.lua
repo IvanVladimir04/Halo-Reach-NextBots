@@ -979,8 +979,8 @@ function ENT:Think()
 					end )
 				end
 			else
-				local off = 0
-				if self.SideAnim == "Right" then off = -0 end
+				local off = 50*self.SAnimId
+				if self.SideAnim == "Right" then off = -50*self.SAnimId end
 				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
 			end
 			--self.loco:SetVelocity(Vector(0,0,0))
@@ -1588,6 +1588,7 @@ function ENT:CustomBehaviour(ent,range)
 			end
 			if self.StopShoot then
 				self:Speak("OnCharge")
+				self:Shoot()
 				self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
 			end
 			if !IsValid(ent) then return end

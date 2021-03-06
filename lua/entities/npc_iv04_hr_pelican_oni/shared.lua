@@ -75,8 +75,25 @@ function ENT:PrepareMarines(int)
 		if s > 5 then s = s-5 ent.SideAnim = "Right" end
 		ent.SAnimId = s
 		ent:Spawn()
+		ent.OSM = ent:GetSolidMask()
 		ent:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 		ent.OCG = ent:GetCollisionGroup()
+		ent.OOHE = ent.OnHaveEnemy
+		ent.OnHaveEnemy = function(ent) end -- lol
+		ent.OOLOG = ent.OnLandOnGround
+		ent.OOI = ent.OnInjured
+		ent.OOTA = ent.OnTraceAttack
+		ent.OnInjured = function(s) end
+		ent.OnTraceAttack = function(s,a,e) end
+		ent.OnLandOnGround = function(s,e)
+			ent:SetCollisionGroup(ent.OCG)
+			ent:SetSolidMask(ent.OSM)
+			ent.OnHaveEnemy = ent.OOHE
+			ent:OOLOG(s,e)
+			ent.OnLandOnGround = ent.OOLOG
+			ent.OnInjured = ent.OOI
+			ent.OnTraceAttack = ent.OOTA
+		end
 		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 		ent:SetParent(self)
 		ent:SetOwner(self)
@@ -97,7 +114,6 @@ function ENT:PrepareMarines(int)
 				ent.loco:SetVelocity(Vector(0,0,-800)+ent:GetForward()*math.random(1,5))
 				coroutine.wait(0.01)
 			end
-			ent:SetCollisionGroup(ent.OCG)
 		end
 		table.insert(ent.StuffToRunInCoroutine,func)
 		self.Passengers[#self.Passengers+1] = ent
@@ -299,6 +315,7 @@ function ENT:DropTroops()
 	for i = 1, pass do 
 		local ent = self.Passengers[i]
 		ent.PLanded = true
+		ent:SetEnemy(self.Enemy)
 		while (!ent.PExited) do
 			coroutine.wait(0.01)
 		end
