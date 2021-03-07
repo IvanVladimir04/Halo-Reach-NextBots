@@ -24,6 +24,7 @@ function ENT:SetupHoldtypes()
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle1")),self:GetSequenceActivity(self:LookupSequence("Idle2")),self:GetSequenceActivity(self:LookupSequence("Idle3")),self:GetSequenceActivity(self:LookupSequence("Idle4"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Idle1")),self:GetSequenceActivity(self:LookupSequence("Idle2")),self:GetSequenceActivity(self:LookupSequence("Idle3")),self:GetSequenceActivity(self:LookupSequence("Idle4"))}
 	end
+	self:SetColor(Color(math.random(255),math.random(255),math.random(255)))
 	self.GetupAnim1 = "Infect"
 	self.GetupAnim2 = "Resurrect"
 	self.Seqs = {

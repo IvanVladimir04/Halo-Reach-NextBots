@@ -338,6 +338,8 @@ function ENT:PrepareTroops(int)
 		ent.OOTA = ent.OnTraceAttack
 		ent.OnInjured = function(s) end
 		ent.OnTraceAttack = function(s,a,e) end
+		ent.OOOK = ent.OnOtherKilled
+		ent.OnOtherKilled = function(s,s1) end
 		ent.OnLandOnGround = function(s,e)
 			ent:SetCollisionGroup(ent.OCG)
 			ent:SetSolidMask(ent.OSM)
@@ -346,6 +348,7 @@ function ENT:PrepareTroops(int)
 			ent.OnLandOnGround = ent.OOLOG
 			ent.OnInjured = ent.OOI
 			ent.OnTraceAttack = ent.OOTA
+			ent.OnOtherKilled = ent.OOOK
 		end
 		ent:SetParent(self)
 		ent:SetOwner(self)
@@ -560,16 +563,17 @@ function ENT:DropTroops()
 	local pass = #self.Passengers
 	self:DoGestureSeq("Doors Open")
 	--self:DoGestureSeq("Doors Open Idle",false)
-	timer.Simple( 1, function()
+	timer.Simple( 3, function()
 		if IsValid(self) then
 			self:DoGestureSeq("Doors Open Idle",false,0)
 		end
 	end )
-	coroutine.wait(1)
+	coroutine.wait(3)
 	local s1 = 0
 	local s2 = 2
 	for i = 1, pass do 
 		local ent = self.Passengers[i]
+		if !IsValid(ent) then continue end
 		ent.DLanded = true
 		s1 = s1+1
 		self.CurrentExitor = ent

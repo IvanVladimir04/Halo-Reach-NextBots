@@ -4,6 +4,10 @@ ENT.PrintName = "Flood Human Combat Form"
 ENT.StartHealth = 90
 ENT.Models = {"models/halo_reach/characters/other/flood_human_combat_form.mdl"}
 
+ENT.MoveSpeed = 30
+
+ENT.MoveSpeedMultiplier = 5
+
 ENT.PossibleWeapons = {
 	"astw2_halo_cea_assault_rifle",
 	"astw2_halo_cea_pistol"

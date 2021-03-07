@@ -85,6 +85,8 @@ function ENT:PrepareMarines(int)
 		ent.OOTA = ent.OnTraceAttack
 		ent.OnInjured = function(s) end
 		ent.OnTraceAttack = function(s,a,e) end
+		ent.OOOK = ent.OnOtherKilled
+		ent.OnOtherKilled = function(s,s1) end
 		ent.OnLandOnGround = function(s,e)
 			ent:SetCollisionGroup(ent.OCG)
 			ent:SetSolidMask(ent.OSM)
@@ -93,6 +95,7 @@ function ENT:PrepareMarines(int)
 			ent.OnLandOnGround = ent.OOLOG
 			ent.OnInjured = ent.OOI
 			ent.OnTraceAttack = ent.OOTA
+			ent.OnOtherKilled = ent.OOOK
 		end
 		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 		ent:SetParent(self)
@@ -314,6 +317,7 @@ function ENT:DropTroops()
 	coroutine.wait(1)
 	for i = 1, pass do 
 		local ent = self.Passengers[i]
+		if !IsValid(ent) then continue end
 		ent.PLanded = true
 		ent:SetEnemy(self.Enemy)
 		while (!ent.PExited) do

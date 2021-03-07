@@ -124,8 +124,8 @@ end
 
 
 function ENT:OnInitialize()
-	self:SetCollisionBounds(Vector(8,8,15),Vector(-8,-8,0))
 	if !self.FromCarrier then
+		self:SetCollisionBounds(Vector(8,8,15),Vector(-8,-8,0))
 		self:SetSolidMask(MASK_NPCSOLID)
 	end
 	self.DoClimb = GetConVar("halo_reach_nextbots_ai_flood_infection_climb"):GetInt() == 1
@@ -330,7 +330,7 @@ function ENT:ComputeAPath(ent,path)
 			-- optimization to avoid recomputing length
 			dist = length
 		else
-			dist = ( area:GetCenter() - fromArea:GetCenter() ):GetLength()
+			dist = ( area:GetCenter() - fromArea:GetCenter() ):Length()
 		end
 
 		local cost = dist + fromArea:GetCostSoFar()
@@ -428,6 +428,8 @@ function ENT:BodyUpdate()
 end
 
 function ENT:ChaseEnt(ent) -- Modified MoveToPos to integrate some stuff
+	if !self.loco:IsOnGround() then return end
+	if !ent:IsOnGround() then return end
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( self.PathMinLookAheadDistance )
 	path:SetGoalTolerance( self.PathGoalTolerance )

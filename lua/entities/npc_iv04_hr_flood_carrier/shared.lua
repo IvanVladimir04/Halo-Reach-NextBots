@@ -99,9 +99,9 @@ function ENT:Wander()
 			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.WalkAnim[math.random(1,#self.WalkAnim)], self.MoveSpeed )
 			coroutine.wait(1)
 		else
-			--if self:GetActivity() != self.IdleCalmAnim[1] then
-			--	self:StartActivity(self.IdleCalmAnim[1])
-			--end
+			if self:GetActivity() != 1 then
+				self:StartActivity(1)
+			end
 			if  math.random(1,3) == 1 then
 				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.WalkAnim[math.random(1,#self.WalkAnim)], self.MoveSpeed )
 			else
@@ -252,18 +252,22 @@ function ENT:OnKilled(dmginfo)
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	ParticleEffect("iv04_halo_reach_flood_carrier_form_gib", self:WorldSpaceCenter(), self:GetAngles(), nil )
 	self:Speak("OnExplode")
-	for i = 1, math.random(7,10) do
+	for i = 1, math.random(6,10) do
 		local pop = ents.Create( "npc_iv04_hr_flood_infection_form" )
-		pop:SetPos( self:WorldSpaceCenter()+self:GetUp()*math.random(20,40)+self:GetRight()*math.random(30,-30) )
+		pop:SetPos( self:WorldSpaceCenter()+self:GetUp()*math.random(20,70)+self:GetRight()*math.random(50,-50)+self:GetForward()*math.random(50,-50) )
 		local dir = self:GetForward()*math.random(1,-1)+self:GetRight()*math.random(1,-1)+self:GetUp()*1
-		pop:SetCollisionBounds(Vector(0,0,0),Vector(-0,-0,0))
 		pop.loco:SetVelocity( dir*10 )
 		pop:SetAngles(Angle(0,dir:Angle().y,0))
 		pop.FromCarrier = true
 		pop:Spawn()
-		timer.Simple(1, function()
+		pop.OCG = pop:GetCollisionGroup()
+		pop:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
+		--pop:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+		--pop:SetCollisionBounds(Vector(0,0,0),Vector(-0,-0,0))
+		timer.Simple(2, function()
 			if IsValid(pop) then
 				pop:SetCollisionBounds(Vector(8,8,15),Vector(-8,-8,0))
+				pop:SetCollisionGroup(pop.OCG)
 				pop:SetSolidMask(MASK_NPCSOLID)
 			end
 		end )

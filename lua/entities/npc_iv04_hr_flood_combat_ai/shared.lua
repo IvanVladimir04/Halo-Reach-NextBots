@@ -1,8 +1,8 @@
 AddCSLuaFile()
 include("voices.lua")
 ENT.Base 			= "npc_iv04_base"
-ENT.MoveSpeed = 50
-ENT.MoveSpeedMultiplier = 3.5
+ENT.MoveSpeed = 40
+ENT.MoveSpeedMultiplier = 5
 ENT.BehaviourType = 3
 ENT.BulletNumber = 1
 ENT.IdleSoundDelay = math.random(6,10)
@@ -1122,9 +1122,9 @@ end
 
 function ENT:BodyUpdate()
 	local act = self:GetActivity()
-	--if moves[act] and self:Health() > 0 then
-		--self:BodyMoveXY()
-	--end
+	if moves[act] and self:Health() > 0 then
+		self:BodyMoveXY()
+	end
 	if !self.loco:GetVelocity():IsZero() and self.loco:IsOnGround() then
 	if !self.LMove then
 			self.LMove = CurTime()+0.27
