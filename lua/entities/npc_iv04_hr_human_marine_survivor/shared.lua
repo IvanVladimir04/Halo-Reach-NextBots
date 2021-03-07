@@ -25,6 +25,13 @@ ENT.PossibleWeapons = {
 	"astw2_haloreach_spartan_laser"]]
 }
 
+ENT.PossibleCEVoices = {
+	[1] = "Mendoza",
+	[2] = "Bisenti",
+	[3] = "Fitzgerald",
+	[4] = "Chipps Dubbo"
+}
+
 function ENT:DoInit()
 	local wep = table.Random(self.PossibleWeapons)
 	self:Give(wep)
@@ -42,6 +49,9 @@ function ENT:DoInit()
 	self:SetBodygroup(12,4)
 	self:SetBodygroup(13,1)
 	self:SetBodygroup(14,1)
+	if GetConVar("hce_dropship_targetting") then
+		self.VoiceType = self.PossibleCEVoices[math.random(#self.PossibleCEVoices)]
+	end
 end
 
 list.Set( "NPC", "npc_iv04_hr_human_marine_survivor", {
