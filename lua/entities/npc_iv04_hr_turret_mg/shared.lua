@@ -1,7 +1,7 @@
 AddCSLuaFile()
 ENT.Base = "npc_iv04_base"
-ENT.PrintName = "Pelican"
-ENT.Models  = {"models/halo_reach/vehicles/unsc/pelican.mdl"}
+ENT.PrintName = "Anti Infantry Turret"
+ENT.Models  = {"models/halo_reach/vehicles/unsc/anti_infantry_turret.mdl"}
 
 ENT.MoveSpeed = 300
 ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times faster
@@ -24,8 +24,6 @@ ENT.Preset = {}
 
 ENT.FriendlyToPlayers = true
 
-ENT.IsDropship = true
-
 --ENT.TakeOffSounds = { "oddworld/strangers_wrath/dropship/fx_native4_01_drop01_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_native4_01_drop02_takeoff.ogg","oddworld/strangers_wrath/dropship/fx_native4_01_drop03_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_cargoship_fly_away.ogg" }
 ENT.SoundIdle = { "vehicles/pelican_engine_pelengine.wav" }
 --ENT.LandingSounds = { "oddworld/strangers_wrath/dropship/fx_drop01_landing.ogg", "oddworld/strangers_wrath/dropship/fx_drop02_landing.ogg","oddworld/strangers_wrath/dropship/fx_drop03_landing.ogg" }
@@ -34,108 +32,18 @@ ENT.SoundIdle = { "vehicles/pelican_engine_pelengine.wav" }
 --ENT.CloseDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_close.ogg" }
 --ENT.FlySounds = { "oddworld/strangers_wrath/dropship/fx_dropship_flyby1_r05w.ogg", "oddworld/strangers_wrath/dropship/fx_dropship_flyby2.ogg" }
 
+ENT.CustomIdle = true
+
 function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	--[[if options ==  "event_osw_dropship_deploy" then
 		self:DeploySquad()
 	end]]
 end
 
-ENT.InfantryAtts = {
-	[1] = "spawner_l1",
-	[2] = "spawner_l2",
-	[3] = "spawner_l3",
-	[4] = "spawner_l4",
-	[5] = "spawner_l5",
-	[6] = "spawner_r1",
-	[7] = "spawner_r2",
-	[8] = "spawner_r3",
-	[9] = "spawner_r4",
-	[10] = "spawner_r5"
-}
-
-ENT.Passengers = {
-
-}
- 
-function ENT:PrepareMarines(int)
-	for i = 1, int do
-		local at = self.InfantryAtts[i]
-		local attachment = self:GetAttachment(self:LookupAttachment(at))
-		local ent = ents.Create( self.PassengersClass[math.random(#self.PassengersClass)] )
-		ent.OldGravity = ent.loco:GetGravity()
-		ent.loco:SetGravity(0)
-		ent:SetPos(attachment.Pos)
-		ent:SetAngles(attachment.Ang)
-		ent.InPelican = true
-		ent.IsInVehicle = true
-		ent.Pelican = self
-		ent.PelicanId = i
-		local s = i
-		ent.SideAnim = "Left"
-		if s > 5 then s = s-5 ent.SideAnim = "Right" end
-		ent.SAnimId = s
-		ent:Spawn()
-		ent.OSM = ent:GetSolidMask()
-		ent:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
-		ent.OCG = ent:GetCollisionGroup()
-		ent.OOHE = ent.OnHaveEnemy
-		ent.OnHaveEnemy = function(ent) end -- lol
-		ent.OOLOG = ent.OnLandOnGround
-		ent.OOI = ent.OnInjured
-		ent.OOTA = ent.OnTraceAttack
-		ent.OnInjured = function(s) end
-		ent.OnTraceAttack = function(s,a,e) end
-		ent.OOOK = ent.OnOtherKilled
-		ent.OnOtherKilled = function(s,s1) end
-		ent.OnLandOnGround = function(s,e)
-			ent:SetCollisionGroup(ent.OCG)
-			ent:SetSolidMask(ent.OSM)
-			ent.OnHaveEnemy = ent.OOHE
-			ent:OOLOG(s,e)
-			ent.OnLandOnGround = ent.OOLOG
-			ent.OnInjured = ent.OOI
-			ent.OnTraceAttack = ent.OOTA
-			ent.OnOtherKilled = ent.OOOK
-		end
-		ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
-		ent:SetParent(self)
-		ent:SetOwner(self)
-		local func = function()
-			while (ent.InPelican and !ent.PLanded) do
-				coroutine.wait(0.01)
-			end
-			local anim
-			if ent.SideAnim == "Left" then
-				anim = ent.PelicanPassengerLExitAnims[ent.SAnimId]
-			else
-				anim = ent.PelicanPassengerRExitAnims[ent.SAnimId]
-			end
-			ent:PlaySequenceAndPWait(anim,1,ent:GetPos())
-			ent.PExited = true
-			local dir = ent:GetRight()
-			while (!ent.loco:IsOnGround()) do
-				ent.loco:SetVelocity(Vector(0,0,-800)+ent:GetForward()*math.random(1,5))
-				coroutine.wait(0.01)
-			end
-		end
-		table.insert(ent.StuffToRunInCoroutine,func)
-		self.Passengers[#self.Passengers+1] = ent
-	end
-end
-
-ENT.PassengersClass = {
-	"npc_iv04_hr_human_odst",
-	"npc_iv04_hr_human_odst",
-	"npc_iv04_hr_human_odst",
-	"npc_iv04_hr_human_odst",
-	"npc_iv04_hr_human_odst_female"
-}
-
 function ENT:PreInit()
 	self.StopMovement = true
-	self.loco:SetGravity( 0 )
 	local func = function()
-		self:PelicanCycle()
+		self:PlaySequenceAndWait("Turret_Open")
 	end
 	table.insert(self.StuffToRunInCoroutine,func)
 	self:ResetAI()
@@ -164,25 +72,9 @@ end
 
 function ENT:OnInitialize()
 	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
-	self.IsNTarget = true
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	snd = table.Random(self.SoundIdle)
-	--if self:WaterLevel() != 0 then 	if self.EngineSnd then self.EngineSnd:Stop() end return end
-	--if !self.EngineSnd and isstring(snd) then self.EngineSnd = CreateSound(self,snd) end
-	--if self.EngineSnd then
-	--	self.EngineSnd:Play()
-	--end
-	for i = 2, 5 do
-		ParticleEffectAttach( "halo_reach_pelican_thruster_fx", PATTACH_POINT_FOLLOW, self, i )
-	end
-	local r = math.random(5,10)
-	self.MarinesCount = r
-	self:PrepareMarines(r)
-	--self:SetPos(self:GetPos()+Vector(0,0,200))
-	--local who = math.random(0,2)
-	--self:SetBodygroup(1,who)
-	local mins, maxs = self:GetCollisionBounds()
-	self:SetCollisionBounds(mins+Vector(50,50,30),maxs+Vector(-50,-50,-30))
+	--self:SetCollisionBounds(mins+Vector(50,50,30),maxs+Vector(-50,-50,-30))
 	--print(who)
 end
 
@@ -217,6 +109,10 @@ function ENT:OnContact( ent ) -- When we touch someBODY
 	end
 end
 
+function ENT:DoCustomIdle()
+	return self:DoWander()
+end
+
 function ENT:OnInjured(dmg)
 	if self:CheckRelationships(dmg:GetAttacker()) == "friend" then dmg:ScaleDamage(0) return end
 	if dmg:GetDamageType() != DMG_BLAST and dmg:GetDamageType() != DMG_AIRBOAT then dmg:ScaleDamage(0) end
@@ -225,30 +121,17 @@ function ENT:OnInjured(dmg)
 	end
 end
 
-function ENT:PelicanCycle()
-	self:PlaySequenceAndWait("Arrival")
-	self.IsNTarget = false
-	self:DropTroops()
-	self.IsNTarget = true
-	self:PlaySequenceAndWait("Departure")
-	self:Remove() -- Very cool
+function ENT:DoWander()
+	self:PlaySequenceAndWait("Unarmed_Idle")
+end
+
+function ENT:CustomBehaviour(ent,range)
+	self:PlaySequenceAndWait("Unarmed_Idle")
 end
 
 ENT.NInvisT = 0
 
 ENT.InvisDel = 0.5
-
-function ENT:CanSee(pos)
-	local tr = {
-		start = self:GetPos(),
-		endpos = pos,
-		mins = self:OBBMins(),
-		maxs = self:OBBMaxs(),
-		mask = MASK_NPCSOLID_BRUSHONLY,
-		filter = {self,self:GetOwner()}
-	}
-	return !util.TraceHull(tr).Hit
-end
 
 function ENT:CanSee(pos)
 	local tr = {
@@ -271,9 +154,6 @@ end
 if SERVER then
 
 	function ENT:Think()
-		if self.StopMovement then
-			self.loco:SetVelocity(Vector(0,0,0))
-		end
 		if self.NextTurretThink < CurTime() then
 			self.NextTurretThink = CurTime()+2
 			if !IsValid(self.Enemy) then
@@ -305,68 +185,10 @@ if SERVER then
 
 end
 
-function ENT:DropTroops()
-	local pass = #self.Passengers
-	self:DoGestureSeq("Doors Open")
-	--self:DoGestureSeq("Doors Open Idle",false)
-	timer.Simple( 1, function()
-		if IsValid(self) then
-			self:DoGestureSeq("Doors Open Idle",false,0)
-		end
-	end )
-	coroutine.wait(1)
-	for i = 1, pass do 
-		local ent = self.Passengers[i]
-		if !IsValid(ent) then continue end
-		ent.PLanded = true
-		ent:SetEnemy(self.Enemy)
-		while (!ent.PExited) do
-			coroutine.wait(0.01)
-		end
-		ent.IsInVehicle = false
-		ent.InPelican = false
-		ent.Pelican = nil
-		ent.loco:SetGravity(ent.OldGravity)
-		ent:SetParent(nil)
-		ent:ResetSequence(ent.AirAnim)
-		local dir = ent:GetRight()
-		if ent.SideAnim == "Right" then dir = -ent:GetRight() end
-		ent:SetPos(ent:GetPos()+(dir*((40*pass)-10)))
-	end
-	self:RemoveAllGestures()
-	self:DoGestureSeq("Doors Close")
-	timer.Simple( 1, function()
-		if IsValid(self) then
-			self:DoGestureSeq("Doors Close Idle",false,0)
-		end
-	end )
-end
-
-function ENT:TakeOff()
-	local t = CurTime()+8
-	--local snd = table.Random(self.TakeOffSounds)
-	--self:EmitSound(snd,100)
-	--self:SetPos(self:GetPos()+self:GetUp()*10)
-	while ( t > CurTime() ) do
-		self.loco:SetVelocity(self:GetUp()*100)
-		coroutine.wait(0.01)
-	end
-	self.DState = 5
-end
-
-ENT.WA = 20
-ENT.WR = 20
-ENT.WL = 20
-
 ENT.LTP = 0
 ENT.LTPP = 0
 
 function ENT:BodyUpdate()
-	local goal = self:GetPos()+self.loco:GetVelocity()
-	local y = (goal-self:GetPos()):Angle().y
-	local di = math.AngleDifference(self:GetAngles().y,y)
-	self:SetPoseParameter("move_yaw",di)
-	self:SetPoseParameter("walk_yaw",di)
 	local look = false
 	local goal
 	local y
@@ -389,13 +211,14 @@ function ENT:BodyUpdate()
 						self.Transitioned = false
 					end
 				end )
+				--print(vy,vp)
 				if math.abs(vy) > 5 then
 					self.LTPP = self:GetPoseParameter("aim_yaw")
 					local i
 					if vy < 0 then
-						i = 2
+						i = 1
 					else
-						i = -2
+						i = -1
 					end
 					self:SetPoseParameter("aim_yaw",self.LTPP+i)
 					self.GunnerShoot = false
@@ -419,12 +242,12 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	ParticleEffect("halo_reach_explosion_unsc",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+	ParticleEffect("halo_reach_explosion_unsc",self:GetPos(),self:GetAngles()+Angle(-90,0,0),nil)
 	self:Remove()
 end
 
-list.Set( "NPC", "npc_iv04_hr_pelican_oni", {
-	Name = "Pelican (ONI)",
-	Class = "npc_iv04_hr_pelican_oni",
+list.Set( "NPC", "npc_iv04_hr_turret_mg", {
+	Name = "Anti Infantry Turret",
+	Class = "npc_iv04_hr_turret_mg",
 	Category = "Halo Reach"
 } )

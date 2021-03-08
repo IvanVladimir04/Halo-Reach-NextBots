@@ -392,7 +392,7 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	ParticleEffect("halo_reach_explosion_unsc",self:GetPos()+self:GetForward()*-300+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+	ParticleEffect("halo_reach_explosion_unsc",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
 	self:Remove()
 end
 
