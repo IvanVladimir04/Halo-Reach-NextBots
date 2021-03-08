@@ -672,7 +672,7 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	timer.Simple( 1.5, function()
 		if IsValid(self) then
 			self:EmitSound("halo_reach/vehicles/phantom/phantom_destroyed.ogg",100)
-			ParticleEffect("halo_reach_explosion_covenant_large",self:GetPos()++self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+			ParticleEffect("halo_reach_explosion_covenant_large",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
 			for i = 1, #self.Gibs do
 				local gib = ents.Create("prop_physics")
 				gib:SetModel(self.Gibs[i])
