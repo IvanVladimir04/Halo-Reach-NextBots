@@ -36,18 +36,8 @@ function ENT:DoInit()
 	local wep = table.Random(self.PossibleWeapons)
 	self:Give(wep)
 	self:SetSkin(1)
-	local hed = math.random(1,4)
-	local s = 0
-	if hed == 1 then
-		s = math.random(6,0)
-		if s == 6 then s = 7 end
-		hed = math.random(6,1)
-		if s == 3 and hed == 2 then hed = hed+math.random(1,2) end
-		if s == 3 then self.IsSergeant = true end
-	else
-		hed = 6
-		s = 6
-	end
+	local hed = math.random(5,0)
+	local s = 2
 	self:SetBodygroup(2,hed)
 	self:SetBodygroup(3,s)
 	self:SetBodygroup(5,math.random(-4,1))
