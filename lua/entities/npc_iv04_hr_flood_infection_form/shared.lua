@@ -47,7 +47,7 @@ function ENT:Wander()
 			local nav = navs[math.random(#navs)]
 			local pos = goal
 			if nav then pos = nav:GetRandomPoint() end
-			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
+			self:WanderToPosition( (pos), self.RunAnim[math.random(#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		else
 			for i = 1, 3 do
 				timer.Simple( 0.5*i, function()
@@ -377,7 +377,7 @@ function ENT:Climb(path)
 	self:SetAngles(self:GetAngles()+Angle(-90,0,0))
 	self:SetPos(self:GetPos()+self:GetForward()*20)
 	local stop = false
-	self:StartActivity(self.RunAnim[1])
+	self:StartActivity(self.RunAnim[math.random(#self.RunAnim)])
 	--local dx = true
 --	local vel
 	--print(path:GetCurrentGoal().distanceFromStart)
