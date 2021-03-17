@@ -414,9 +414,11 @@ end
 
 function ENT:OnInitialize()
 	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
-	self.IsNTarget = true
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	snd = table.Random(self.SoundIdle)
+	self.EngineSnd = CreateSound( self, snd )
+	self.EngineSnd:SetSoundLevel(100)
+	self.EngineSnd:Play()
 	local r = math.random(8,10)
 	self.TroopsCount = r
 	self:PrepareTroops(r)
@@ -488,7 +490,7 @@ ENT.CheckT = 0
 
 ENT.CheckDel = 0.3
 
-ENT.PathGoalTolerance = 100
+ENT.PathGoalTolerance = 180
 
 function ENT:MoveToPos( pos,face )
 	local face = face or false
