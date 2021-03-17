@@ -3,7 +3,7 @@ ENT.Base = "npc_iv04_base"
 ENT.PrintName = "Phantom"
 ENT.Models  = {"models/halo_reach/vehicles/covenant/phantom.mdl"}
 
-ENT.MoveSpeed = 300
+ENT.MoveSpeed = 1000
 ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times faster
 
 ENT.Faction = "FACTION_COVENANT"
@@ -382,7 +382,7 @@ function ENT:PrepareTroops(int)
 end
 
 function ENT:PreInit()
-	self.StopMovement = true
+	--self.StopMovement = true
 	self.loco:SetGravity( 0 )
 	local func = function()
 		self:PhantomCycle()
@@ -417,23 +417,14 @@ function ENT:OnInitialize()
 	self.IsNTarget = true
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	snd = table.Random(self.SoundIdle)
-	--if self:WaterLevel() != 0 then 	if self.EngineSnd then self.EngineSnd:Stop() end return end
-	--if !self.EngineSnd and isstring(snd) then self.EngineSnd = CreateSound(self,snd) end
-	--if self.EngineSnd then
-	--	self.EngineSnd:Play()
-	--end
-	--for i = 2, 5 do
-	--	ParticleEffectAttach( "halo_reach_Dropship_thruster_fx", PATTACH_POINT_FOLLOW, self, i )
-	--end
 	local r = math.random(8,10)
 	self.TroopsCount = r
 	self:PrepareTroops(r)
-	--self:SetPos(self:GetPos()+Vector(0,0,200))
-	--local who = math.random(0,2)
-	--self:SetBodygroup(1,who)
-	local mins, maxs = self:GetCollisionBounds()
-	self:SetCollisionBounds(mins+Vector(50,50,30),maxs+Vector(-50,-50,-30))
-	--print(who)
+	self:SetCollisionBounds(Vector(400,300,800),Vector(-400,-300,400))
+	self.StartPos = self:GetPos()
+	self.SpawnPos = self:GetPos()+self:GetForward()*-7000+self:GetUp()*1000
+	self.EndPos = self:GetPos()+self:GetForward()*7000+self:GetUp()*1000
+	self:SetPos(self.SpawnPos)
 end
 
 function ENT:OnRemove()
@@ -454,8 +445,14 @@ function ENT:OnRemove()
     end
 end
 
+function ENT:OnTouchWorld( ent )
+	local p = ent:NearestPoint(self:WorldSpaceCenter())
+	local dir = (self:WorldSpaceCenter()-p):GetNormalized()
+	self.loco:SetVelocity(self.loco:GetVelocity()+dir*5)
+end
+
 function ENT:OnContact( ent ) -- When we touch someBODY
-	if ent == game.GetWorld() then return "no" end
+	if ent == game.GetWorld() then return self:OnTouchWorld(ent) end
 	local v = ent
 	--[[if (v.IsVJBaseSNPC == true or v.CPTBase_NPC == true or v.IsSLVBaseNPC == true or v:GetNWBool( "bZelusSNPC" ) == true) or (v:IsNPC() && v:GetClass() != "npc_bullseye" && v:Health() > 0 ) or (v:IsPlayer() and v:Alive()) or ( (v:IsNextBot()) and v != self ) then
 		local d = self:GetPos()-ent:GetPos()
@@ -487,13 +484,122 @@ function ENT:OnInjured(dmg)
 	end
 end
 
+ENT.CheckT = 0
+
+ENT.CheckDel = 0.3
+
+ENT.PathGoalTolerance = 100
+
+function ENT:MoveToPos( pos,face )
+	local face = face or false
+	local goal = pos
+	if !goal then return end
+	local direang = (goal-self:WorldSpaceCenter()):GetNormalized():Angle()
+	local right = direang:Right()
+	local reached = false
+	if face then
+		self:SetAngles(Angle(self:GetAngles().p,direang.y-90,self:GetAngles().r))
+	end
+	while (!reached) do
+		if GetConVar("ai_disabled"):GetBool() or self.Perching then
+			reached = true
+		end
+		if self.CheckT < CurTime() then
+			self.CheckT = CurTime()+self.CheckDel
+			dire = (goal-self:WorldSpaceCenter()):GetNormalized()
+			if self:NearestPoint(goal):DistToSqr(goal) < self.PathGoalTolerance^2 then
+				reached = true
+			end
+		end
+		--self.loco:FaceTowards( self:GetPos()+right )
+		self.loco:SetVelocity( dire*(self.MoveSpeed*self.MoveSpeedMultiplier) )
+		coroutine.wait(0.01)
+	end
+end
+
+function ENT:Tilt(side,tim)
+	--print("yes")
+	tim = tim or 1
+	local i
+	if side == "Right" then
+		i = 0.1
+	elseif side == "Left" then
+		i = -0.1
+	else
+		if math.random(1,2) == 1 then i = 0.1 else i = -0.1 end
+	end
+	for e = 1, tim*5 do
+		timer.Simple( e*0.1, function()
+			if IsValid(self) then
+				self:SetAngles(Angle(self:GetAngles().p+i,self:GetAngles().y,self:GetAngles().r))
+			end
+		end )
+	end
+	for x = 1, tim*5 do
+		timer.Simple( (x*0.1)+((tim*50)/10), function()
+			if IsValid(self) then
+				self:SetAngles(Angle(self:GetAngles().p-i,self:GetAngles().y,self:GetAngles().r))
+			end
+		end )
+	end
+end
+
 function ENT:PhantomCycle()
-	self:PlaySequenceAndWait("Arrival")
-	self.IsNTarget = false
+	self:ResetSequence("Idle")
+	local ref = self.StartPos+self:GetUp()*1000
+	self:MoveToPos(ref,true)
+	local rig = -self:GetRight()
+	self.MoveSpeed = 700
+	self:MoveToPos(ref+(rig)*60)
+	self.MoveSpeed = 500
+	self:MoveToPos(ref+(rig)*200)
+	coroutine.wait(1)
+	self.MoveSpeed = 300
+	self:MoveToPos(self.StartPos+rig*260)
+	--self.IsNTarget = false
+	self.StopMovement = true
 	self:DropTroops()
-	self.IsNTarget = true
-	self:PlaySequenceAndWait("Departure")
+	self.StopMovement = false
+	self.MoveSpeed = 400
+	self:MoveToPos(ref+rig*360)
+	self.MoveSpeed = 500
+	self:MoveToPos(ref+rig*560)
+	self.MoveSpeed = 600
+	self:MoveToPos(ref+rig*660)
+	self.MoveSpeed = 750
+	self:MoveToPos(ref+rig*760)
+	--self.IsNTarget = true
+	self.MoveSpeed = 1200
+	--self:MoveToPos(self.EndPos)
+	--self:ResetSequence("Departure")
+	self:GoAway()
 	self:Remove() -- Very cool
+end
+
+ENT.NInvisT = 0
+
+ENT.InvisDel = 0.5
+
+function ENT:GoAway()
+	local stop = false
+
+	while (!stop) do
+	
+		if self.NInvisT < CurTime() then
+			self.NInvisT = CurTime()+self.InvisDel
+			if !util.IsInWorld(self:GetPos()+(-self:GetRight()*1200)) then
+				stop = true
+			end
+			--debugoverlay.Sphere(self:GetPos()+self:GetForward()*1200,6)
+		end
+	
+		self.loco:SetVelocity(-self:GetRight()*self.MoveSpeed)
+		
+		--self.loco:FaceTowards(self:GetPos()+randdir)
+	
+		coroutine.wait(0.01)
+	
+	end
 end
 
 ENT.NInvisT = 0
@@ -526,6 +632,7 @@ if SERVER then
 		end
 		if self.NextTurretThink < CurTime() then
 			self.NextTurretThink = CurTime()+math.random(4,6)
+			self:Tilt()
 			if !IsValid(self.Enemy) then
 				self:SearchEnemy()
 			else
@@ -592,7 +699,7 @@ function ENT:DropTroops()
 		--ent:ResetSequence(ent.AirAnim)
 		local dir = ent:GetRight()
 		if ent.SideAnim == "Right" then dir = -ent:GetRight() end
-		ent:SetPos(ent:GetPos()+(dir*((40*pass)-10)))
+		ent:SetPos(self:GetAttachment(self:LookupAttachment(self.InfantryAtts[ent.DropshipId])).Pos)
 	end
 	self:RemoveAllGestures()
 	self:DoGestureSeq("Doors Close")
@@ -672,7 +779,7 @@ function ENT:OnKilled( dmginfo ) -- When killed
 	timer.Simple( 1.5, function()
 		if IsValid(self) then
 			self:EmitSound("halo_reach/vehicles/phantom/phantom_destroyed.ogg",100)
-			ParticleEffect("halo_reach_explosion_covenant_large",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+			ParticleEffect("iv04_halo_reach_phantom_explosion",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
 			for i = 1, #self.Gibs do
 				local gib = ents.Create("prop_physics")
 				gib:SetModel(self.Gibs[i])
@@ -683,6 +790,11 @@ function ENT:OnKilled( dmginfo ) -- When killed
 						gib:Remove()
 					end
 				end )
+				local phys = gib:GetPhysicsObject()
+				if phys then
+					phys:Wake()
+					phys:SetMass( phys:GetMass()*10 )
+				end
 			end
 			self:Remove()
 		end

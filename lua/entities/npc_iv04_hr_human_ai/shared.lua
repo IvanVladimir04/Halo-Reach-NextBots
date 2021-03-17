@@ -979,8 +979,9 @@ function ENT:Think()
 					end )
 				end
 			else
-				local off = 50*self.SAnimId
-				if self.SideAnim == "Right" then off = -50*self.SAnimId end
+				--local off = 50*self.SAnimId
+				--if self.SideAnim == "Right" then off = -50*self.SAnimId end
+				local off = 0
 				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
 			end
 			--self.loco:SetVelocity(Vector(0,0,0))

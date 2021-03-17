@@ -24,14 +24,6 @@ ENT.Preset = {}
 
 ENT.FriendlyToPlayers = true
 
---ENT.TakeOffSounds = { "oddworld/strangers_wrath/dropship/fx_native4_01_drop01_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_native4_01_drop02_takeoff.ogg","oddworld/strangers_wrath/dropship/fx_native4_01_drop03_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_cargoship_fly_away.ogg" }
-ENT.SoundIdle = { "vehicles/pelican_engine_pelengine.wav" }
---ENT.LandingSounds = { "oddworld/strangers_wrath/dropship/fx_drop01_landing.ogg", "oddworld/strangers_wrath/dropship/fx_drop02_landing.ogg","oddworld/strangers_wrath/dropship/fx_drop03_landing.ogg" }
---ENT.ShootSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_missle.ogg" }
---ENT.OpenDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_open.ogg" }
---ENT.CloseDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_close.ogg" }
---ENT.FlySounds = { "oddworld/strangers_wrath/dropship/fx_dropship_flyby1_r05w.ogg", "oddworld/strangers_wrath/dropship/fx_dropship_flyby2.ogg" }
-
 ENT.CustomIdle = true
 
 function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
@@ -73,7 +65,7 @@ end
 function ENT:OnInitialize()
 	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 	self:SetBloodColor( BLOOD_COLOR_MECH )
-	snd = table.Random(self.SoundIdle)
+	--snd = table.Random(self.SoundIdle)
 	--self:SetCollisionBounds(mins+Vector(50,50,30),maxs+Vector(-50,-50,-30))
 	--print(who)
 end
