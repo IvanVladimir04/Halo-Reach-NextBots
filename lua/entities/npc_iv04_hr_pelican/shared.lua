@@ -239,7 +239,7 @@ function ENT:MoveToPos( pos,face )
 	local direang = (goal-self:WorldSpaceCenter()):GetNormalized():Angle()
 	local reached = false
 	while (!reached) do
-		if GetConVar("ai_disabled"):GetBool() or self.Perching then
+		if GetConVar("ai_disabled"):GetBool() then
 			reached = true
 		end
 		if self.CheckT < CurTime() then
