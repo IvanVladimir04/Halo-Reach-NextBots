@@ -2,6 +2,7 @@ if util.IsValidModel( "models/halo/halo_reach/weapons/needler_rifle.mdl" ) and f
 	CreateConVar( "halo_reach_nextbots_ai_type", "Offensive", FCVAR_ARCHIVE, "Type of AI the Halo Reach NextBots will spawn with (if you change this after spawning one its AI type won't change), possible values are Defensive, Offensive and Static. Note not all kind of nextbots can be affected by this!" )
 	CreateConVar( "halo_reach_nextbots_ai_difficulty", 2, FCVAR_ARCHIVE, "Difficulty, (1 = easy, 2 = normal, 3 = heroic, 4 = legendary" )
 	CreateConVar( "halo_reach_nextbots_ai_heroes", 1, FCVAR_ARCHIVE, "Are hero characters invincible?" )
+	CreateConVar( "halo_reach_nextbots_ai_dropship_collisions", 1, FCVAR_ARCHIVE, "Do dropships collide with the world?" )
 	CreateConVar( "halo_reach_nextbots_ai_great_schism", 1, FCVAR_ARCHIVE, "Allow funny space monkeys to take the control?" )
 	CreateConVar( "halo_reach_nextbots_ai_flood_infection_climb", 1, FCVAR_ARCHIVE, "Allow infection forms to climb?" )
 else

@@ -177,9 +177,21 @@ function ENT:OnInitialize()
 	self.MarinesCount = r
 	self:PrepareMarines(r)
 	self:SetCollisionBounds(Vector(400,300,550),Vector(-400,-300,400))
-	self.StartPos = self:GetPos()
-	self.SpawnPos = self:GetPos()+self:GetForward()*-7000+self:GetUp()*1000
-	self.EndPos = self:GetPos()+self:GetForward()*7000+self:GetUp()*1000
+	self.StartPos = self:GetPos()+self:GetUp()*700
+	local startoff = self:GetForward()
+	local endoff = self:GetForward()
+	for i = 1, 7 do 
+		if util.IsInWorld(self:GetPos()+startoff*-1000+self:GetUp()*1400) then
+			startoff = self:GetForward()*(-1000*i)
+		end
+	end
+	for i = 1, 7 do 
+		if util.IsInWorld(self:GetPos()+endoff*-1000+self:GetUp()*1400) then
+			endoff = self:GetForward()*(1000*i)
+		end
+	end
+	self.SpawnPos = self:GetPos()+startoff+self:GetUp()*1400
+	self.EndPos = self:GetPos()+endoff+self:GetUp()*1400
 	self:SetPos(self.SpawnPos)
 end
 
@@ -290,7 +302,7 @@ end
 function ENT:PelicanCycle()
 	self:ResetSequence("Idle")
 	local rig = (self.StartPos-self.SpawnPos):GetNormalized()
-	local ref = self.StartPos+self:GetUp()*1000
+	local ref = self.StartPos+self:GetUp()*1400
 	self:MoveToPos(ref,true)
 	self.MoveSpeed = 700
 	self:MoveToPos(ref+(self:GetUp()*-200)+(rig)*160)

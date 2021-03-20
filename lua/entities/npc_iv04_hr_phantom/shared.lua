@@ -412,6 +412,10 @@ function ENT:Speak(quote)
 	end
 end
 
+function ENT:OnLandOnGround(s) 
+	--self:SetPos(self:GetPos()+self:GetUp()*-100)
+end
+
 function ENT:OnInitialize()
 	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 	self:SetBloodColor( BLOOD_COLOR_MECH )
@@ -423,9 +427,21 @@ function ENT:OnInitialize()
 	self.TroopsCount = r
 	self:PrepareTroops(r)
 	self:SetCollisionBounds(Vector(400,300,800),Vector(-400,-300,400))
-	self.StartPos = self:GetPos()
-	self.SpawnPos = self:GetPos()+self:GetForward()*-7000+self:GetUp()*1000
-	self.EndPos = self:GetPos()+self:GetForward()*7000+self:GetUp()*1000
+	self.StartPos = self:GetPos()+self:GetUp()*500
+	local startoff = self:GetForward()
+	local endoff = self:GetForward()
+	for i = 1, 7 do 
+		if util.IsInWorld(self:GetPos()+startoff*-1000+self:GetUp()*1400) then
+			startoff = self:GetForward()*(-1000*i)
+		end
+	end
+	for i = 1, 7 do 
+		if util.IsInWorld(self:GetPos()+endoff*-1000+self:GetUp()*1400) then
+			endoff = self:GetForward()*(1000*i)
+		end
+	end
+	self.SpawnPos = self:GetPos()+startoff+self:GetUp()*1400
+	self.EndPos = self:GetPos()+endoff+self:GetUp()*1400
 	self:SetPos(self.SpawnPos)
 end
 
@@ -496,7 +512,8 @@ function ENT:MoveToPos( pos,face )
 	local face = face or false
 	local goal = pos
 	if !goal then return end
-	local direang = (goal-self:WorldSpaceCenter()):GetNormalized():Angle()
+	local dire = (goal-self:WorldSpaceCenter()):GetNormalized()
+	local direang = dire:Angle()
 	local right = direang:Right()
 	local reached = false
 	if face then
@@ -508,7 +525,6 @@ function ENT:MoveToPos( pos,face )
 		end
 		if self.CheckT < CurTime() then
 			self.CheckT = CurTime()+self.CheckDel
-			dire = (goal-self:WorldSpaceCenter()):GetNormalized()
 			if self:NearestPoint(goal):DistToSqr(goal) < self.PathGoalTolerance^2 then
 				reached = true
 			end
@@ -548,7 +564,7 @@ end
 
 function ENT:PhantomCycle()
 	self:ResetSequence("Idle")
-	local ref = self.StartPos+self:GetUp()*1000
+	local ref = self.StartPos+self:GetUp()*1400
 	self:MoveToPos(ref,true)
 	local rig = -self:GetRight()
 	self.MoveSpeed = 700
@@ -705,7 +721,7 @@ function ENT:DropTroops()
 	end
 	self:RemoveAllGestures()
 	self:DoGestureSeq("Doors Close")
-	timer.Simple( 1, function()
+	timer.Simple( 3, function()
 		if IsValid(self) then
 			self:DoGestureSeq("Doors Close Idle",false,0)
 		end
