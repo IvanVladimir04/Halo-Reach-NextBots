@@ -1570,7 +1570,7 @@ function ENT:ThrowGrenade(range,ent)
 	timer.Simple( 0.3, function()
 		if IsValid(self) and !self.DoingFlinch then
 			ent = ent or self.Enemy
-			local gre = ents.Create("astw2_halo_cea_plasma_grenade_thrown")
+			local gre = ents.Create("astw2_haloreach_plasma_thrown")
 			gre:SetPos(self:WorldSpaceCenter()+self:GetRight()*-40)
 			gre:SetAngles(self:GetAngles())
 			gre:SetOwner(self)
