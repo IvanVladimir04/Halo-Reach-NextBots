@@ -42,7 +42,9 @@ end
 
 function ENT:OnRemove()
     if SERVER then
-        self.motorsound:Stop()
+		if self.motorsound then
+			self.motorsound:Stop()
+		end
     end
 end
 

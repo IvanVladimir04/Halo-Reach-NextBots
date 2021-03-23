@@ -181,12 +181,12 @@ function ENT:OnInitialize()
 	local startoff = self:GetForward()
 	local endoff = self:GetForward()
 	for i = 1, 7 do 
-		if util.IsInWorld(self:GetPos()+startoff*-1000+self:GetUp()*1400) then
+		if util.IsInWorld(self:GetPos()+self:GetForward()*(-1000*i)+self:GetUp()*1400) then
 			startoff = self:GetForward()*(-1000*i)
 		end
 	end
 	for i = 1, 7 do 
-		if util.IsInWorld(self:GetPos()+endoff*-1000+self:GetUp()*1400) then
+		if util.IsInWorld(self:GetPos()+self:GetForward()*(1000*i)+self:GetUp()*1400) then
 			endoff = self:GetForward()*(1000*i)
 		end
 	end
