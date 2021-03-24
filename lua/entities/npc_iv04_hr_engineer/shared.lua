@@ -33,6 +33,8 @@ ENT.ShieldHealth = 100
 
 ENT.IsEngineer = true
 
+ENT.UseNBSight = true
+
 -- Flinching
 
 ENT.FlinchChance = 30

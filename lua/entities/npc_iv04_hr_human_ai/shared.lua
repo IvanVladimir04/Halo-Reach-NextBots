@@ -51,6 +51,8 @@ ENT.SearchJustAsSpawned = false
 
 ENT.CanJump = true
 
+ENT.UseNBSight = true
+
 ENT.BloodEffect = "halo_reach_blood_impact_human"
 
 ENT.FlinchHitgroups = {

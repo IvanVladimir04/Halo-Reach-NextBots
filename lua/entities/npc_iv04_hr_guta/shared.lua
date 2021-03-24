@@ -399,24 +399,23 @@ end
 function ENT:CustomBehaviour(ent)
 	if !IsValid(ent) then return end
 	--if !ent:IsOnGround() then return self:StartShooting(ent) end
-	if self.NewSP then
-		self.NewSP = false
-		if math.random(1,3) == 1 then
-			self:Speak("OnRoar")
-			self:RoarPush()
-			self:PlaySequenceAndWait("Taunt_Roar_Push")
-		else
-			self:Speak("OnRoarShort")
-			self:PlaySequenceAndWait("Taunt_Roar_"..math.random(1,3).."")
-		end
-	end
 	local los, obstr = self:IsOnLineOfSight(self:WorldSpaceCenter()+self:GetUp()*40,ent:WorldSpaceCenter(),{self,ent,self:GetOwner()})
 	local dist = self:GetRangeSquaredTo(ent:GetPos())
 	if los then
 		if IsValid(ent) then
 			self.LastSeenEnemyPos = ent:GetPos()
 		end
-		self:StartChasing(ent,self.RunAnim[math.random(1,#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+		local result = self:StartChasing(ent,self.RunAnim[math.random(1,#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true)
+		if result == "Failed" then
+			if dist < 400^2 then
+				self:Speak("OnRoar")
+				self:RoarPush()
+				self:PlaySequenceAndWait("Taunt_Roar_Push")
+			else
+				self:Speak("OnRoarShort")
+				self:PlaySequenceAndWait("Taunt_Roar_"..math.random(1,3).."")
+			end
+		end
 	elseif !los then
 		self:StartChasing( ent, self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier, false )
 	end
@@ -594,7 +593,7 @@ function ENT:StartChasing( ent, anim, speed, los )
 	end
 	self:StartActivity( anim )
 	self.loco:SetDesiredSpeed( speed )		-- Move speed
-	self:ChaseEnt(ent,los)
+	return self:ChaseEnt(ent,los)
 end
 
 ENT.NextUpdateT = CurTime()
