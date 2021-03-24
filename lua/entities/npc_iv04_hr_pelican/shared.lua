@@ -8,7 +8,7 @@ ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times fast
 
 ENT.Faction = "FACTION_UNSC"
 
-ENT.StartHealth = 500
+ENT.StartHealth = 2000
 
 ENT.LoseEnemyDistance = 9999999
 
@@ -27,11 +27,15 @@ ENT.FriendlyToPlayers = true
 ENT.IsDropship = true
 
 --ENT.TakeOffSounds = { "oddworld/strangers_wrath/dropship/fx_native4_01_drop01_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_native4_01_drop02_takeoff.ogg","oddworld/strangers_wrath/dropship/fx_native4_01_drop03_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_cargoship_fly_away.ogg" }
-ENT.SoundIdle = { "vehicles/pelican_engine_pelengine.wav" }
+ENT.SoundIdle = { "halo_reach/vehicles/pelican/pelican_engine_right/pel_eng_right/loop.wav" }
+ENT.SoundIdle2 = {  "halo_reach/vehicles/pelican/pelican_hover_right/pel_hover_right/loop/pelican_hover1r.wav", "halo_reach/vehicles/pelican/pelican_hover_right/pel_hover_right/loop/pelican_hover2r.wav",
+			"halo_reach/vehicles/pelican/pelican_hover_right/pel_hover_right/loop/pelican_hover3r.wav" }
+ENT.SoundIdle3 = {  "halo_reach/vehicles/pelican/pelican_banking_right/pel_banking_right/loop/pel_bank1r.wav", "halo_reach/vehicles/pelican/pelican_banking_right/pel_banking_right/loop/pel_bank2r.wav",
+			"halo_reach/vehicles/pelican/pelican_banking_right/pel_banking_right/loop/pel_bank3r.wav" }
 --ENT.LandingSounds = { "oddworld/strangers_wrath/dropship/fx_drop01_landing.ogg", "oddworld/strangers_wrath/dropship/fx_drop02_landing.ogg","oddworld/strangers_wrath/dropship/fx_drop03_landing.ogg" }
 --ENT.ShootSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_missle.ogg" }
---ENT.OpenDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_open.ogg" }
---ENT.CloseDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_close.ogg" }
+ENT.OpenDoorSounds =  "halo_reach/vehicles/pelican/pelican_hatch_open.ogg" 
+ENT.CloseDoorSounds =  "halo_reach/vehicles/pelican/pelican_hatch_close.ogg" 
 --ENT.FlySounds = { "oddworld/strangers_wrath/dropship/fx_dropship_flyby1_r05w.ogg", "oddworld/strangers_wrath/dropship/fx_dropship_flyby2.ogg" }
 
 function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
@@ -163,11 +167,17 @@ function ENT:OnInitialize()
 	--self.IsNTarget = true
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	snd = table.Random(self.SoundIdle)
-	--if self:WaterLevel() != 0 then 	if self.EngineSnd then self.EngineSnd:Stop() end return end
-	--if !self.EngineSnd and isstring(snd) then self.EngineSnd = CreateSound(self,snd) end
-	--if self.EngineSnd then
-	--	self.EngineSnd:Play()
-	--end
+	snd2 = table.Random(self.SoundIdle2)
+	snd3 = table.Random(self.SoundIdle3)
+	self.EngineSnd = CreateSound( self, snd )
+	self.EngineSnd2 = CreateSound( self, snd2 )
+	self.EngineSnd3 = CreateSound( self, snd3 )
+	self.EngineSnd:SetSoundLevel(115)
+	self.EngineSnd2:SetSoundLevel(95)
+	self.EngineSnd3:SetSoundLevel(85)
+	self.EngineSnd:Play()
+	self.EngineSnd2:Play()
+	self.EngineSnd3:Play()
 	for i = 2, 5 do
 		ParticleEffectAttach( "halo_reach_pelican_thruster_fx", PATTACH_POINT_FOLLOW, self, i )
 	end
@@ -195,7 +205,9 @@ end
 
 function ENT:OnRemove()
     if SERVER then
-        --self.EngineSnd:Stop()
+        self.EngineSnd:Stop()
+        self.EngineSnd2:Stop()
+        self.EngineSnd3:Stop()
     end
 end
 
@@ -414,10 +426,12 @@ end
 function ENT:DropTroops()
 	local pass = #self.Passengers
 	self:DoGestureSeq("Doors Open")
+	sound.Play(self.OpenDoorSounds,self:GetAttachment(19).Pos,100)
 	--self:DoGestureSeq("Doors Open Idle",false)
 	timer.Simple( 1, function()
 		if IsValid(self) then
 			self:DoGestureSeq("Doors Open Idle",false,0)
+			
 		end
 	end )
 	coroutine.wait(1)
@@ -441,6 +455,7 @@ function ENT:DropTroops()
 	end
 	self:RemoveAllGestures()
 	self:DoGestureSeq("Doors Close")
+	sound.Play(self.CloseDoorSounds,self:GetAttachment(19).Pos,100)
 	timer.Simple( 1, function()
 		if IsValid(self) then
 			self:DoGestureSeq("Doors Close Idle",false,0)
@@ -513,7 +528,7 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	ParticleEffect("halo_reach_explosion_unsc",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+	ParticleEffect("halo_reach_explosion_unsc_large",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
 	self:Remove()
 end
 

@@ -5,6 +5,7 @@ ENT.StartHealth = 100
 ENT.Models = {"models/halo_reach/characters/covenant/skirmisher_commando.mdl"}
 
 ENT.CovRank = 3
+ENT.ShieldUp = false
 
 ENT.PossibleWeapons = {
 	"astw2_haloreach_plasma_pistol",

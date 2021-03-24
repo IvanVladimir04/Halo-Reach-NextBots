@@ -55,6 +55,16 @@ ENT.Voices = {
 	}
 }
 
+function ENT:FireAnimationEvent(pos,ang,event,name)
+	--print(pos)
+	--print(ang)
+	--print(event)
+	--print(name)--halo_reach/vehicles/scarab/scarab_steps/scarab_step (1-7) .ogg
+	if options == "IV04_Reach_Scarab.Step" then
+		self:EmitSound("halo_reach/vehicles/scarab/scarab_steps/scarab_step"..math.random(1,7)..".ogg",80)
+	end
+end
+
 ENT.VoiceType = "Scarab"
 
 function ENT:Speak(voice,stopothersounds)
@@ -199,6 +209,7 @@ end
 
 function ENT:OnInitialize()
 	self:SetBloodColor(BLOOD_COLOR_MECH)
+	self:SetHealth(self.StartHealth*(GetConVar("halo_reach_nextbots_ai_difficulty"):GetInt()/2))
 	local tr = util.TraceLine( {
 		start = self:GetPos(),
 		endpos = self:GetPos()+Vector(0,0,10000000000),
@@ -217,6 +228,7 @@ function ENT:OnInitialize()
 			if IsValid(self) then
 				local anim = self.IdleAnim[math.random(#self.IdleAnim)]
 				self:StartActivity(anim)
+				self.Landed = true
 			end
 		end )
 		local func = function()
@@ -260,7 +272,7 @@ function ENT:CustomBehaviour(ent,range)
 		end
 		sound.Play("halo_reach/vehicles/scarab/scarab_charge_h3.ogg",self:GetAttachment(1).Pos,100)
 		for i = 1, 8 do
-			timer.Simple( (i*0.5)+5, function()
+			timer.Simple( (i*0.5)+2.5, function()
 				if IsValid(self) and IsValid(self.Enemy) then
 					if i == 1 then
 						sound.Play("halo_reach/vehicles/scarab/scarab_beam_in.ogg",self:GetAttachment(1).Pos,100)
@@ -314,10 +326,16 @@ end
 
 ENT.NextTurretThink = 0
 
+ENT.NMSound = 0
+
 if SERVER then
 
 	function ENT:Think()
-		if self:Health() < 1 then return end
+		if self:Health() < 1 or !self.Landed then return end
+		if self.NMSound < CurTime() then
+			self.NMSound = self.NMSound+2.5
+			self:EmitSound("halo_reach/vehicles/scarab/scarab_walk_move_short/scarab_walk_short"..math.random(1,7)..".ogg",80)
+		end
 		if self.NextTurretThink < CurTime() then
 			self.NextTurretThink = CurTime()+math.random(6,10)
 			if IsValid(self.OtherTarget) then

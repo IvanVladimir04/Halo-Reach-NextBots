@@ -1146,8 +1146,24 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
+			
+			-- local bracers = self:FindBodygroupByName( "Bracer" )
+			self:SetBodygroup(4,1)
+			self:SetBodygroup(5,1)
+			-- if (self.ShieldHealth <=0) then self.ShieldUp = false return end
+			if (self.ShieldHealth > 0 and self.ShieldUp == true ) then
+			sound.Play( "halo_reach/characters/jackal/jackal_shield_death/jackal_shield_death" .. math.random(1,3) .. ".ogg",  self:GetPos(), 75, math.random(105,115) )
+			if self.CovRank == 2 then
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", self:GetAttachment(1).Pos, Angle(0,0,0), self )
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_red", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+			else
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(1).Pos, Angle(0,0,0), self )
+				ParticleEffect( "halo_reach_jackal_shield_deplete_effect_blue", self:GetAttachment(2).Pos, Angle(0,0,0), self )
+			end
+			end
 	--self:SetBodygroup(3,1)
 	self.KilledDmgInfo = dmginfo
+	
 	self.BehaveThread = nil
 	self.DrownThread = coroutine.create( function() self:DoKilledAnim() end )
 	coroutine.resume( self.DrownThread )

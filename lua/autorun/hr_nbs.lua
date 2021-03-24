@@ -29,6 +29,7 @@ game.AddParticles( "particles/iv04_halo_reach_phantom_muzzle_effects.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_shield_impact_effects.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_shield_pop_effects.pcf" )
 game.AddParticles( "particles/iv04_halo_reach_flood_gibbing.pcf" )
+game.AddParticles( "particles/iv04_halo_reach_unsc_explosions.pcf" )
 PrecacheParticleSystem( "iv04_halo_reach_flood_infection_form_gib" )
 PrecacheParticleSystem( "iv04_halo_reach_flood_carrier_form_gib" )
 PrecacheParticleSystem( "iv04_halo_reach_flood_combat_form_gib" )
@@ -66,6 +67,7 @@ PrecacheParticleSystem( "iv04_halo_reach_phantom_explosion" )
 PrecacheParticleSystem( "iv04_halo_reach_scarab_explosion" )
 PrecacheParticleSystem( "iv04_halo_reach_engineer_beam" )
 PrecacheParticleSystem( "iv04_halo_reach_jackal_sniper_glow" )
+PrecacheParticleSystem( "halo_reach_explosion_unsc_large" )
 
 HRNBsTbl = {
 

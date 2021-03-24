@@ -8,7 +8,7 @@ ENT.MoveSpeedMultiplier = 1 -- When running, the move speed will be x times fast
 
 ENT.Faction = "FACTION_COVENANT"
 
-ENT.StartHealth = 500
+ENT.StartHealth = 2500
 
 ENT.LoseEnemyDistance = 9999999
 
@@ -25,7 +25,10 @@ ENT.Preset = {}
 ENT.IsDropship = true
 
 --ENT.TakeOffSounds = { "oddworld/strangers_wrath/dropship/fx_native4_01_drop01_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_native4_01_drop02_takeoff.ogg","oddworld/strangers_wrath/dropship/fx_native4_01_drop03_takeoff.ogg", "oddworld/strangers_wrath/dropship/fx_cargoship_fly_away.ogg" }
-ENT.SoundIdle = { "halo_reach/vehicles/phantom/phantom_engine_lod/track2/loop.ogg" }
+ENT.SoundIdle = { "halo_reach/vehicles/tuning_fork/tuning_fork_engine/track2/loop.wav" }
+ENT.SoundIdle2 = { "halo_reach/vehicles/tuning_fork/tuning_fork_lod/track1/loop/fork_lod_01.wav", "halo_reach/vehicles/tuning_fork/tuning_fork_lod/track1/loop/fork_lod_02.wav",
+				"halo_reach/vehicles/tuning_fork/tuning_fork_lod/track1/loop/fork_lod_03.wav", "halo_reach/vehicles/tuning_fork/tuning_fork_lod/track1/loop/fork_lod_04.wav" }
+ENT.SoundIdle3 = { "halo_reach/vehicles/tuning_fork/tuning_fork_engine/track1/loop.wav" }
 --ENT.LandingSounds = { "oddworld/strangers_wrath/dropship/fx_drop01_landing.ogg", "oddworld/strangers_wrath/dropship/fx_drop02_landing.ogg","oddworld/strangers_wrath/dropship/fx_drop03_landing.ogg" }
 --ENT.ShootSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_missle.ogg" }
 --ENT.OpenDoorSounds = { "oddworld/strangers_wrath/dropship/fx_dropship_doors_open.ogg" }
@@ -513,9 +516,17 @@ function ENT:OnInitialize()
 	--self:SetSolidMask(MASK_NPCSOLID_BRUSHONLY)
 	self:SetBloodColor( BLOOD_COLOR_MECH )
 	snd = table.Random(self.SoundIdle)
+	snd2 = table.Random(self.SoundIdle2)
+	snd3 = table.Random(self.SoundIdle3)
 	self.EngineSnd = CreateSound( self, snd )
-	self.EngineSnd:SetSoundLevel(100)
+	self.EngineSnd2 = CreateSound( self, snd2 )
+	self.EngineSnd3 = CreateSound( self, snd3 )
+	self.EngineSnd:SetSoundLevel(115)
+	self.EngineSnd2:SetSoundLevel(85)
+	self.EngineSnd3:SetSoundLevel(95)
 	self.EngineSnd:Play()
+	self.EngineSnd2:Play()
+	self.EngineSnd3:Play()
 	local r = 16
 	self.TroopsCount = r
 	self:PrepareTroops(r)
@@ -541,6 +552,8 @@ end
 function ENT:OnRemove()
 	if SERVER then
 		if self.EngineSnd then self.EngineSnd:Stop() end
+		if self.EngineSnd2 then self.EngineSnd2:Stop() end
+		if self.EngineSnd3 then self.EngineSnd3:Stop() end
 		if IsValid(self.CurrentExitor) then
 			local ent = self.CurrentExitor
 	   		ent.IsInVehicle = false
