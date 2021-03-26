@@ -190,42 +190,6 @@ function ENT:OnLandOnGround(ent)
 	end
 end
 
-function ENT:Think()
-	if self.IsInVehicle then
-		if self.InDropship then
-			local att = self.Dropship:GetAttachment(self.Dropship:LookupAttachment(self.Dropship.InfantryAtts[self.DropshipId]))
-			local ang = att.Ang
-			local pos = att.Pos
-			self:SetAngles(att.Ang)
-			if !self.DLanded then
-				self:SetPos(att.Pos+Vector(0,0,3))
-				if !self.DidDropshipIdleAnim then
-					self.DidDropshipIdleAnim = true
-					local anim
-					if self.InPhantom then
-						anim = self.DropshipPassengerIdleAnims[math.random(#self.DropshipPassengerIdleAnims)]
-					else
-						anim = self.SpiritPassengerIdleAnims[math.random(#self.SpiritPassengerIdleAnims)]
-					end
-					local id, len = self:LookupSequence(anim)
-					self:ResetSequence(id)
-					--print(id,len)
-					timer.Simple( len, function()
-						if IsValid(self) then
-							self.DidDropshipIdleAnim = false
-						end
-					end )
-				end
-			else
-				local off = 0
-				if self.SideAnim == "Right" then off = -0 end
-				self:SetPos(att.Pos+Vector(0,0,3)-att.Ang:Right()*off)
-			end
-			--self.loco:SetVelocity(Vector(0,0,0))
-		end
-	end
-end
-
 function ENT:Speak(voice)
 	local character = self.Voices["Elite"]
 	if self.IsBrute then character = self.Voices["Brute"] end
@@ -1350,7 +1314,9 @@ function ENT:DoCustomIdle()
 	local seq = self:SelectWeightedSequence(anim)
 	self:StartActivity(anim)
 	self:SearchEnemy()
-	timer.Simple( self:SequenceDuration(seq)/2, function()
+	local t = self:SequenceDuration(seq)/2
+	if t < 0.5 then t = 0.5 end
+	timer.Simple( t, function()
 		if IsValid(self) then
 			self:SearchEnemy()
 		end
