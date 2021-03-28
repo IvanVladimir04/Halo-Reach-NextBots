@@ -75,6 +75,8 @@ ENT.Faction = "FACTION_COVENANT"
 
 ENT.CurMag = 100
 
+ENT.CustomIdle = true
+
 local seqs = {
 	[1] = "evade_left",
 	[2] = "evade_right"
@@ -529,7 +531,7 @@ function ENT:LocalAllies()
 	return allies
 end
 
-function ENT:Wander()
+function ENT:DoCustomIdle()
 	if self.IsControlled then return end
 	if self.IsFollowingPlayer and IsValid(self.FollowingPlayer) then
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
@@ -542,13 +544,13 @@ function ENT:Wander()
 			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		else
 			for i = 1, 3 do
-				timer.Simple( 0.5*i, function()
+				timer.Simple( 0.7*i, function()
 					if IsValid(self) and !IsValid(self.Enemy) then
 						self:SearchEnemy()
 					end
 				end )
 				if !IsValid(self.Enemy) then
-					coroutine.wait(0.5)
+					coroutine.wait(0.7)
 				end
 			end
 		end
@@ -576,13 +578,13 @@ function ENT:Wander()
 				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			else
 				for i = 1, 3 do
-					timer.Simple( 0.5*i, function()
+					timer.Simple( 0.7*i, function()
 						if IsValid(self) and !IsValid(self.Enemy) then
 							self:SearchEnemy()
 						end
 					end )
 					if !IsValid(self.Enemy) then
-						coroutine.wait(0.5)
+						coroutine.wait(0.7)
 					end
 				end
 			end
@@ -702,7 +704,7 @@ function ENT:OnOtherKilled( victim, info )
 				local func = function()
 					while (self.Spooked) do
 						self:Flee()
-						coroutine.wait(0.01)
+						coroutine.wait(1)
 					end
 				end
 				table.insert(self.StuffToRunInCoroutine,func)

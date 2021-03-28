@@ -298,6 +298,7 @@ ENT.RifleHolds = {
 
 ENT.PistolHolds = {
 	["pistol"] = true,
+	["smg"] = true,
 	["revolver"] = true
 }
 
@@ -311,6 +312,7 @@ ENT.TotalHolds = {
 	["shotgun"] = true,
 	["pistol"] = true,
 	["revolver"] = true,
+	["smg"] = true,
 	["rpg"] = true
 }
 
@@ -1683,7 +1685,7 @@ function ENT:CustomBehaviour(ent,range)
 	elseif los and !self.DoneMelee and range < self.ChaseRange^2 then
 		self:StartChasing(self.Enemy,self.RunAnim[math.random(#self.RunAnim)],self.MoveSpeed*self.MoveSpeedMultiplier,true,false)
 	end
-	if range > self.ShootDist^2 then
+	if range > self.ShootDist^2 and ent:IsOnGround() then
 		self.StopShoot = true
 	else
 		self.StopShoot = false

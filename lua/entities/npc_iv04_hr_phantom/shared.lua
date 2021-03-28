@@ -434,9 +434,6 @@ function ENT:OnInitialize()
 	self.EngineSnd:Play()
 	self.EngineSnd2:Play()
 	self.EngineSnd3:Play()
-	local r = math.random(8,10)
-	self.TroopsCount = r
-	self:PrepareTroops(r)
 	self:SetCollisionBounds(Vector(400,300,800),Vector(-400,-300,400))
 	self.StartPos = self:GetPos()+self:GetUp()*500
 	local startoff = self:GetForward()
@@ -589,6 +586,9 @@ function ENT:PhantomCycle()
 	self:MoveToPos(self.StartPos+rig*260)
 	--self.IsNTarget = false
 	self.StopMovement = true
+	local r = math.random(8,10)
+	self.TroopsCount = r
+	self:PrepareTroops(r)
 	self:DropTroops()
 	self.StopMovement = false
 	self.MoveSpeed = 400
@@ -632,10 +632,6 @@ function ENT:GoAway()
 	
 	end
 end
-
-ENT.NInvisT = 0
-
-ENT.InvisDel = 0.5
 
 function ENT:CanSee(pos)
 	local tr = {
@@ -768,7 +764,7 @@ function ENT:BodyUpdate()
 		p = an.p
 		dip = math.AngleDifference(self:GetAngles().p,p)
 			if !self.Transitioned then
-				local vy = math.AngleDifference(self:GetAngles().y+self.LTPP,y)
+				local vy = math.AngleDifference(self:GetAngles().y+90+self.LTPP,y)
 				local vp = math.AngleDifference(self:GetAngles().p+self.LTP,p)
 				self.Transitioned = true
 				timer.Simple(0.01, function()
@@ -807,6 +803,14 @@ end
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	self:EmitSound("halo_reach/vehicles/phantom/phantom_windup.ogg",100)
+	local speed = (1.5/(GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10))
+	for i = 1, GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10 do 
+		timer.Simple( i*speed, function()
+			if IsValid(self) then
+				ParticleEffect("halo_reach_explosion_covenant",self:GetAttachment(math.random(17)).Pos,self:GetAngles()+Angle(-90,0,0),nil)
+			end
+		end )
+	end
 	timer.Simple( 1.5, function()
 		if IsValid(self) then
 			self:EmitSound("halo_reach/vehicles/phantom/phantom_destroyed.ogg",100)
@@ -825,6 +829,14 @@ function ENT:OnKilled( dmginfo ) -- When killed
 				if phys then
 					phys:Wake()
 					phys:SetMass( phys:GetMass()*10 )
+				end
+			end
+			for k, v in pairs(player.GetAll()) do
+				if self:GetRangeSquaredTo(v:WorldSpaceCenter()) < 4096^2 then
+					v:SetNWBool("FoolNearBoom",true)
+					timer.Simple( 5, function()
+						if IsValid(v) then v:SetNWBool("FoolNearBoom",false) end
+					end )
 				end
 			end
 			self:Remove()

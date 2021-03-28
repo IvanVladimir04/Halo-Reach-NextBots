@@ -1,0 +1,15 @@
+refract
+{
+	$normalmap 		"vgui/overlays/halo_reach/fp_lens"
+	$refractamount 		.1
+	$forcerefract 		1
+	$bluramount 		4
+//	$nofog 			1
+	$modulate 		1
+//	$additive 			1
+//	$vertexalpha 		1
+	$vertexcolor 		1
+	$translucent 		1
+	$refracttint [ 1 0.7 0.75 ]
+	$MIRRORABOUTVIEWPORTEDGES 1
+}

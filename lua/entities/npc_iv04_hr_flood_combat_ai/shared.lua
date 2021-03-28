@@ -930,6 +930,23 @@ function ENT:Melee()
 	self:SetAngles(self:GetAngles()+Angle(0,yd,0))
 end
 
+function ENT:OnLeaveGround( ent )
+	self:StartActivity( self:GetSequenceActivity(self:LookupSequence("Air")) )
+end
+
+function ENT:JumpTo(ent)
+	local dir = self:GetAimVector()*1200
+	self.loco:JumpAcrossGap(self:GetPos()+dir,self:GetForward())
+	local func = function()
+		while (!self.loco:IsOnGround()) do
+			coroutine.wait(0.01)
+		end
+		self:PlaySequenceAndWait( "Land" )
+	end
+	table.insert(self.StuffToRunInCoroutine,func)
+	self:ResetAI()
+end
+
 ENT.NextUpdateT = CurTime()
 
 ENT.UpdateDelay = 0.5
@@ -940,7 +957,7 @@ function ENT:ChaseEnt(ent,los)
 	path:SetGoalTolerance( self.PathGoalTolerance )
 	if !IsValid(ent) then return end
 	path:Compute( self, ent:GetPos() )
-	if ( !path:IsValid() ) then return "Failed" end
+	if ( !path:IsValid() ) then coroutine.wait(1) return "Failed" end
 	local saw = false
 	while ( path:IsValid() and IsValid(ent) ) do
 		if !self.DoingLose then
@@ -973,6 +990,17 @@ function ENT:ChaseEnt(ent,los)
 			end
 			if cansee then
 				self.LastSeenEnemyPos = ent:GetPos()
+			end
+			if !self.Jumped then
+				self.Jumped = true
+				timer.Simple( math.random(10,15), function()
+					if IsValid(self) then
+						self.Jumped = false
+					end
+				end )
+				if dist > 800^2 then
+					return self:JumpTo(ent)
+				end
 			end
 		end
 		if path:GetAge() > self.RebuildPathTime then

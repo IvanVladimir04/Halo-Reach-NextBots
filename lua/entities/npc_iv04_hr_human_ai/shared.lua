@@ -332,6 +332,7 @@ end
 ENT.RifleHolds = {
 	["crossbow"] = true,
 	["ar2"] = true,
+	["smg"] = true,
 	["shotgun"] = true
 }
 
@@ -346,6 +347,7 @@ ENT.TotalHolds = {
 	["shotgun"] = true,
 	["pistol"] = true,
 	["revolver"] = true,
+	["smg"] = true,
 	["rpg"] = true
 }
 
@@ -1360,7 +1362,7 @@ function ENT:CustomBehaviour(ent,range)
 	if los and !self.DoneMelee and range < self.MeleeRange^2 then
 		self:DoMelee()
 	end
-	if range > self.ShootDist^2 then
+	if range > self.ShootDist^2 and ent:IsOnGround() then
 		self.StopShoot = true
 	else
 		self.StopShoot = false

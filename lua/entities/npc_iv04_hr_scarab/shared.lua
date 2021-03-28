@@ -145,7 +145,25 @@ function ENT:OnInjured( info )
 		local tr = trace.HitGroup
 		if self.LegsArmor[tr] > 0 then
 			self.LegsArmor[tr] = self.LegsArmor[tr]-math.abs(info:GetDamage())
-			if self.LegsArmor[tr] < 0 then self:SetBodygroup(self.LegsArmorBodygroups[tr],1) self.LegsArmor[tr] = 0 end
+			if self.LegsArmor[tr] < 0 then 
+				ParticleEffect("halo_reach_explosion_covenant",trace.HitPos,self:GetAngles()+Angle(-90,0,0),nil)
+				self:SetBodygroup(self.LegsArmorBodygroups[tr],1) 
+				self.LegsArmor[tr] = 0 
+				local gib = ents.Create("prop_physics")
+				gib:SetModel("models/halo_reach/vehicles/covenant/gibs/scarab_gib_armor_flap.mdl")
+				gib:SetPos( trace.HitPos )
+				gib:Spawn()
+				timer.Simple( 30, function()
+					if IsValid(gib) then	
+						gib:Remove()
+					end
+				end )
+				local phys = gib:GetPhysicsObject()
+				if phys then
+					phys:Wake()	
+					phys:SetMass( phys:GetMass()*10 )
+				end
+			end
 		end
 		if self:Health() - info:GetDamage() < 1 then self.DeathHitGroup = trace.HitGroup return end
 		info:ScaleDamage(2)
@@ -334,7 +352,10 @@ if SERVER then
 		if self:Health() < 1 or !self.Landed then return end
 		if self.NMSound < CurTime() then
 			self.NMSound = self.NMSound+2.5
-			self:EmitSound("halo_reach/vehicles/scarab/scarab_walk_move_short/scarab_walk_short"..math.random(1,7)..".ogg",80)
+			if self.MShortSound then self.MShortSound:Stop() end
+			self.MShortSound = CreateSound( self, "halo_reach/vehicles/scarab/scarab_walk_move_short/scarab_walk_short"..math.random(1,7)..".ogg" )
+			self.MShortSound:SetSoundLevel( 80 )
+			self.MShortSound:Play()
 		end
 		if self.NextTurretThink < CurTime() then
 			self.NextTurretThink = CurTime()+math.random(6,10)
@@ -399,6 +420,14 @@ end
 function ENT:DoKilledAnim()
 	local anim = "Death"
 	local len = self:SetSequence(anim)
+	local speed = (14/GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt())
+	for i = 1, GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt() do 
+		timer.Simple( i*speed, function()
+			if IsValid(self) then
+				ParticleEffect("halo_reach_explosion_covenant",self:GetAttachment(math.random(18)).Pos,self:GetAngles()+Angle(-90,0,0),nil)
+			end
+		end )
+	end
 	timer.Simple( len*2, function()
 		if IsValid(self) then
 			self:Speak("DeathExplosion")
@@ -415,6 +444,14 @@ function ENT:DoKilledAnim()
 					dmg:SetDamage(600)
 					dmg:SetDamageType(DMG_BLAST)
 					v:TakeDamageInfo(dmg)
+				end
+			end
+			for k, v in pairs(player.GetAll()) do
+				if self:GetRangeSquaredTo(v:WorldSpaceCenter()) < 8096^2 then
+					v:SetNWBool("FoolNearBoom",true)
+					timer.Simple( 5, function()
+						if IsValid(v) then v:SetNWBool("FoolNearBoom",false) end
+					end )
 				end
 			end
 			self:Remove()

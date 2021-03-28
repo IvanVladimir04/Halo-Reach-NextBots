@@ -1,0 +1,5 @@
+UnlitGeneric
+{
+	$basetexture ""vgui/overlays/halo_reach/nvg_edges"
+	$translucent 1
+}

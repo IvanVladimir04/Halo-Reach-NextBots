@@ -245,6 +245,7 @@ function ENT:ChaseEnt(ent) -- Modified MoveToPos to integrate some stuff
 		end
 		coroutine.yield()
 	end
+	coroutine.wait(1)
 	return "ok"
 end
 

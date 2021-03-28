@@ -244,6 +244,20 @@ function ENT:OnLeaveGround( ent )
 	self.DoingMelee = true
 end
 
+
+function ENT:JumpTo(ent)
+	local dir = self:GetAimVector()*200
+	self.loco:JumpAcrossGap(self:GetPos()+dir,self:GetForward())
+	self:StartActivity( self:GetSequenceActivity(self:LookupSequence("Leap")) )
+	local func = function()
+		while (!self.loco:IsOnGround() and !IsValid(self:GetOwner())) do
+			coroutine.wait(0.01)
+		end
+	end
+	table.insert(self.StuffToRunInCoroutine,func)
+	self:ResetAI()
+end
+
 function ENT:OnContact( ent )
 	if ent == game.GetWorld() then return end
 	local tbl = {
@@ -458,6 +472,17 @@ function ENT:ChaseEnt(ent) -- Modified MoveToPos to integrate some stuff
 			if dist < self.MeleeRange^2 and !self.HasLatched then
 				return self:Melee(self.MeleeDamage)
 			end
+			if !self.Jumped then
+				self.Jumped = true
+				timer.Simple( math.random(5,10), function()
+					if IsValid(self) then
+						self.Jumped = false
+					end
+				end )
+				if dist > 300^2 then
+					return self:JumpTo(ent)
+				end
+			end
 		end
 		if self.DoClimb and	!self.DoneDis then
 			self.DoneDis = true
@@ -492,6 +517,7 @@ function ENT:ChaseEnt(ent) -- Modified MoveToPos to integrate some stuff
 		end
 		coroutine.yield()
 	end
+	coroutine.wait(1)
 	return "ok"
 end
 

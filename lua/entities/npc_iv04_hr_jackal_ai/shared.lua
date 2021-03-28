@@ -61,6 +61,8 @@ ENT.CanUse = true
 
 ENT.SearchJustAsSpawned = false
 
+ENT.CustomIdle = true 
+
 ENT.Faction = "FACTION_COVENANT"
 
 ENT.CurMag = 100
@@ -193,6 +195,7 @@ function ENT:SetupHoldtypes()
 	if self.PistolHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
 		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol_Crouch"))}
+		self.WanderAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Pistol"))}
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Idle_1")),self:GetSequenceActivity(self:LookupSequence("Idle_2")),self:GetSequenceActivity(self:LookupSequence("Idle_3"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Pistol_Idle_Crouch"))}
 		self.WarnAnim = "Warn"
@@ -213,6 +216,7 @@ function ENT:SetupHoldtypes()
 	elseif self.RifleHolds[hold] then
 		self.RunAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle"))}
 		self.WalkAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle_Slow"))}
+		self.WanderAnim = {self:GetSequenceActivity(self:LookupSequence("Move_Rifle"))}
 		self.IdleCalmAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle"))}
 		self.IdleAnim = {self:GetSequenceActivity(self:LookupSequence("Rifle_Idle"))}
 		self.WarnAnim = "Surprised"
@@ -537,7 +541,7 @@ function ENT:LocalAllies()
 	return allies
 end
 
-function ENT:Wander()
+function ENT:DoCustomIdle()
 	if self.IsControlled then return end
 	if self.IsFollowingPlayer and IsValid(self.FollowingPlayer) then
 		local dist = self:GetRangeSquaredTo(self.FollowingPlayer)
@@ -550,13 +554,13 @@ function ENT:Wander()
 			self:WanderToPosition( (pos), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 		else
 			for i = 1, 3 do
-				timer.Simple( 0.5*i, function()
+				timer.Simple( 0.7*i, function()
 					if IsValid(self) and !IsValid(self.Enemy) then
 						self:SearchEnemy()
 					end
 				end )
 				if !IsValid(self.Enemy) then
-					coroutine.wait(0.5)
+					coroutine.wait(0.7)
 				end
 			end
 		end
@@ -580,20 +584,17 @@ function ENT:Wander()
 			self:WanderToPosition( ((self.LastSeenEnemyPos or self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			coroutine.wait(1)
 		else
-			--if self:GetActivity() != self.IdleCalmAnim[1] then
-			--	self:StartActivity(self.IdleCalmAnim[1])
-			--end
-			if !self.IsSniper and math.random(1,3) == 1 then
+			if math.random(1,3) == 1 then
 				self:WanderToPosition( ((self:GetPos()) + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 200), self.RunAnim[math.random(1,#self.RunAnim)], self.MoveSpeed*self.MoveSpeedMultiplier )
 			else
 				for i = 1, 3 do
-					timer.Simple( 0.5*i, function()
+					timer.Simple( 0.7*i, function()
 						if IsValid(self) and !IsValid(self.Enemy) then
 							self:SearchEnemy()
 						end
 					end )
 					if !IsValid(self.Enemy) then
-						coroutine.wait(0.5)
+						coroutine.wait(0.7)
 					end
 				end
 			end

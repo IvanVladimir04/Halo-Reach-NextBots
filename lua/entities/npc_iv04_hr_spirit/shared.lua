@@ -36,15 +36,15 @@ ENT.SoundIdle3 = { "halo_reach/vehicles/tuning_fork/tuning_fork_engine/track1/lo
 --ENT.FlySounds = { "oddworld/strangers_wrath/dropship/fx_dropship_flyby1_r05w.ogg", "oddworld/strangers_wrath/dropship/fx_dropship_flyby2.ogg" }
 
 ENT.Gibs = {
-	[1] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_1.mdl",
-	[2] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_2.mdl",
-	[3] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_3.mdl",
-	[4] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_4.mdl",
-	[5] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_5.mdl",
-	[6] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_6.mdl",
-	[7] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_7.mdl",
-	[8] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_8.mdl",
-	[9] = "models/halo_reach/vehicles/covenant/gibs/phantom_gib_turret_door.mdl"
+	[1] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_1.mdl",
+	[2] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_2.mdl",
+	[3] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_3.mdl",
+	[4] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_4.mdl",
+	[5] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_5.mdl",
+	[6] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_6.mdl",
+	[7] = "models/halo_reach/vehicles/covenant/gibs/spirit_gib_7.mdl",
+	[8] = "models/halo_reach/vehicles/covenant/gibs/spirit_turret_gib_1.mdl",
+	[9] = "models/halo_reach/vehicles/covenant/gibs/spirit_turret_gib_2.mdl"
 }
 
 function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
@@ -527,9 +527,6 @@ function ENT:OnInitialize()
 	self.EngineSnd:Play()
 	self.EngineSnd2:Play()
 	self.EngineSnd3:Play()
-	local r = 16
-	self.TroopsCount = r
-	self:PrepareTroops(r)
 	self:SetCollisionBounds(Vector(400,300,800),Vector(-400,-300,400))
 	self.StartPos = self:GetPos()+self:GetUp()*500
 	local startoff = self:GetForward()
@@ -681,6 +678,9 @@ function ENT:PhantomCycle()
 	self:MoveToPos(self.StartPos+rig*260)
 	--self.IsNTarget = false
 	self.StopMovement = true
+	local r = 16
+	self.TroopsCount = r
+	self:PrepareTroops(r)
 	self:DropTroops()
 	self.StopMovement = false
 	self.MoveSpeed = 400
@@ -724,10 +724,6 @@ function ENT:GoAway()
 	
 	end
 end
-
-ENT.NInvisT = 0
-
-ENT.InvisDel = 0.5
 
 function ENT:CanSee(pos)
 	local tr = {
@@ -899,6 +895,14 @@ end
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
 	self:EmitSound("halo_reach/vehicles/phantom/phantom_windup.ogg",100)
+	local speed = (1.5/(GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10))
+	for i = 1, GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10 do 
+		timer.Simple( i*speed, function()
+			if IsValid(self) then
+				ParticleEffect("halo_reach_explosion_covenant",self:GetAttachment(math.random(17)).Pos,self:GetAngles()+Angle(-90,0,0),nil)
+			end
+		end )
+	end
 	timer.Simple( 1.5, function()
 		if IsValid(self) then
 			self:EmitSound("halo_reach/vehicles/phantom/phantom_destroyed.ogg",100)
@@ -917,6 +921,14 @@ function ENT:OnKilled( dmginfo ) -- When killed
 				if phys then
 					phys:Wake()
 					phys:SetMass( phys:GetMass()*10 )
+				end
+			end
+			for k, v in pairs(player.GetAll()) do
+				if self:GetRangeSquaredTo(v:WorldSpaceCenter()) < 4096^2 then
+					v:SetNWBool("FoolNearBoom",true)
+					timer.Simple( 5, function()
+						if IsValid(v) then v:SetNWBool("FoolNearBoom",false) end
+					end )
 				end
 			end
 			self:Remove()

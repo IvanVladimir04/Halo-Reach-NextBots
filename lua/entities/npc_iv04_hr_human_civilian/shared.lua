@@ -258,7 +258,7 @@ function ENT:DoKilledAnim()
 		if self.KilledDmgInfo:GetDamage() <= 150 then
 			self:Speak("OnDeath")
 			local anim = self:DetermineDeathAnim(self.KilledDmgInfo)
-			print("dead",anim)
+			--print("dead",anim)
 			if anim == true then 
 				local rag = self:BecomeRagdoll(self.KilledDmgInfo)
 				return

@@ -239,6 +239,7 @@ function ENT:HandleStanding()
 	for i = 1, #self.IdleAnim do
 		if self:GetActivity() != self.IdleAnim[i] then
 			change = true
+			break
 		end
 	end
 	if change then
@@ -250,7 +251,7 @@ ENT.CheckT = 0
 
 ENT.CheckDel = 0.3
 
-ENT.PathGoalTolerance = 80
+ENT.PathGoalTolerance = 120
 
 function ENT:MoveToPos( pos )
 	local goal = pos
@@ -371,7 +372,7 @@ local thingstoavoid = {
 }
 
 function ENT:OnTouchWorld( world )
-	if self.InFlight and !self.Perched and !self.Perching then
+	if IsValid(self.Enemy) and self.InFlight and !self.Perched and !self.Perching then
 		self.Perching = true
 		self:Speak("OnPerch")
 		timer.Simple( 4, function()
@@ -580,15 +581,11 @@ function ENT:LocalAllies()
 	return allies
 end
 
-function ENT:HandleStanding()
-
-end
-
 function ENT:Wander()
 	if self.IsControlled then return end
 	if self.InFlight then
 		self.InFlight = false
-		self:MoveToPos(self.StartPoint)
+		self:MoveToPos(self.StartPoint+Vector(0,0,50))
 		self.loco:SetGravity(self.OldGravity)
 		local search = false
 		while (!self.loco:IsOnGround()) do

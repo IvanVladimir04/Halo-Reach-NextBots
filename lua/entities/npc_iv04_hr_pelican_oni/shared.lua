@@ -44,6 +44,13 @@ function ENT:HandleAnimEvent(event,eventTime,cycle,type,options)
 	end]]
 end
 
+ENT.Gibs = {
+	[1] = "models/halo_reach/vehicles/unsc/gibs/pelican_gib_1.mdl",
+	[2] = "models/halo_reach/vehicles/unsc/gibs/pelican_gib_2.mdl",
+	[3] = "models/halo_reach/vehicles/unsc/gibs/pelican_gib_3.mdl",
+	[4] = "models/halo_reach/vehicles/unsc/gibs/pelican_husk.mdl"
+}
+
 ENT.InfantryAtts = {
 	[1] = "spawner_l1",
 	[2] = "spawner_l2",
@@ -183,9 +190,6 @@ function ENT:OnInitialize()
 	for i = 2, 5 do
 		ParticleEffectAttach( "halo_reach_pelican_thruster_fx", PATTACH_POINT_FOLLOW, self, i )
 	end
-	local r = math.random(5,10)
-	self.MarinesCount = r
-	self:PrepareMarines(r)
 	self:SetCollisionBounds(Vector(400,300,550),Vector(-400,-300,400))
 	self.StartPos = self:GetPos()+self:GetUp()*700
 	local startoff = self:GetForward()
@@ -325,6 +329,9 @@ function ENT:PelicanCycle()
 	self:MoveToPos(self.StartPos+rig*400)
 	--self.IsNTarget = false
 	self.StopMovement = true
+	local r = math.random(5,10)
+	self.MarinesCount = r
+	self:PrepareMarines(r)
 	self:DropTroops()
 	self.StopMovement = false
 	self.MoveSpeed = 400
@@ -553,8 +560,38 @@ end
 
 function ENT:OnKilled( dmginfo ) -- When killed
 	hook.Call( "OnNPCKilled", GAMEMODE, self, dmginfo:GetAttacker(), dmginfo:GetInflictor() )
-	ParticleEffect("halo_reach_explosion_unsc_large",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
-	self:Remove()
+	local speed = (1.5/(GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10))
+	for i = 1, GetConVar("halo_reach_nextbots_ai_scarab_explosions"):GetInt()/10 do 
+		timer.Simple( i*speed, function()
+			if IsValid(self) then
+				ParticleEffect("astw2_halo_3_rocket_explosion",self:GetAttachment(math.random(17)).Pos,self:GetAngles()+Angle(-90,0,0),nil)
+			end
+		end )
+	end
+	self:SetSkin(1)
+	timer.Simple( 1.5, function()
+		if IsValid(self) then
+			for i = 1, #self.Gibs do
+				local gib = ents.Create("prop_physics")
+				gib:SetModel(self.Gibs[i])
+				gib:SetPos( self:WorldSpaceCenter()+self:GetForward()*(80*i) )
+				gib:Spawn()
+				gib:SetSkin(1)
+				timer.Simple( 30, function()
+					if IsValid(gib) then	
+						gib:Remove()
+					end
+				end )
+				local phys = gib:GetPhysicsObject()
+				if phys then
+					phys:Wake()	
+					phys:SetMass( phys:GetMass()*10 )
+				end
+			end
+			ParticleEffect("halo_reach_explosion_unsc_large",self:GetPos()+self:GetUp()*140,self:GetAngles()+Angle(-90,0,0),nil)
+			self:Remove()
+		end
+	end )
 end
 
 list.Set( "NPC", "npc_iv04_hr_pelican_oni", {

@@ -105,8 +105,10 @@ local tbl5 = {
     sc = "Halo Reach NextBots",
     id = "Halo_Reach_NextBots",
     dv = 1,
-    d = "Should the dropships collide with the world?",
-    cv = "halo_reach_nextbots_ai_dropship_collisions"
+    d = "Total amount of particles the scarab spawns (in 14 seconds)",
+    cv = "halo_reach_nextbots_ai_scarab_explosions",
+	t = "slider",
+	l = 140
 }
 
 IV04AddMenuOption( tbl )
@@ -114,7 +116,7 @@ IV04AddMenuOption( tbl1 )
 IV04AddMenuOption( tbl2 )
 IV04AddMenuOption( tbl3 )
 IV04AddMenuOption( tbl4 )
---IV04AddMenuOption( tbl5 )
+IV04AddMenuOption( tbl5 )
 
 HRShieldMaterial = Material("models/halo_reach/characters/covenant/elite/minor/energy_shield")
 
@@ -131,4 +133,25 @@ net.Receive( "HRNBsSpartanSpawned", function()
 	HRNBsColors[ent:EntIndex()] = col
 	if !ent.GetPlayerColor then ent.GetPlayerColor = function() return ent.SpecialColor or Vector(0,0,0) end end
 	--print(ent.HasSpecialColor,ent.SpecialColor,HRNBsColors[ent:EntIndex()])
+end )
+
+local tab = {
+	[ "$pp_colour_addr" ] = 0,
+	[ "$pp_colour_addg" ] = 0,
+	[ "$pp_colour_addb" ] = 0.2,
+	[ "$pp_colour_brightness" ] = -0.04,
+	[ "$pp_colour_contrast" ] = 2.26,
+	[ "$pp_colour_colour" ] = 1.62,
+	[ "$pp_colour_mulr" ] = 0,
+	[ "$pp_colour_mulg" ] = 0.7,
+	[ "$pp_colour_mulb" ] = 0.11
+}
+
+hook.Add( "RenderScreenspaceEffects", "GetAwayItsGonnaBlow", function()
+	if LocalPlayer():GetNWBool("FoolNearBoom") then
+		DrawColorModify( tab )
+		DrawToyTown(2, ScrH() / 2)
+		DrawSharpen( 1.2, 1.2 )
+		DrawBloom( 0.65, 2, 9, 9, 1, 1, 1, 1, 1 )
+	end
 end )
